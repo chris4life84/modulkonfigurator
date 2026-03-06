@@ -1,13 +1,11 @@
 import { useWizardStore } from '../../store/useWizardStore';
 import { TemplateSelectionStep } from '../template-selection/TemplateSelectionStep';
 import { GridEditorStep } from '../grid-editor/GridEditorStep';
-import { OptionsStep } from '../options/OptionsStep';
 import { SummaryStep } from '../summary/SummaryStep';
 
 const STEP_COMPONENTS = [
   TemplateSelectionStep,
   GridEditorStep,
-  OptionsStep,
   SummaryStep,
 ];
 

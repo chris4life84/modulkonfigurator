@@ -6,50 +6,67 @@ interface SVGModuleProps {
   color: string;
   label: string;
   selected?: boolean;
+  dragging?: boolean;
+  moveReady?: boolean;
   onClick?: () => void;
+  onPointerDown?: (e: React.PointerEvent) => void;
 }
 
-export function SVGModule({ module: m, color, label, selected, onClick }: SVGModuleProps) {
-  const gap = 0.06;
+export function SVGModule({
+  module: m,
+  color,
+  label,
+  selected,
+  dragging,
+  moveReady,
+  onClick,
+  onPointerDown,
+}: SVGModuleProps) {
+  const gap = 0.18;
 
   return (
     <g
-      className={onClick ? 'cursor-pointer' : ''}
+      className={onClick || onPointerDown ? (dragging ? 'cursor-grabbing' : 'cursor-grab') : ''}
       onClick={onClick}
+      onPointerDown={onPointerDown}
+      opacity={dragging ? 0.5 : 1}
+      style={{ pointerEvents: dragging ? 'none' : 'auto' }}
     >
       <rect
         x={m.gridX + gap}
         y={m.gridY + gap}
         width={m.width - gap * 2}
         height={m.height - gap * 2}
-        rx={0.1}
+        rx={0.3}
         fill={color}
         opacity={0.9}
-        stroke={selected ? '#1e293b' : 'white'}
-        strokeWidth={selected ? 0.08 : 0.03}
+        stroke={selected ? '#1e293b' : moveReady ? '#3b82f6' : 'white'}
+        strokeWidth={selected ? 0.24 : moveReady ? 0.18 : 0.09}
       />
       {/* Module name */}
       <text
         x={m.gridX + m.width / 2}
-        y={m.gridY + m.height / 2 - 0.05}
+        y={m.gridY + m.height / 2 - 0.15}
         textAnchor="middle"
         dominantBaseline="middle"
         fill="white"
-        fontSize={m.width >= 2 && m.height >= 2 ? 0.28 : 0.22}
+        fontSize={m.width >= 6 && m.height >= 6 ? 0.84 : 0.66}
         fontWeight="600"
+        style={{ pointerEvents: 'none' }}
       >
         {label}
       </text>
       {/* Dimensions */}
       <text
         x={m.gridX + m.width / 2}
-        y={m.gridY + m.height / 2 + 0.22}
+        y={m.gridY + m.height / 2 + 0.66}
         textAnchor="middle"
         dominantBaseline="middle"
         fill="rgba(255,255,255,0.7)"
-        fontSize={0.16}
+        fontSize={0.48}
+        style={{ pointerEvents: 'none' }}
       >
-        {(m.width * GRID_CELL_SIZE).toFixed(1)}×{(m.height * GRID_CELL_SIZE).toFixed(1)}m
+        {(m.width * GRID_CELL_SIZE).toFixed(1)}x{(m.height * GRID_CELL_SIZE).toFixed(1)}m
       </text>
       {/* Selection indicator */}
       {selected && (
@@ -58,12 +75,36 @@ export function SVGModule({ module: m, color, label, selected, onClick }: SVGMod
           y={m.gridY + gap}
           width={m.width - gap * 2}
           height={m.height - gap * 2}
-          rx={0.1}
+          rx={0.3}
           fill="none"
           stroke="white"
-          strokeWidth={0.04}
-          strokeDasharray="0.12 0.08"
+          strokeWidth={0.12}
+          strokeDasharray="0.36 0.24"
+          style={{ pointerEvents: 'none' }}
         />
+      )}
+      {/* Move-ready animated indicator */}
+      {moveReady && (
+        <rect
+          x={m.gridX + gap}
+          y={m.gridY + gap}
+          width={m.width - gap * 2}
+          height={m.height - gap * 2}
+          rx={0.3}
+          fill="none"
+          stroke="#3b82f6"
+          strokeWidth={0.18}
+          strokeDasharray="0.5 0.3"
+          style={{ pointerEvents: 'none' }}
+        >
+          <animate
+            attributeName="stroke-dashoffset"
+            from="0"
+            to="1.6"
+            dur="1s"
+            repeatCount="indefinite"
+          />
+        </rect>
       )}
     </g>
   );

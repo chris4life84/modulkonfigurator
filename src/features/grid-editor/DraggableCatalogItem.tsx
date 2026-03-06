@@ -6,6 +6,7 @@ interface DraggableCatalogItemProps {
   width: number;
   height: number;
   isSelected: boolean;
+  color: string;
   onClick: () => void;
   children: React.ReactNode;
 }
@@ -15,6 +16,7 @@ export function DraggableCatalogItem({
   width,
   height,
   isSelected,
+  color,
   onClick,
   children,
 }: DraggableCatalogItemProps) {
@@ -29,13 +31,14 @@ export function DraggableCatalogItem({
       {...listeners}
       {...attributes}
       onClick={onClick}
-      className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors touch-manipulation
-        ${isDragging ? 'opacity-50' : ''}
+      className={`flex-1 min-w-0 rounded-lg border-2 px-2 py-2 text-center transition-all touch-manipulation
+        ${isDragging ? 'opacity-50 scale-95' : ''}
         ${
           isSelected
-            ? 'border-wood-500 bg-wood-50 text-wood-700'
-            : 'border-gray-200 text-gray-600 hover:border-wood-300 hover:bg-wood-50'
+            ? 'border-current bg-current/5 ring-1 ring-current/20'
+            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
         }`}
+      style={isSelected ? { color } : undefined}
     >
       {children}
     </button>

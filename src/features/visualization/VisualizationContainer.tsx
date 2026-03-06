@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+import { useDroppable } from '@dnd-kit/core';
 import type { PlacedModule, GridPosition } from '../../types/grid';
 import { useViewMode } from '../../hooks/useViewMode';
 import { GridCanvas } from './GridCanvas';
@@ -9,13 +10,27 @@ const Scene3D = lazy(() =>
   import('./Scene3D').then((mod) => ({ default: mod.Scene3D })),
 );
 
+export interface GridDragState {
+  moduleId: string;
+  currentX: number;
+  currentY: number;
+  isValid: boolean;
+}
+
 interface VisualizationContainerProps {
   modules: PlacedModule[];
   validPlacements?: GridPosition[];
   ghostModule?: { width: number; height: number } | null;
   selectedModuleId?: string | null;
+  movingModuleId?: string | null;
+  moveReadyModuleId?: string | null;
+  moveTargets?: GridPosition[];
+  gridDrag?: GridDragState | null;
   onCellClick?: (pos: GridPosition) => void;
   onModuleClick?: (id: string) => void;
+  onModulePointerDown?: (id: string, e: React.PointerEvent) => void;
+  onMoveTargetClick?: (pos: GridPosition) => void;
+  onBackgroundClick?: () => void;
   interactive?: boolean;
   svgRef?: React.Ref<SVGSVGElement>;
 }
@@ -25,15 +40,23 @@ export function VisualizationContainer({
   validPlacements,
   ghostModule,
   selectedModuleId,
+  movingModuleId,
+  moveReadyModuleId,
+  moveTargets,
+  gridDrag,
   onCellClick,
   onModuleClick,
+  onModulePointerDown,
+  onMoveTargetClick,
+  onBackgroundClick,
   interactive = true,
   svgRef,
 }: VisualizationContainerProps) {
   const { viewMode } = useViewMode();
+  const { setNodeRef: setDropRef } = useDroppable({ id: 'grid-drop-zone' });
 
   return (
-    <div className="relative h-full w-full">
+    <div ref={setDropRef} className="relative h-full w-full">
       <ViewToggle />
 
       {viewMode === '3d' ? (
@@ -57,8 +80,15 @@ export function VisualizationContainer({
           validPlacements={validPlacements}
           ghostModule={ghostModule}
           selectedModuleId={selectedModuleId}
+          movingModuleId={movingModuleId}
+          moveReadyModuleId={moveReadyModuleId}
+          moveTargets={moveTargets}
+          gridDrag={gridDrag}
           onCellClick={onCellClick}
           onModuleClick={onModuleClick}
+          onModulePointerDown={onModulePointerDown}
+          onMoveTargetClick={onMoveTargetClick}
+          onBackgroundClick={onBackgroundClick}
           interactive={interactive}
         />
       )}

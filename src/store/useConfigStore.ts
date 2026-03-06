@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { PlacedModule } from '../types/grid';
+import type { WallConfig } from '../types/walls';
 import { TEMPLATES } from '../data/templates';
 
 interface ConfigState {
@@ -11,7 +12,9 @@ interface ConfigState {
   addModule: (module: Omit<PlacedModule, 'id'>) => void;
   removeModule: (id: string) => void;
   rotateModule: (id: string) => void;
+  moveModule: (id: string, newX: number, newY: number) => void;
   setModuleOption: (moduleId: string, key: string, value: string | boolean) => void;
+  setModuleWalls: (moduleId: string, walls: WallConfig) => void;
   reset: () => void;
 }
 
@@ -56,7 +59,17 @@ export const useConfigStore = create<ConfigState>()(
             if (m.id !== id) return m;
             // Swap width and height (only for non-square modules)
             if (m.width === m.height) return m;
-            return { ...m, width: m.height, height: m.width };
+            // Reset custom walls on rotation (dimensions changed)
+            return { ...m, width: m.height, height: m.width, walls: undefined };
+          }),
+        }));
+      },
+
+      moveModule: (id: string, newX: number, newY: number) => {
+        set((state) => ({
+          modules: state.modules.map((m) => {
+            if (m.id !== id) return m;
+            return { ...m, gridX: newX, gridY: newY };
           }),
         }));
       },
@@ -70,12 +83,21 @@ export const useConfigStore = create<ConfigState>()(
         }));
       },
 
+      setModuleWalls: (moduleId: string, walls: WallConfig) => {
+        set((state) => ({
+          modules: state.modules.map((m) => {
+            if (m.id !== moduleId) return m;
+            return { ...m, walls };
+          }),
+        }));
+      },
+
       reset: () => {
         set({ templateId: null, modules: [] });
       },
     }),
     {
-      name: 'modulhaus-config',
+      name: 'modulhaus-config-v3',
     },
   ),
 );

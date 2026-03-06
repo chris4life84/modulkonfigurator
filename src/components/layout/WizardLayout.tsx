@@ -7,6 +7,7 @@ interface WizardLayoutProps {
 
 export function WizardLayout({ children }: WizardLayoutProps) {
   const { currentStep, goToStep } = useWizardStore();
+  const isEditorStep = currentStep === 1;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -17,8 +18,10 @@ export function WizardLayout({ children }: WizardLayoutProps) {
           onStepClick={goToStep}
         />
       </div>
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-5xl px-4 py-6">{children}</div>
+      <div className={`flex-1 ${isEditorStep ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+        <div className={isEditorStep ? 'h-full px-4 py-2' : 'mx-auto max-w-5xl px-4 py-6'}>
+          {children}
+        </div>
       </div>
     </div>
   );

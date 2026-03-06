@@ -24,7 +24,7 @@ function getAllOccupiedCells(modules: PlacedModule[]): Set<string> {
 }
 
 /** Check if a position overlaps with existing modules */
-function overlaps(
+export function overlaps(
   modules: PlacedModule[],
   gridX: number,
   gridY: number,
@@ -41,7 +41,7 @@ function overlaps(
 }
 
 /** Check if a new module at given position shares at least one edge with existing modules */
-function sharesEdge(
+export function sharesEdge(
   modules: PlacedModule[],
   gridX: number,
   gridY: number,
@@ -144,11 +144,119 @@ function modulesShareEdge(cellsA: GridPosition[], cellsB: GridPosition[]): boole
   return false;
 }
 
+/** Get valid positions for moving an existing module (excludes self from collision) */
+export function getValidMovePlacements(
+  modules: PlacedModule[],
+  moduleId: string,
+  width: number,
+  height: number,
+): GridPosition[] {
+  const others = modules.filter((m) => m.id !== moduleId);
+  if (others.length === 0) {
+    // Only module - can go anywhere
+    const bbox = getBoundingBox(modules);
+    const pad = Math.max(width, height) + 2;
+    const positions: GridPosition[] = [];
+    for (let x = bbox.minX - pad; x <= bbox.maxX + pad; x++) {
+      for (let y = bbox.minY - pad; y <= bbox.maxY + pad; y++) {
+        positions.push({ x, y });
+      }
+    }
+    return positions;
+  }
+
+  const bbox = getBoundingBox(modules);
+  const positions: GridPosition[] = [];
+  const searchPad = Math.max(width, height) + 1;
+
+  for (let x = bbox.minX - searchPad; x <= bbox.maxX + searchPad; x++) {
+    for (let y = bbox.minY - searchPad; y <= bbox.maxY + searchPad; y++) {
+      if (!overlaps(others, x, y, width, height) && sharesEdge(others, x, y, width, height)) {
+        positions.push({ x, y });
+      }
+    }
+  }
+
+  return positions;
+}
+
+/** Check if a module can be rotated in place (no overlap, stays connected) */
+export function canRotate(modules: PlacedModule[], moduleId: string): boolean {
+  const mod = modules.find((m) => m.id === moduleId);
+  if (!mod || mod.width === mod.height) return false;
+
+  const newW = mod.height;
+  const newH = mod.width;
+  const others = modules.filter((m) => m.id !== moduleId);
+
+  // Check overlap with rotated dimensions at same position
+  if (overlaps(others, mod.gridX, mod.gridY, newW, newH)) return false;
+
+  // Check connectivity
+  if (others.length > 0 && !sharesEdge(others, mod.gridX, mod.gridY, newW, newH)) return false;
+
+  const simulated = others.map((m) => ({ ...m }));
+  simulated.push({ ...mod, width: newW, height: newH });
+  return isConnected(simulated);
+}
+
 /** Check if removing a module would break connectivity */
 export function canRemove(modules: PlacedModule[], moduleId: string): boolean {
   const remaining = modules.filter((m) => m.id !== moduleId);
   if (remaining.length === 0) return false; // Cannot remove last module
   return isConnected(remaining);
+}
+
+/** Convert browser pixel coordinates to SVG grid coordinates */
+export function screenToSvgGrid(
+  svgElement: SVGSVGElement,
+  clientX: number,
+  clientY: number,
+): GridPosition {
+  const ctm = svgElement.getScreenCTM();
+  if (!ctm) return { x: 0, y: 0 };
+  const inv = ctm.inverse();
+  return {
+    x: Math.round(inv.a * clientX + inv.c * clientY + inv.e),
+    y: Math.round(inv.b * clientX + inv.d * clientY + inv.f),
+  };
+}
+
+/** Find the closest valid placement to a target position (Manhattan distance) */
+export function findNearestValidPlacement(
+  validPlacements: GridPosition[],
+  targetX: number,
+  targetY: number,
+  maxDistance: number,
+): GridPosition | null {
+  let best: GridPosition | null = null;
+  let bestDist = Infinity;
+
+  for (const pos of validPlacements) {
+    const dist = Math.abs(pos.x - targetX) + Math.abs(pos.y - targetY);
+    if (dist < bestDist && dist <= maxDistance) {
+      bestDist = dist;
+      best = pos;
+    }
+  }
+
+  return best;
+}
+
+/** Check if a specific position is valid for moving a module (lightweight single-position check) */
+export function isValidMovePosition(
+  modules: PlacedModule[],
+  moduleId: string,
+  newX: number,
+  newY: number,
+): boolean {
+  const mod = modules.find((m) => m.id === moduleId);
+  if (!mod) return false;
+  const others = modules.filter((m) => m.id !== moduleId);
+  if (others.length === 0) return true;
+  if (overlaps(others, newX, newY, mod.width, mod.height)) return false;
+  if (!sharesEdge(others, newX, newY, mod.width, mod.height)) return false;
+  return true;
 }
 
 /** Get bounding box of all placed modules */

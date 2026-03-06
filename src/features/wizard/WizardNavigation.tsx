@@ -25,7 +25,7 @@ export function WizardNavigation() {
 
   return (
     <div className="border-t border-gray-200 bg-white px-4 py-4">
-      <div className="mx-auto flex max-w-5xl items-center justify-between">
+      <div className="mx-auto flex max-w-7xl items-center justify-between">
         <div>
           {!isFirst && (
             <Button variant="secondary" onClick={prevStep}>

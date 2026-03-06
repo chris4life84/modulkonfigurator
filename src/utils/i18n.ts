@@ -3,8 +3,7 @@ const strings: Record<string, string> = {
   'app.subtitle': 'Gestalten Sie Ihr individuelles Modulhaus',
 
   'step.template': 'Vorlage',
-  'step.modules': 'Module',
-  'step.options': 'Optionen',
+  'step.modules': 'Module & Optionen',
   'step.summary': 'Zusammenfassung',
 
   'nav.back': 'Zurück',
@@ -22,6 +21,12 @@ const strings: Record<string, string> = {
   'editor.size.small': 'Klein (3,0 × 1,5 m)',
   'editor.size.large': 'Groß (3,0 × 3,0 m)',
   'editor.click_to_place': 'Klicken zum Platzieren',
+  'editor.move': 'Verschieben',
+  'editor.move_hint': 'Modul ziehen, um es zu verschieben. Alternativ auf eine blaue Position klicken.',
+  'editor.cancel': 'Abbrechen',
+  'editor.rotate_blocked': 'Drehung nicht möglich (Überlappung oder Konnektivität)',
+  'editor.config.title': 'Konfiguration',
+  'editor.placement_hint': 'Klicken Sie auf eine grüne Position, um das Modul zu platzieren.',
 
   'options.title': 'Optionen konfigurieren',
   'options.description': 'Passen Sie die Details für jedes Modul an.',
@@ -51,10 +56,21 @@ const strings: Record<string, string> = {
   'view.2d': '2D-Grundriss',
 
   'editor.drag_hint': 'Modul ziehen oder klicken, dann auf dem Grundriss platzieren',
+  'editor.catalog.hint': 'Klicken = platzieren · Ziehen = gezielt platzieren',
 
   'pdf.export': 'PDF herunterladen',
   'pdf.generating': 'PDF wird erstellt...',
   'pdf.footer': 'Erstellt mit dem Modulhaus-Konfigurator · Alle Preise sind Richtwerte inkl. MwSt.',
+
+  'walls.title': 'Türen & Fenster',
+  'walls.shared': 'Verbundwand',
+  'walls.wall': 'Wand',
+  'walls.door': 'Tür',
+  'walls.window': 'Fenster',
+  'walls.front': 'Vorne',
+  'walls.back': 'Hinten',
+  'walls.left': 'Links',
+  'walls.right': 'Rechts',
 };
 
 export function t(key: string): string {

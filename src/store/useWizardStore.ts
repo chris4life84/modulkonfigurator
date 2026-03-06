@@ -3,8 +3,7 @@ import { persist } from 'zustand/middleware';
 
 export const STEPS = [
   { key: 'template', label: 'Vorlage' },
-  { key: 'modules', label: 'Module' },
-  { key: 'options', label: 'Optionen' },
+  { key: 'modules', label: 'Module & Optionen' },
   { key: 'summary', label: 'Zusammenfassung' },
 ] as const;
 
@@ -40,6 +39,17 @@ export const useWizardStore = create<WizardState>()(
     }),
     {
       name: 'modulhaus-wizard',
+      version: 2,
+      migrate: (persisted: unknown, version: number) => {
+        const state = persisted as { currentStep: number };
+        if (version < 2) {
+          // Old 4-step wizard → new 3-step: 0→0, 1→1, 2→1, 3→2
+          const oldStep = state.currentStep ?? 0;
+          const mapping: Record<number, number> = { 0: 0, 1: 1, 2: 1, 3: 2 };
+          return { ...state, currentStep: mapping[oldStep] ?? 0 };
+        }
+        return state;
+      },
     },
   ),
 );

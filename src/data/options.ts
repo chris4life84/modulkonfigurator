@@ -2,18 +2,6 @@ import type { OptionDefinition } from '../types/configuration';
 
 export const MODULE_OPTIONS: OptionDefinition[] = [
   {
-    key: 'holzart',
-    label: 'Holzart',
-    type: 'select',
-    options: [
-      { value: 'fichte', label: 'Nordische Fichte', priceModifier: 0 },
-      { value: 'espe', label: 'Espe (Aspen)', priceModifier: 800 },
-      { value: 'zeder', label: 'Kanadische Zeder', priceModifier: 1500 },
-    ],
-    defaultValue: 'fichte',
-    appliesTo: ['sauna', 'ruhe', 'living'],
-  },
-  {
     key: 'ofen',
     label: 'Saunaofen',
     type: 'select',

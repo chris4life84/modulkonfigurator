@@ -6,7 +6,7 @@ export function calculateModulePrice(module: PlacedModule): number {
   const def = MODULE_DEFINITIONS[module.type];
   if (!def) return 0;
 
-  const isLarge = module.width === 2 && module.height === 2;
+  const isLarge = module.width >= 6 && module.height >= 6;
   let price = isLarge ? def.basePrice * 1.7 : def.basePrice;
 
   // Add option prices

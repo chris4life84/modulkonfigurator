@@ -9,7 +9,7 @@ export function Header() {
 
   return (
     <header className="border-b border-gray-200 bg-white px-4 py-4 shadow-sm">
-      <div className="mx-auto flex max-w-5xl items-center justify-between">
+      <div className="mx-auto flex max-w-7xl items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-wood-800">{t('app.title')}</h1>
           <p className="text-sm text-gray-500">{t('app.subtitle')}</p>

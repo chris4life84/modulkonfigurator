@@ -32,7 +32,7 @@ export function TemplateSelectionStep() {
               </span>
             </div>
             <p className="text-sm text-gray-600">{tpl.description}</p>
-            <div className="mt-3 rounded-lg bg-gray-50 p-2">
+            <div className="mt-3 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 p-3">
               <TemplateMiniPreview modules={tpl.modules} />
             </div>
           </Card>

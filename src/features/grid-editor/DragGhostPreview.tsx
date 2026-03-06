@@ -10,8 +10,8 @@ interface DragGhostPreviewProps {
 
 export function DragGhostPreview({ type, width, height }: DragGhostPreviewProps) {
   const def = MODULE_DEFINITIONS[type];
-  const pixelW = width * 60;
-  const pixelH = height * 60;
+  const pixelW = width * GRID_CELL_SIZE * 40; // 40px per meter
+  const pixelH = height * GRID_CELL_SIZE * 40;
   const sizeLabel = `${(width * GRID_CELL_SIZE).toFixed(1)}×${(height * GRID_CELL_SIZE).toFixed(1)}m`;
 
   return (

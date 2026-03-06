@@ -8,8 +8,8 @@ export const TEMPLATES: Template[] = [
     persons: '3 Personen',
     basePrice: 11700,
     modules: [
-      { type: 'sauna', gridX: 0, gridY: 0, width: 2, height: 1, options: {} },
-      { type: 'technik', gridX: 2, gridY: 0, width: 2, height: 1, options: {} },
+      { type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 3, options: {} },
+      { type: 'technik', gridX: 6, gridY: 0, width: 6, height: 3, options: {} },
     ],
   },
   {
@@ -19,8 +19,8 @@ export const TEMPLATES: Template[] = [
     persons: '6 Personen',
     basePrice: 11700,
     modules: [
-      { type: 'sauna', gridX: 0, gridY: 0, width: 2, height: 2, options: {} },
-      { type: 'technik', gridX: 2, gridY: 0, width: 2, height: 1, options: {} },
+      { type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 6, options: {} },
+      { type: 'technik', gridX: 6, gridY: 0, width: 6, height: 3, options: {} },
     ],
   },
   {
@@ -30,9 +30,9 @@ export const TEMPLATES: Template[] = [
     persons: '3 Personen',
     basePrice: 17500,
     modules: [
-      { type: 'sauna', gridX: 0, gridY: 0, width: 2, height: 1, options: {} },
-      { type: 'sanitaer', gridX: 2, gridY: 0, width: 2, height: 1, options: {} },
-      { type: 'umkleide', gridX: 4, gridY: 0, width: 2, height: 1, options: {} },
+      { type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 3, options: {} },
+      { type: 'sanitaer', gridX: 6, gridY: 0, width: 6, height: 3, options: {} },
+      { type: 'umkleide', gridX: 12, gridY: 0, width: 6, height: 3, options: {} },
     ],
   },
   {
@@ -42,7 +42,7 @@ export const TEMPLATES: Template[] = [
     persons: 'Flexibel',
     basePrice: 6800,
     modules: [
-      { type: 'living', gridX: 0, gridY: 0, width: 2, height: 1, options: {} },
+      { type: 'living', gridX: 0, gridY: 0, width: 6, height: 3, options: {} },
     ],
   },
 ];
