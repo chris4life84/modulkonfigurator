@@ -19,6 +19,7 @@ export function SummaryStep() {
   const template = TEMPLATES.find((tp) => tp.id === templateId);
   const [sent, setSent] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
+  const vizContainerRef = useRef<HTMLDivElement>(null);
 
   return (
     <div>
@@ -26,6 +27,7 @@ export function SummaryStep() {
 
       {/* 3D/2D Visualization */}
       <div
+        ref={vizContainerRef}
         className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-2 overflow-hidden"
         style={{ height: '300px' }}
       >
@@ -90,6 +92,7 @@ export function SummaryStep() {
               totalPrice={totalPrice}
               totalDimensions={totalDims}
               svgRef={svgRef}
+              vizContainerRef={vizContainerRef}
             />
           </div>
         </div>

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import type { WallOpening } from '../../types/walls';
 import { createWoodTexture, loadWoodImageTexture } from './textures/createWoodTexture';
-import { loadWoodPBR, clonePBRMaps } from './textures/loadWoodPBR';
+import { loadWoodPBR, loadWallPBR, clonePBRMaps } from './textures/loadWoodPBR';
 
 const WALL_THICKNESS = 0.13;
 
@@ -124,9 +124,24 @@ export function WoodWall({
   const texture = imageTexture ?? canvasTexture;
   const isImageBased = !!imageTexture;
 
+  // Clamp openings to match OpeningsGroup (15cm margin from wall edges)
+  // This ensures the hole in the wall matches the rendered window/door frame
+  const clampedOpenings = useMemo(() => {
+    const margin = 0.15;
+    const maxW = Math.max(0.3, wallWidth - margin * 2);
+    return openings.map((o) => {
+      const w = Math.min(o.width, maxW);
+      const halfW = w / 2;
+      const minPos = (halfW + margin) / wallWidth;
+      const maxPos = 1 - minPos;
+      const pos = Math.max(minPos, Math.min(maxPos, o.position));
+      return { ...o, width: w, position: pos };
+    });
+  }, [openings, wallWidth]);
+
   const segments = useMemo(
-    () => computeWallSegments(wallWidth, wallHeight, openings),
-    [wallWidth, wallHeight, openings],
+    () => computeWallSegments(wallWidth, wallHeight, clampedOpenings),
+    [wallWidth, wallHeight, clampedOpenings],
   );
 
   return (
@@ -156,8 +171,8 @@ interface WallSegmentMeshProps {
 }
 
 function WallSegmentMesh({ segment, wallWidth, wallHeight, texture, isImageBased, isInterior = false }: WallSegmentMeshProps) {
-  // Try PBR textures first (Polyhaven planks_brown_10)
-  const pbrMaps = useMemo(() => loadWoodPBR(), []);
+  // PBR textures: wall texture for exterior, wood for fallback
+  const pbrMaps = useMemo(() => isInterior ? null : (loadWallPBR() ?? loadWoodPBR()), [isInterior]);
 
   const clonedTexture = useMemo(() => {
     const t = texture.clone();
@@ -206,12 +221,14 @@ function WallSegmentMesh({ segment, wallWidth, wallHeight, texture, isImageBased
       const mat = new THREE.MeshStandardMaterial({
         map: cloned.diffuse,
         roughnessMap: cloned.roughness,
-        roughness: 1.0, // roughnessMap multiplies with this
-        bumpMap: cloned.bump,
-        bumpScale: 0.02,
+        roughness: 1.0,
         metalness: 0,
       });
 
+      if (cloned.bump) {
+        mat.bumpMap = cloned.bump;
+        mat.bumpScale = 0.02;
+      }
       if (cloned.normal) {
         mat.normalMap = cloned.normal;
         mat.normalScale = new THREE.Vector2(0.8, 0.8);

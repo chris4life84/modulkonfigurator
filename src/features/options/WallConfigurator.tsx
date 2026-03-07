@@ -40,7 +40,7 @@ function createOpeningForState(
   wallWidthM: number,
 ): WallOpening[] {
   if (state === 'wall' || state === 'open') return [];
-  const maxW = wallWidthM - 0.1;
+  const maxW = wallWidthM - 0.30; // 15cm margin per side (must match OpeningsGroup clamp)
   if (state === 'window') {
     const w = Math.min(2.0, maxW);
     return [{ type: 'window', position: 0.5, width: w, height: 2.0, offsetY: 0 }];
@@ -189,7 +189,7 @@ export function WallConfigurator({ module, allModules }: WallConfiguratorProps) 
 
   const handleDimensionChange = (side: WallSide, dim: 'width' | 'height' | 'offsetY', value: number, isInterior = false) => {
     const wallWidthM = getWallWidthM(side);
-    const maxW = wallWidthM - 0.05;
+    const maxW = wallWidthM - 0.30; // 15cm margin per side
     const maxH = OUTER_HEIGHT;
 
     // Get current opening to cross-validate height + offsetY
@@ -227,7 +227,7 @@ export function WallConfigurator({ module, allModules }: WallConfiguratorProps) 
   // --- Render selected side controls ---
   const isShared = sharedWalls.has(selectedSide);
   const wallWidthM = getWallWidthM(selectedSide);
-  const maxW = wallWidthM - 0.05;
+  const maxW = wallWidthM - 0.30; // 15cm margin per side
 
   return (
     <div className="mt-4">

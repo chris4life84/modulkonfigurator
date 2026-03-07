@@ -47,6 +47,7 @@ export function Scene3D({ modules, selectedModuleId, onModuleClick }: Scene3DPro
       camera={{ position: camera.position, fov: 50, near: 0.1, far: 200 }}
       gl={{
         antialias: true,
+        preserveDrawingBuffer: true,
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 1.5,
       }}

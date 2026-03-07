@@ -7,7 +7,7 @@ import * as THREE from 'three';
 export interface WoodPBRMaps {
   diffuse: THREE.Texture;
   roughness: THREE.Texture;
-  bump: THREE.Texture;
+  bump?: THREE.Texture;
   normal?: THREE.Texture;
 }
 
@@ -112,7 +112,42 @@ export function clonePBRMaps(
   return {
     diffuse: cloneMap(maps.diffuse),
     roughness: cloneMap(maps.roughness),
-    bump: cloneMap(maps.bump),
+    bump: maps.bump ? cloneMap(maps.bump) : undefined,
     normal: maps.normal ? cloneMap(maps.normal) : undefined,
   };
+}
+
+// ─── Wall PBR Loader (beige wall texture) ────────────────────────────
+
+let _wallCached: WoodPBRMaps | null = null;
+let _wallLoadAttempted = false;
+
+/**
+ * Load PBR textures for exterior wall surfaces (beige/plaster style).
+ * Only diffuse + roughness available (no bump/normal).
+ */
+export function loadWallPBR(): WoodPBRMaps | null {
+  if (_wallCached) return _wallCached;
+  if (_wallLoadAttempted) return null;
+  _wallLoadAttempted = true;
+
+  try {
+    const loader = new THREE.TextureLoader();
+
+    const diffuse = configureTex(
+      loader.load('/textures/pbr/wall/diff_2k.jpg', undefined, undefined, () => {
+        _wallCached = null;
+      }),
+      true,
+    );
+    const roughness = configureTex(
+      loader.load('/textures/pbr/wall/rough_2k.jpg'),
+      false,
+    );
+
+    _wallCached = { diffuse, roughness };
+    return _wallCached;
+  } catch {
+    return null;
+  }
 }
