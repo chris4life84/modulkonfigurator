@@ -22,14 +22,11 @@ interface VisualizationContainerProps {
   validPlacements?: GridPosition[];
   ghostModule?: { width: number; height: number } | null;
   selectedModuleId?: string | null;
-  movingModuleId?: string | null;
-  moveReadyModuleId?: string | null;
-  moveTargets?: GridPosition[];
   gridDrag?: GridDragState | null;
   onCellClick?: (pos: GridPosition) => void;
   onModuleClick?: (id: string) => void;
   onModulePointerDown?: (id: string, e: React.PointerEvent) => void;
-  onMoveTargetClick?: (pos: GridPosition) => void;
+  onRotate?: (id: string) => void;
   onBackgroundClick?: () => void;
   interactive?: boolean;
   svgRef?: React.Ref<SVGSVGElement>;
@@ -40,14 +37,11 @@ export function VisualizationContainer({
   validPlacements,
   ghostModule,
   selectedModuleId,
-  movingModuleId,
-  moveReadyModuleId,
-  moveTargets,
   gridDrag,
   onCellClick,
   onModuleClick,
   onModulePointerDown,
-  onMoveTargetClick,
+  onRotate,
   onBackgroundClick,
   interactive = true,
   svgRef,
@@ -80,14 +74,11 @@ export function VisualizationContainer({
           validPlacements={validPlacements}
           ghostModule={ghostModule}
           selectedModuleId={selectedModuleId}
-          movingModuleId={movingModuleId}
-          moveReadyModuleId={moveReadyModuleId}
-          moveTargets={moveTargets}
           gridDrag={gridDrag}
           onCellClick={onCellClick}
           onModuleClick={onModuleClick}
           onModulePointerDown={onModulePointerDown}
-          onMoveTargetClick={onMoveTargetClick}
+          onRotate={onRotate}
           onBackgroundClick={onBackgroundClick}
           interactive={interactive}
         />

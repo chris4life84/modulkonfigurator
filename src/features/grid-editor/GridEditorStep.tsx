@@ -61,8 +61,6 @@ export function GridEditorStep() {
   const [catalogSelection, setCatalogSelection] = useState<SelectedCatalogItem | null>(null);
   const [dragItem, setDragItem] = useState<SelectedCatalogItem | null>(null);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
-  const [movingModuleId, setMovingModuleId] = useState<string | null>(null);
-  const [moveReadyModuleId, setMoveReadyModuleId] = useState<string | null>(null);
   const totalPrice = selectTotalPrice(modules);
 
   // SVG ref for coordinate conversion
@@ -81,14 +79,6 @@ export function GridEditorStep() {
     return getValidPlacements(modules, activeItem.width, activeItem.height);
   }, [modules, activeItem]);
 
-  // Move targets: valid positions for the module being moved
-  const moveTargets = useMemo(() => {
-    if (!movingModuleId) return [];
-    const mod = modules.find((m) => m.id === movingModuleId);
-    if (!mod) return [];
-    return getValidMovePlacements(modules, movingModuleId, mod.width, mod.height);
-  }, [modules, movingModuleId]);
-
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
@@ -106,26 +96,27 @@ export function GridEditorStep() {
     });
   };
 
-  const handleModuleClick = (id: string) => {
-    // Suppress click after drag
-    if (justDraggedRef.current) return;
+  const handleModuleClick = useCallback(
+    (id: string) => {
+      // Suppress click after drag
+      if (justDraggedRef.current) return;
 
-    // If in move mode, ignore normal module clicks
-    if (movingModuleId) return;
+      // If in grid drag, ignore
+      if (gridDrag) return;
 
-    // If in grid drag, ignore
-    if (gridDrag) return;
+      // If in placement mode: exit placement and select the clicked module
+      if (catalogSelection || dragItem) {
+        setCatalogSelection(null);
+        setDragItem(null);
+        setSelectedModuleId(id);
+        return;
+      }
 
-    // If in placement mode: exit placement and select the clicked module
-    if (catalogSelection || dragItem) {
-      setCatalogSelection(null);
-      setDragItem(null);
-      setSelectedModuleId(id);
-      return;
-    }
-
-    setSelectedModuleId(id === selectedModuleId ? null : id);
-  };
+      // Functional update avoids stale selectedModuleId in closure
+      setSelectedModuleId((prev) => (prev === id ? null : id));
+    },
+    [gridDrag, catalogSelection, dragItem],
+  );
 
   // --- In-grid module drag (2D SVG drag) ---
 
@@ -134,36 +125,13 @@ export function GridEditorStep() {
       // Only in 2D mode, not during other modes
       if (viewMode !== '2d') return;
       if (catalogSelection || dragItem) return;
+      if (gridDrag) return;
 
       e.preventDefault();
       e.stopPropagation();
 
-      // If this module is "move-ready" (user clicked Verschieben), start drag immediately
-      if (moveReadyModuleId === moduleId) {
-        const svg = svgRef.current;
-        const mod = modules.find((m) => m.id === moduleId);
-        if (!svg || !mod) return;
-
-        // Precompute valid positions
-        const validPositions = getValidMovePlacements(modules, moduleId, mod.width, mod.height);
-        const validSet = new Set(validPositions.map((p) => `${p.x},${p.y}`));
-
-        setGridDrag({
-          moduleId,
-          originX: mod.gridX,
-          originY: mod.gridY,
-          currentX: mod.gridX,
-          currentY: mod.gridY,
-          isValid: true,
-          validSet,
-        });
-        setMoveReadyModuleId(null);
-        setMovingModuleId(null);
-        return;
-      }
-
-      // If in move mode but not the ready module, ignore
-      if (movingModuleId) return;
+      // Immediate selection on pointerdown — shows config panel instantly
+      setSelectedModuleId(moduleId);
 
       // Store as pending drag (not activated until threshold met)
       pendingDragRef.current = {
@@ -172,7 +140,7 @@ export function GridEditorStep() {
         startClientY: e.clientY,
       };
     },
-    [viewMode, movingModuleId, moveReadyModuleId, catalogSelection, dragItem, modules],
+    [viewMode, catalogSelection, dragItem, gridDrag],
   );
 
   // Pointer move/up listener for in-grid drag
@@ -214,7 +182,6 @@ export function GridEditorStep() {
             isValid: true,
             validSet,
           });
-          setSelectedModuleId(null);
         }
         return;
       }
@@ -244,12 +211,9 @@ export function GridEditorStep() {
     };
 
     const handlePointerUp = () => {
-      // If pending drag never activated, treat as click
+      // Pending drag never activated — selection already happened on pointerdown
       if (pendingDragRef.current && !gridDrag) {
-        const moduleId = pendingDragRef.current.moduleId;
         pendingDragRef.current = null;
-        // Let the click handler handle it
-        handleModuleClick(moduleId);
         return;
       }
 
@@ -274,43 +238,26 @@ export function GridEditorStep() {
       }
     };
 
-    // Only attach listeners when there's a pending or active drag
-    if (pendingDragRef.current || gridDrag) {
-      window.addEventListener('pointermove', handlePointerMove);
-      window.addEventListener('pointerup', handlePointerUp);
+    // Always attach listeners – they are no-ops when idle (no pendingDrag or gridDrag).
+    // pendingDragRef is a ref (not state), so we can't conditionally attach on ref changes.
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
 
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [gridDrag, modules, moveModule]);
+
+  // Cursor feedback during active drag
+  useEffect(() => {
+    if (gridDrag) {
+      document.body.style.cursor = 'grabbing';
       return () => {
-        window.removeEventListener('pointermove', handlePointerMove);
-        window.removeEventListener('pointerup', handlePointerUp);
+        document.body.style.cursor = '';
       };
     }
-  }, [gridDrag, modules, moveModule]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleStartMove = useCallback(
-    (id: string) => {
-      setMoveReadyModuleId(id);
-      setMovingModuleId(id); // Keep for blue target fallback
-      setSelectedModuleId(null);
-      setCatalogSelection(null);
-      setViewMode('2d'); // Force 2D for move
-    },
-    [setViewMode],
-  );
-
-  const handleMoveTargetClick = useCallback(
-    (pos: GridPosition) => {
-      if (!movingModuleId) return;
-      moveModule(movingModuleId, pos.x, pos.y);
-      setMovingModuleId(null);
-      setMoveReadyModuleId(null);
-    },
-    [movingModuleId, moveModule],
-  );
-
-  const handleCancelMove = useCallback(() => {
-    setMovingModuleId(null);
-    setMoveReadyModuleId(null);
-  }, []);
+  }, [gridDrag]);
 
   const handleCancelPlacement = useCallback(() => {
     setCatalogSelection(null);
@@ -323,8 +270,6 @@ export function GridEditorStep() {
       if (e.key === 'Escape') {
         setCatalogSelection(null);
         setDragItem(null);
-        setMovingModuleId(null);
-        setMoveReadyModuleId(null);
         setSelectedModuleId(null);
         setGridDrag(null);
         pendingDragRef.current = null;
@@ -335,16 +280,13 @@ export function GridEditorStep() {
   }, []);
 
   const handleBackgroundClick = useCallback(() => {
-    if (catalogSelection) {
-      setCatalogSelection(null);
-    }
-  }, [catalogSelection]);
+    setCatalogSelection(null);
+    setSelectedModuleId(null);
+  }, []);
 
   const handleCatalogSelect = (item: SelectedCatalogItem | null) => {
     setCatalogSelection(item);
     setSelectedModuleId(null);
-    setMovingModuleId(null);
-    setMoveReadyModuleId(null);
     if (item) {
       setViewMode('2d'); // Auto-switch to 2D for placement
     }
@@ -358,8 +300,6 @@ export function GridEditorStep() {
         setViewMode('2d'); // Force 2D for drag placement
         setCatalogSelection(null);
         setSelectedModuleId(null);
-        setMovingModuleId(null);
-        setMoveReadyModuleId(null);
       }
     },
     [setViewMode],
@@ -443,14 +383,11 @@ export function GridEditorStep() {
               validPlacements={validPlacements}
               ghostModule={activeItem}
               selectedModuleId={selectedModuleId}
-              movingModuleId={movingModuleId}
-              moveReadyModuleId={moveReadyModuleId}
-              moveTargets={moveTargets}
               gridDrag={gridDragProp}
               onCellClick={handleCellClick}
               onModuleClick={handleModuleClick}
               onModulePointerDown={handleModulePointerDown}
-              onMoveTargetClick={handleMoveTargetClick}
+              onRotate={(id) => rotateModule(id)}
               onBackgroundClick={handleBackgroundClick}
               svgRef={svgRef}
             />
@@ -458,32 +395,15 @@ export function GridEditorStep() {
 
           {/* Price + hints - fixed height */}
           <div className="flex-shrink-0">
-            {/* Move mode hint */}
-            {(movingModuleId || moveReadyModuleId) && (
-              <div className="mt-2 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
-                <span className="text-sm text-blue-700">
-                  {t('editor.move_hint')}
-                </span>
-                <button
-                  onClick={handleCancelMove}
-                  className="ml-auto rounded-md border border-blue-300 bg-white px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100"
-                >
-                  {t('editor.cancel')}
-                </button>
-              </div>
-            )}
-
-            {!movingModuleId && !moveReadyModuleId && (
-              <div className="mt-2 flex items-center justify-between text-sm text-gray-500">
-                <span>
-                  {t('dimensions.inner_height')} | {t('dimensions.outer_height')}
-                </span>
-                <span className="font-semibold text-wood-700">{formatPrice(totalPrice)}</span>
-              </div>
-            )}
+            <div className="mt-2 flex items-center justify-between text-sm text-gray-500">
+              <span>
+                {t('dimensions.inner_height')} | {t('dimensions.outer_height')}
+              </span>
+              <span className="font-semibold text-wood-700">{formatPrice(totalPrice)}</span>
+            </div>
 
             {/* Placement mode hint */}
-            {catalogSelection && !movingModuleId && !moveReadyModuleId && (
+            {catalogSelection && (
               <div className="mt-2 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
                 <span className="text-sm text-green-700">
                   {t('editor.placement_hint')}
@@ -508,7 +428,7 @@ export function GridEditorStep() {
 
           {/* Config area – scrollable */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 mt-3 px-2">
-            {selectedModuleId && !movingModuleId && (
+            {selectedModuleId && (
               <>
                 <ModuleActions
                   moduleId={selectedModuleId}
@@ -518,7 +438,6 @@ export function GridEditorStep() {
                     setSelectedModuleId(null);
                   }}
                   onRotate={(id) => rotateModule(id)}
-                  onMove={handleStartMove}
                   onClose={() => setSelectedModuleId(null)}
                 />
                 <ModuleConfigPanel moduleId={selectedModuleId} />

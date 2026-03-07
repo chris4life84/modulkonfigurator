@@ -21,8 +21,6 @@ const strings: Record<string, string> = {
   'editor.size.small': 'Klein (3,0 × 1,5 m)',
   'editor.size.large': 'Groß (3,0 × 3,0 m)',
   'editor.click_to_place': 'Klicken zum Platzieren',
-  'editor.move': 'Verschieben',
-  'editor.move_hint': 'Modul ziehen, um es zu verschieben. Alternativ auf eine blaue Position klicken.',
   'editor.cancel': 'Abbrechen',
   'editor.rotate_blocked': 'Drehung nicht möglich (Überlappung oder Konnektivität)',
   'editor.config.title': 'Konfiguration',

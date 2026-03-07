@@ -1,7 +1,7 @@
 import { useMemo, useRef, forwardRef } from 'react';
 import type { PlacedModule, GridPosition } from '../../types/grid';
 import { MODULE_DEFINITIONS } from '../../data/module-types';
-import { getBoundingBox } from '../../utils/grid';
+import { getBoundingBox, canRotate } from '../../utils/grid';
 import { SVGGrid } from './SVGGrid';
 import { SVGModule } from './SVGModule';
 import type { GridDragState } from './VisualizationContainer';
@@ -11,14 +11,11 @@ interface GridCanvasProps {
   validPlacements?: GridPosition[];
   ghostModule?: { width: number; height: number } | null;
   selectedModuleId?: string | null;
-  movingModuleId?: string | null;
-  moveReadyModuleId?: string | null;
-  moveTargets?: GridPosition[];
   gridDrag?: GridDragState | null;
   onCellClick?: (pos: GridPosition) => void;
   onModuleClick?: (id: string) => void;
   onModulePointerDown?: (id: string, e: React.PointerEvent) => void;
-  onMoveTargetClick?: (pos: GridPosition) => void;
+  onRotate?: (id: string) => void;
   onBackgroundClick?: () => void;
   interactive?: boolean;
 }
@@ -30,14 +27,11 @@ export const GridCanvas = forwardRef<SVGSVGElement, GridCanvasProps>(
       validPlacements = [],
       ghostModule,
       selectedModuleId,
-      movingModuleId,
-      moveReadyModuleId,
-      moveTargets = [],
       gridDrag,
       onCellClick,
       onModuleClick,
       onModulePointerDown,
-      onMoveTargetClick,
+      onRotate,
       onBackgroundClick,
       interactive = true,
     },
@@ -97,14 +91,82 @@ export const GridCanvas = forwardRef<SVGSVGElement, GridCanvasProps>(
               label={def?.name ?? m.type}
               selected={m.id === selectedModuleId}
               dragging={isDragTarget}
-              moveReady={m.id === moveReadyModuleId}
-              onClick={interactive && !gridDrag ? () => onModuleClick?.(m.id) : undefined}
+              onClick={interactive && !gridDrag && !onModulePointerDown ? () => onModuleClick?.(m.id) : undefined}
               onPointerDown={
                 interactive && !gridDrag ? (e) => onModulePointerDown?.(m.id, e) : undefined
               }
             />
           );
         })}
+
+        {/* Rotate icon on selected module */}
+        {selectedModuleId && !gridDrag && onRotate && (() => {
+          const mod = modules.find((m) => m.id === selectedModuleId);
+          if (!mod) return null;
+          // Only show for non-square modules
+          const isSquare = mod.width === mod.height;
+          if (isSquare) return null;
+
+          const rotatable = canRotate(modules, selectedModuleId);
+          const r = 0.7; // icon circle radius
+          const cx = mod.gridX + mod.width - 0.15;
+          const cy = mod.gridY + 0.15;
+          const iconColor = rotatable ? '#1e293b' : '#b0b0b0';
+
+          return (
+            <g
+              className={rotatable ? 'cursor-pointer' : ''}
+              style={{ pointerEvents: rotatable ? 'auto' : 'none' }}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (rotatable) onRotate(selectedModuleId);
+              }}
+            >
+              {/* White circle background */}
+              <circle
+                cx={cx}
+                cy={cy}
+                r={r}
+                fill="white"
+                stroke={iconColor}
+                strokeWidth={0.1}
+                opacity={rotatable ? 0.95 : 0.55}
+              />
+              {/* Rotate arrow icon */}
+              <g
+                transform={`translate(${cx - 0.38}, ${cy - 0.38}) scale(${0.76 / 16})`}
+                opacity={rotatable ? 1 : 0.45}
+              >
+                <path
+                  d="M13 8a5 5 0 0 1-9.33 2.5"
+                  fill="none"
+                  stroke={iconColor}
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M3 8a5 5 0 0 1 9.33-2.5"
+                  fill="none"
+                  stroke={iconColor}
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+                <polyline
+                  points="13,4 13,8 9,8"
+                  fill="none"
+                  stroke={iconColor}
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </g>
+            </g>
+          );
+        })()}
 
         {/* Ghost overlay showing validity during grid drag */}
         {gridDrag && (() => {
@@ -128,8 +190,9 @@ export const GridCanvas = forwardRef<SVGSVGElement, GridCanvasProps>(
           );
         })()}
 
-        {/* Dimensions label */}
+        {/* Dimensions label + direction labels */}
         {modules.length > 0 && <DimensionsLabel modules={modules} />}
+        {modules.length > 0 && <DirectionLabels2D modules={modules} />}
 
         {/* Valid placement highlights (for new modules) – ON TOP of modules */}
         {ghostModule &&
@@ -157,38 +220,76 @@ export const GridCanvas = forwardRef<SVGSVGElement, GridCanvasProps>(
             </rect>
           ))}
 
-        {/* Move target highlights (for moving existing modules) – ON TOP of modules */}
-        {movingModuleId &&
-          moveTargets.map((pos) => {
-            const movingMod = modules.find((m) => m.id === movingModuleId);
-            return (
-              <rect
-                key={`move-${pos.x}-${pos.y}`}
-                x={pos.x + 0.15}
-                y={pos.y + 0.15}
-                width={(movingMod?.width ?? 3) - 0.30}
-                height={(movingMod?.height ?? 3) - 0.30}
-                rx={0.24}
-                fill="#3b82f6"
-                opacity={0.2}
-                stroke="#3b82f6"
-                strokeWidth={0.12}
-                strokeDasharray="0.30 0.18"
-                className="cursor-pointer"
-                onPointerDown={(e) => e.stopPropagation()}
-                onPointerUp={(e) => {
-                  e.stopPropagation();
-                  onMoveTargetClick?.({ x: pos.x, y: pos.y });
-                }}
-              >
-                <title>Hierher verschieben</title>
-              </rect>
-            );
-          })}
       </svg>
     );
   },
 );
+
+/** Subtle direction labels around the building (Vorne/Hinten/Links/Rechts) */
+function DirectionLabels2D({ modules }: { modules: PlacedModule[] }) {
+  const bbox = getBoundingBox(modules);
+  const cx = (bbox.minX + bbox.maxX) / 2;
+  const cy = (bbox.minY + bbox.maxY) / 2;
+
+  return (
+    <>
+      {/* Vorne = maxY (bottom in SVG, +Z in 3D) */}
+      <text
+        x={cx}
+        y={bbox.maxY + 3.2}
+        textAnchor="middle"
+        fill="#9ca3af"
+        fontSize={0.55}
+        fontWeight={400}
+        letterSpacing="0.06em"
+        style={{ pointerEvents: 'none' }}
+      >
+        VORNE
+      </text>
+      {/* Hinten = minY (top in SVG, -Z in 3D) */}
+      <text
+        x={cx}
+        y={bbox.minY - 2.6}
+        textAnchor="middle"
+        fill="#9ca3af"
+        fontSize={0.55}
+        fontWeight={400}
+        letterSpacing="0.06em"
+        style={{ pointerEvents: 'none' }}
+      >
+        HINTEN
+      </text>
+      {/* Links = minX (left in SVG, -X in 3D) */}
+      <text
+        x={bbox.minX - 3.2}
+        y={cy}
+        textAnchor="middle"
+        fill="#9ca3af"
+        fontSize={0.55}
+        fontWeight={400}
+        letterSpacing="0.06em"
+        transform={`rotate(-90, ${bbox.minX - 3.2}, ${cy})`}
+        style={{ pointerEvents: 'none' }}
+      >
+        LINKS
+      </text>
+      {/* Rechts = maxX (right in SVG, +X in 3D) */}
+      <text
+        x={bbox.maxX + 3.2}
+        y={cy}
+        textAnchor="middle"
+        fill="#9ca3af"
+        fontSize={0.55}
+        fontWeight={400}
+        letterSpacing="0.06em"
+        transform={`rotate(90, ${bbox.maxX + 3.2}, ${cy})`}
+        style={{ pointerEvents: 'none' }}
+      >
+        RECHTS
+      </text>
+    </>
+  );
+}
 
 function DimensionsLabel({ modules }: { modules: PlacedModule[] }) {
   const bbox = getBoundingBox(modules);

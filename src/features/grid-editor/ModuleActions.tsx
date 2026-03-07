@@ -8,24 +8,10 @@ interface ModuleActionsProps {
   modules: PlacedModule[];
   onRemove: (id: string) => void;
   onRotate: (id: string) => void;
-  onMove: (id: string) => void;
   onClose: () => void;
 }
 
 // --- SVG Icons (inline, matching WallConfigurator style) ---
-
-function MoveIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 16 16" className={className ?? 'w-5 h-5'} fill="none" stroke="currentColor" strokeWidth="1.5">
-      <line x1="3" y1="8" x2="13" y2="8" />
-      <polyline points="5,5.5 3,8 5,10.5" />
-      <polyline points="11,5.5 13,8 11,10.5" />
-      <line x1="8" y1="3" x2="8" y2="13" />
-      <polyline points="5.5,5 8,3 10.5,5" />
-      <polyline points="5.5,11 8,13 10.5,11" />
-    </svg>
-  );
-}
 
 function RotateIcon({ className }: { className?: string }) {
   return (
@@ -69,7 +55,6 @@ export function ModuleActions({
   modules,
   onRemove,
   onRotate,
-  onMove,
   onClose,
 }: ModuleActionsProps) {
   const module = modules.find((m) => m.id === moduleId);
@@ -80,8 +65,8 @@ export function ModuleActions({
   const isSquare = module.width === module.height;
   const rotatable = !isSquare && canRotate(modules, moduleId);
 
-  // Dynamic grid: 3 cols if square (no rotate), 4 cols otherwise
-  const gridCols = isSquare ? 'grid-cols-3' : 'grid-cols-4';
+  // Dynamic grid: 2 cols if square (no rotate), 3 cols otherwise
+  const gridCols = isSquare ? 'grid-cols-2' : 'grid-cols-3';
 
   return (
     <div className="mt-2">
@@ -98,17 +83,6 @@ export function ModuleActions({
 
       {/* Action buttons in grid (like WallConfigurator) */}
       <div className={`grid ${gridCols} gap-1.5`}>
-        {/* Move */}
-        <button
-          type="button"
-          className={btnNormal}
-          onClick={() => onMove(moduleId)}
-          title={t('editor.move')}
-        >
-          <MoveIcon className="w-5 h-5" />
-          <span>Bewegen</span>
-        </button>
-
         {/* Rotate (only for non-square) */}
         {!isSquare && (
           <button

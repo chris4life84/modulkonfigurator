@@ -105,7 +105,8 @@ function computeWallSegments(
     });
   }
 
-  return segments;
+  // Filter out tiny slivers (< 3cm) that look bad at corners
+  return segments.filter((s) => s.w > 0.03 && s.h > 0.03);
 }
 
 export function WoodWall({

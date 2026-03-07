@@ -9,6 +9,7 @@ import { getBoundingBox } from '../../utils/grid';
 import { Module3D } from './Module3D';
 import { GroundPlane } from './GroundPlane';
 import { EnvironmentSetup } from './EnvironmentSetup';
+import { GardenVegetation } from './GardenVegetation';
 
 interface Scene3DProps {
   modules: PlacedModule[];
@@ -59,6 +60,9 @@ export function Scene3D({ modules, selectedModuleId, onModuleClick }: Scene3DPro
 
         {/* Ground with grass and foundation */}
         <GroundPlane modules={modules} />
+
+        {/* Low-poly garden trees and bushes */}
+        {modules.length > 0 && <GardenVegetation modules={modules} />}
 
         {/* Contact shadows for grounding effect */}
         {modules.length > 0 && (

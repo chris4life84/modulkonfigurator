@@ -29,13 +29,19 @@ export function emptyWallConfig(): WallConfig {
   return { front: [], back: [], left: [], right: [] };
 }
 
-/** Clamp opening widths so they don't exceed actual wall dimensions */
+/** Clamp opening widths and positions so they stay within wall boundaries */
 function clampOpenings(openings: WallOpening[], wallWidthM: number): WallOpening[] {
-  const maxW = Math.max(0.3, wallWidthM - 0.1); // 5cm margin each side
-  return openings.map((o) => ({
-    ...o,
-    width: Math.min(o.width, maxW),
-  }));
+  const margin = 0.15; // 15cm from each wall edge (≥ wall thickness)
+  const maxW = Math.max(0.3, wallWidthM - margin * 2);
+  return openings.map((o) => {
+    const w = Math.min(o.width, maxW);
+    // Clamp position so opening center stays far enough from edges
+    const halfW = w / 2;
+    const minPos = (halfW + margin) / wallWidthM;
+    const maxPos = 1 - minPos;
+    const pos = Math.max(minPos, Math.min(maxPos, o.position));
+    return { ...o, width: w, position: pos };
+  });
 }
 
 /** Clamp all openings in a WallConfig to the actual wall widths */

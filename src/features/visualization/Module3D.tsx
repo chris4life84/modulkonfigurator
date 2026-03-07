@@ -306,12 +306,18 @@ function OpeningsGroup({
   const halfW = widthM / 2;
   const halfD = depthM / 2;
 
-  /** Clamp opening dimensions to fit within the given wall width (safety net) */
-  const clampToWall = (o: WallOpening, wallW: number): WallOpening => ({
-    ...o,
-    width: Math.min(o.width, Math.max(0.3, wallW - 0.05)),
-    height: Math.min(o.height, OUTER_HEIGHT),
-  });
+  /** Clamp opening dimensions and position to fit within the given wall width */
+  const clampToWall = (o: WallOpening, wallW: number): WallOpening => {
+    const margin = 0.15; // 15cm from each wall edge (≥ wall thickness)
+    const w = Math.min(o.width, Math.max(0.3, wallW - margin * 2));
+    const h = Math.min(o.height, OUTER_HEIGHT);
+    // Clamp position so opening center stays far enough from edges
+    const halfW = w / 2;
+    const minPos = (halfW + margin) / wallW;
+    const maxPos = 1 - minPos;
+    const pos = Math.max(minPos, Math.min(maxPos, o.position));
+    return { ...o, width: w, height: h, position: pos };
+  };
 
   const allOpenings: {
     opening: WallOpening;

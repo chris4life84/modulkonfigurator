@@ -7,7 +7,6 @@ interface SVGModuleProps {
   label: string;
   selected?: boolean;
   dragging?: boolean;
-  moveReady?: boolean;
   onClick?: () => void;
   onPointerDown?: (e: React.PointerEvent) => void;
 }
@@ -18,7 +17,6 @@ export function SVGModule({
   label,
   selected,
   dragging,
-  moveReady,
   onClick,
   onPointerDown,
 }: SVGModuleProps) {
@@ -40,8 +38,8 @@ export function SVGModule({
         rx={0.3}
         fill={color}
         opacity={0.9}
-        stroke={selected ? '#1e293b' : moveReady ? '#3b82f6' : 'white'}
-        strokeWidth={selected ? 0.24 : moveReady ? 0.18 : 0.09}
+        stroke={selected ? '#1e293b' : 'white'}
+        strokeWidth={selected ? 0.24 : 0.09}
       />
       {/* Module name */}
       <text
@@ -83,8 +81,8 @@ export function SVGModule({
           style={{ pointerEvents: 'none' }}
         />
       )}
-      {/* Move-ready animated indicator */}
-      {moveReady && (
+      {/* Dragging indicator – dashed border when being moved */}
+      {dragging && (
         <rect
           x={m.gridX + gap}
           y={m.gridY + gap}
@@ -93,18 +91,10 @@ export function SVGModule({
           rx={0.3}
           fill="none"
           stroke="#3b82f6"
-          strokeWidth={0.18}
-          strokeDasharray="0.5 0.3"
+          strokeWidth={0.15}
+          strokeDasharray="0.4 0.25"
           style={{ pointerEvents: 'none' }}
-        >
-          <animate
-            attributeName="stroke-dashoffset"
-            from="0"
-            to="1.6"
-            dur="1s"
-            repeatCount="indefinite"
-          />
-        </rect>
+        />
       )}
     </g>
   );
