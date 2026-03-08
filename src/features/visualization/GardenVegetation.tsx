@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
+import { useGLTF } from '@react-three/drei';
 import type { PlacedModule } from '../../types/grid';
 import { GRID_CELL_SIZE } from '../../types/grid';
 import { getBoundingBox } from '../../utils/grid';
@@ -21,17 +22,14 @@ interface TreeData {
   x: number;
   z: number;
   scale: number;
-  trunkH: number;
-  canopyType: 'cone' | 'sphere';
-  canopyColor: string;
-  trunkColor: string;
   rotation: number;
 }
 
+const TREE_MODEL_PATH = '/models/trees/tree_small_02_opt.glb';
+
 /**
- * Dezente Low-Poly Bäume um das Gebäude herum.
- * Nur Tannen (cone) und Laubbäume (sphere), keine Büsche.
- * Wenige Bäume, weiter entfernt — Fokus bleibt auf dem Haus.
+ * Realistic trees (Polyhaven tree_small_02) placed around the building.
+ * The glTF model is loaded once and instanced at multiple positions.
  */
 export function GardenVegetation({ modules }: GardenVegetationProps) {
   const trees = useMemo(() => {
@@ -40,9 +38,6 @@ export function GardenVegetation({ modules }: GardenVegetationProps) {
     const cx = ((bbox.minX + bbox.maxX) / 2) * GRID_CELL_SIZE;
     const cz = ((bbox.minY + bbox.maxY) / 2) * GRID_CELL_SIZE;
     const buildingRadius = Math.max(bbox.widthM, bbox.heightM) / 2 + 1.5;
-
-    const canopyColors = ['#4A7A32', '#3D6B28', '#5B8C3E', '#3A6025'];
-    const trunkColors = ['#8B6F47', '#7A5E3A', '#9B7F57'];
 
     const treeList: TreeData[] = [];
     const treeCount = 8 + Math.floor(rand() * 4); // 8-11 trees
@@ -56,11 +51,7 @@ export function GardenVegetation({ modules }: GardenVegetationProps) {
       treeList.push({
         x: cx + Math.cos(angle) * dist,
         z: cz + Math.sin(angle) * dist,
-        scale: 0.8 + rand() * 0.5,
-        trunkH: 1.0 + rand() * 0.8,
-        canopyType: rand() > 0.5 ? 'cone' : 'sphere',
-        canopyColor: canopyColors[Math.floor(rand() * canopyColors.length)],
-        trunkColor: trunkColors[Math.floor(rand() * trunkColors.length)],
+        scale: 0.6 + rand() * 0.4, // 0.6–1.0 scale variation
         rotation: rand() * Math.PI * 2,
       });
     }
@@ -71,50 +62,48 @@ export function GardenVegetation({ modules }: GardenVegetationProps) {
   return (
     <group>
       {trees.map((t, i) => (
-        <LowPolyTree key={`tree-${i}`} data={t} />
+        <TreeInstance key={`tree-${i}`} data={t} />
       ))}
     </group>
   );
 }
 
-// Shared geometries (created once, reused)
-const trunkGeo = new THREE.CylinderGeometry(0.12, 0.16, 1, 6);
-const coneCanopyGeo = new THREE.ConeGeometry(1, 2.2, 7);
-const sphereCanopyGeo = new THREE.SphereGeometry(1, 7, 5);
+/** Single tree instance using the shared glTF model */
+function TreeInstance({ data }: { data: TreeData }) {
+  const { scene } = useGLTF(TREE_MODEL_PATH);
+  const ref = useRef<THREE.Group>(null);
 
-function LowPolyTree({ data }: { data: TreeData }) {
-  const { x, z, scale, trunkH, canopyType, canopyColor, trunkColor, rotation } = data;
-  const canopyY = trunkH * scale + 0.6 * scale;
-
-  const canopyGeometry = canopyType === 'cone' ? coneCanopyGeo : sphereCanopyGeo;
-  const canopyScaleY = canopyType === 'cone' ? 1.1 : 0.85;
+  // Clone the scene so each instance has independent transforms
+  const clonedScene = useMemo(() => {
+    const clone = scene.clone(true);
+    // Enable shadows on all meshes
+    clone.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+        // Fix alpha for leaf materials
+        if (child.material instanceof THREE.MeshStandardMaterial) {
+          if (child.material.alphaMap || child.material.transparent) {
+            child.material.alphaTest = 0.5;
+            child.material.side = THREE.DoubleSide;
+          }
+        }
+      }
+    });
+    return clone;
+  }, [scene]);
 
   return (
-    <group position={[x, 0, z]} rotation={[0, rotation, 0]}>
-      {/* Trunk */}
-      <mesh
-        geometry={trunkGeo}
-        position={[0, (trunkH * scale) / 2, 0]}
-        scale={[scale, trunkH * scale, scale]}
-        castShadow
-      >
-        <meshStandardMaterial color={trunkColor} roughness={0.9} metalness={0} />
-      </mesh>
-
-      {/* Canopy */}
-      <mesh
-        geometry={canopyGeometry}
-        position={[0, canopyY, 0]}
-        scale={[scale * 0.9, scale * canopyScaleY, scale * 0.9]}
-        castShadow
-      >
-        <meshStandardMaterial
-          color={canopyColor}
-          roughness={0.85}
-          metalness={0}
-          flatShading
-        />
-      </mesh>
+    <group
+      ref={ref}
+      position={[data.x, 0, data.z]}
+      rotation={[0, data.rotation, 0]}
+      scale={data.scale}
+    >
+      <primitive object={clonedScene} />
     </group>
   );
 }
+
+// Preload the tree model
+useGLTF.preload(TREE_MODEL_PATH);
