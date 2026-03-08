@@ -96,6 +96,33 @@ export function Module3D({ module: m, allModules, color, label, selected, onClic
     [widthM, depthM],
   );
 
+  // Detect which sides have an adjacent pergola module — remove roof overhang there
+  const pergolaAdjacent = useMemo(() => {
+    const sides = { front: false, back: false, left: false, right: false };
+    const pergolaCells = new Set<string>();
+    for (const other of allModules) {
+      if (other.id === m.id || other.type !== 'pergola') continue;
+      for (let dx = 0; dx < other.width; dx++) {
+        for (let dy = 0; dy < other.height; dy++) {
+          pergolaCells.add(`${other.gridX + dx},${other.gridY + dy}`);
+        }
+      }
+    }
+    for (let dx = 0; dx < m.width; dx++) {
+      if (pergolaCells.has(`${m.gridX + dx},${m.gridY + m.height}`)) { sides.front = true; break; }
+    }
+    for (let dx = 0; dx < m.width; dx++) {
+      if (pergolaCells.has(`${m.gridX + dx},${m.gridY - 1}`)) { sides.back = true; break; }
+    }
+    for (let dy = 0; dy < m.height; dy++) {
+      if (pergolaCells.has(`${m.gridX - 1},${m.gridY + dy}`)) { sides.left = true; break; }
+    }
+    for (let dy = 0; dy < m.height; dy++) {
+      if (pergolaCells.has(`${m.gridX + m.width},${m.gridY + dy}`)) { sides.right = true; break; }
+    }
+    return sides;
+  }, [m.id, m.gridX, m.gridY, m.width, m.height, allModules]);
+
   return (
     <group
       position={[posX, 0, posZ]}
@@ -205,6 +232,10 @@ export function Module3D({ module: m, allModules, color, label, selected, onClic
         moduleWidth={widthM}
         moduleDepth={depthM}
         roofY={OUTER_HEIGHT}
+        overhangFront={pergolaAdjacent.front ? 0 : undefined}
+        overhangBack={pergolaAdjacent.back ? 0 : undefined}
+        overhangLeft={pergolaAdjacent.left ? 0 : undefined}
+        overhangRight={pergolaAdjacent.right ? 0 : undefined}
       />
 
       {/* Interior partition walls at shared boundaries */}

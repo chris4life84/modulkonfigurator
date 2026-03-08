@@ -14,12 +14,21 @@ interface ModuleCatalogProps {
   onSelect: (item: SelectedCatalogItem | null) => void;
 }
 
-const BLOCK_COLOR = '#d97706';
+type Category = 'haus' | 'pergola';
 
-const BLOCKS: { w: number; h: number }[] = [
+const HAUS_COLOR = '#d97706';
+const PERGOLA_COLOR = '#6B7280';
+
+const HAUS_BLOCKS: { w: number; h: number }[] = [
   { w: 6, h: 3 },
   { w: 3, h: 6 },
   { w: 6, h: 6 },
+];
+
+const PERGOLA_BLOCKS: { w: number; h: number }[] = [
+  { w: 6, h: 4 },
+  { w: 6, h: 6 },
+  { w: 8, h: 6 },
 ];
 
 /** Snap a meter value to the nearest valid grid cell multiple */
@@ -28,17 +37,20 @@ function snapToGrid(meters: number): number {
 }
 
 export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
-  // State in meters (step = GRID_CELL_SIZE = 0.5m)
+  const [category, setCategory] = useState<Category>('haus');
   const [customWm, setCustomWm] = useState(4.5);
   const [customHm, setCustomHm] = useState(3.0);
 
-  // Convert meters → grid cells for internal use
   const customW = Math.round(customWm / GRID_CELL_SIZE);
   const customH = Math.round(customHm / GRID_CELL_SIZE);
 
+  const blocks = category === 'haus' ? HAUS_BLOCKS : PERGOLA_BLOCKS;
+  const blockColor = category === 'haus' ? HAUS_COLOR : PERGOLA_COLOR;
+  const blockType: ModuleType = category === 'haus' ? 'living' : 'pergola';
+
   const isCustomSelected =
     selection != null &&
-    !BLOCKS.some((b) => b.w === selection.width && b.h === selection.height) &&
+    !blocks.some((b) => b.w === selection.width && b.h === selection.height) &&
     selection.width === customW &&
     selection.height === customH;
 
@@ -52,32 +64,65 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
     }
   };
 
+  const handleCategoryChange = (cat: Category) => {
+    setCategory(cat);
+    onSelect(null); // Clear selection when switching
+  };
+
   return (
     <div>
-      <h3 className="text-base font-semibold text-gray-900">Modulblöcke</h3>
+      {/* Category tabs */}
+      <div className="flex rounded-lg bg-gray-100 p-0.5 mb-3">
+        <button
+          type="button"
+          onClick={() => handleCategoryChange('haus')}
+          className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+            category === 'haus'
+              ? 'bg-white text-amber-700 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Modulhaus
+        </button>
+        <button
+          type="button"
+          onClick={() => handleCategoryChange('pergola')}
+          className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+            category === 'pergola'
+              ? 'bg-white text-gray-700 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Pergola
+        </button>
+      </div>
+
+      <h3 className="text-base font-semibold text-gray-900">
+        {category === 'haus' ? 'Modulblöcke' : 'Pergola-Blöcke'}
+      </h3>
       <p className="mt-1 text-xs text-gray-400">
         Klicken = platzieren · Ziehen = gezielt platzieren
       </p>
 
       <div className="mt-2 flex gap-2">
-        {BLOCKS.map(({ w, h }) => {
+        {blocks.map(({ w, h }) => {
           const isSelected =
-            selection?.width === w && selection?.height === h;
+            selection?.width === w && selection?.height === h && selection?.type === blockType;
           const sizeLabel = `${(w * GRID_CELL_SIZE).toFixed(1)}×${(h * GRID_CELL_SIZE).toFixed(1)}m`;
           const isVertical = w < h;
-          const isLarge = w === 6 && h === 6;
+          const isLarge = w >= 6 && h >= 6;
 
           return (
             <DraggableCatalogItem
               key={`${w}x${h}`}
-              type={'living' as ModuleType}
+              type={blockType}
               width={w}
               height={h}
               isSelected={isSelected}
-              color={BLOCK_COLOR}
+              color={blockColor}
               onClick={() =>
                 onSelect(
-                  isSelected ? null : { type: 'living' as ModuleType, width: w, height: h },
+                  isSelected ? null : { type: blockType, width: w, height: h },
                 )
               }
             >
@@ -88,7 +133,7 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
                   style={{
                     width: isLarge ? 24 : isVertical ? 12 : 24,
                     height: isLarge ? 24 : isVertical ? 24 : 12,
-                    backgroundColor: isSelected ? BLOCK_COLOR : `${BLOCK_COLOR}40`,
+                    backgroundColor: isSelected ? blockColor : `${blockColor}40`,
                   }}
                 />
               </div>
@@ -98,7 +143,7 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
         })}
       </div>
 
-      {/* Custom size block – inputs in meters */}
+      {/* Custom size block */}
       <div className="mt-3 rounded-lg border border-dashed border-gray-300 p-2.5">
         <p className="text-xs font-medium text-gray-600 mb-2">Eigene Größe</p>
         <div className="flex items-center gap-1.5">
@@ -130,12 +175,14 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
             onSelect(
               isCustomSelected
                 ? null
-                : { type: 'living' as ModuleType, width: customW, height: customH },
+                : { type: blockType, width: customW, height: customH },
             );
           }}
           className={`mt-2 w-full rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
             isCustomSelected
-              ? 'bg-amber-600 text-white'
+              ? category === 'haus'
+                ? 'bg-amber-600 text-white'
+                : 'bg-gray-600 text-white'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
@@ -144,7 +191,10 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
       </div>
 
       <p className="mt-2 text-[10px] text-gray-400 leading-snug">
-        Nutzbar als: Saunakern, Technikraum, Ruheeinheit, Umkleide, Sanitär, Living/Office
+        {category === 'haus'
+          ? 'Nutzbar als: Saunakern, Technikraum, Ruheeinheit, Umkleide, Sanitär, Living/Office'
+          : 'Aluminium-Pergola mit Lamellen-, Glas- oder EPDM-Dach. Direkt an Modulhäuser anschließbar.'
+        }
       </p>
     </div>
   );

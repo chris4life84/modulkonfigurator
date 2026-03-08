@@ -21,6 +21,7 @@ export function SVGModule({
   onPointerDown,
 }: SVGModuleProps) {
   const gap = 0.18;
+  const isPergola = m.type === 'pergola';
 
   return (
     <g
@@ -36,11 +37,36 @@ export function SVGModule({
         width={m.width - gap * 2}
         height={m.height - gap * 2}
         rx={0.3}
-        fill={color}
+        fill={isPergola ? `${color}30` : color}
         opacity={0.9}
-        stroke={selected ? '#1e293b' : 'white'}
-        strokeWidth={selected ? 0.24 : 0.09}
+        stroke={selected ? '#1e293b' : isPergola ? color : 'white'}
+        strokeWidth={selected ? 0.24 : isPergola ? 0.15 : 0.09}
+        strokeDasharray={isPergola && !selected ? '0.4 0.2' : undefined}
       />
+      {/* Pergola diagonal lines pattern */}
+      {isPergola && (
+        <>
+          {Array.from({ length: Math.ceil(m.width / 0.8) + Math.ceil(m.height / 0.8) }, (_, i) => {
+            const offset = (i - Math.ceil(m.height / 0.8)) * 0.8;
+            const x1 = Math.max(gap, offset) + m.gridX;
+            const y1 = Math.max(gap, -offset) + m.gridY;
+            const x2 = Math.min(m.width - gap, offset + m.height) + m.gridX;
+            const y2 = Math.min(m.height - gap, m.height - offset) + m.gridY;
+            if (x1 >= m.gridX + m.width - gap || y1 >= m.gridY + m.height - gap) return null;
+            if (x2 <= m.gridX + gap || y2 <= m.gridY + gap) return null;
+            return (
+              <line
+                key={i}
+                x1={x1} y1={y1} x2={x2} y2={y2}
+                stroke={color}
+                strokeWidth={0.04}
+                opacity={0.35}
+                style={{ pointerEvents: 'none' }}
+              />
+            );
+          })}
+        </>
+      )}
       {/* Module name */}
       <text
         x={m.gridX + m.width / 2}

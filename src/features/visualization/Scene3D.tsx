@@ -7,6 +7,7 @@ import { GRID_CELL_SIZE } from '../../types/grid';
 import { MODULE_DEFINITIONS } from '../../data/module-types';
 import { getBoundingBox } from '../../utils/grid';
 import { Module3D } from './Module3D';
+import { Pergola3D } from './Pergola3D';
 import { GroundPlane } from './GroundPlane';
 import { EnvironmentSetup } from './EnvironmentSetup';
 import { GardenVegetation } from './GardenVegetation';
@@ -80,17 +81,19 @@ export function Scene3D({ modules, selectedModuleId, onModuleClick }: Scene3DPro
         {/* Modules */}
         {modules.map((m) => {
           const def = MODULE_DEFINITIONS[m.type];
-          return (
-            <Module3D
-              key={m.id}
-              module={m}
-              allModules={modules}
-              color={def?.color ?? '#9ca3af'}
-              label={def?.name ?? m.type}
-              selected={m.id === selectedModuleId}
-              onClick={onModuleClick ? () => onModuleClick(m.id) : undefined}
-            />
-          );
+          const sharedProps = {
+            key: m.id,
+            module: m,
+            allModules: modules,
+            color: def?.color ?? '#9ca3af',
+            label: def?.name ?? m.type,
+            selected: m.id === selectedModuleId,
+            onClick: onModuleClick ? () => onModuleClick(m.id) : undefined,
+          };
+          if (m.type === 'pergola') {
+            return <Pergola3D {...sharedProps} />;
+          }
+          return <Module3D {...sharedProps} />;
         })}
 
         {/* Direction labels */}

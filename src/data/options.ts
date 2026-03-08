@@ -27,6 +27,29 @@ export const MODULE_OPTIONS: OptionDefinition[] = [
     defaultValue: false,
     appliesTo: ['living'],
   },
+  {
+    key: 'dachtyp',
+    label: 'Dachtyp',
+    type: 'select',
+    options: [
+      { value: 'lamellen', label: 'Alu-Lamellen (offen)', priceModifier: 0 },
+      { value: 'glas', label: 'Glasdach', priceModifier: 1800 },
+      { value: 'epdm', label: 'EPDM-Dachfolie', priceModifier: 900 },
+    ],
+    defaultValue: 'lamellen',
+    appliesTo: ['pergola'],
+  },
+  {
+    key: 'anschluss',
+    label: 'Wandanschluss',
+    type: 'select',
+    options: [
+      { value: 'wand', label: 'Wandanschluss (keine Pfosten)', priceModifier: 0 },
+      { value: 'pfosten', label: 'Mit Pfosten', priceModifier: 200 },
+    ],
+    defaultValue: 'wand',
+    appliesTo: ['pergola'],
+  },
 ];
 
 export const FENSTER_PRICE = 650;

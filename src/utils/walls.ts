@@ -54,10 +54,13 @@ export function getSharedWallSegments(
     right: new Array(module.height).fill(false),
   };
 
-  // Build set of all cells occupied by OTHER modules
+  // Build set of all cells occupied by OTHER modules.
+  // Enclosed modules (houses) ignore pergola neighbors so their walls stay visible.
+  const isEnclosed = module.type !== 'pergola';
   const occupied = new Set<string>();
   for (const other of allModules) {
     if (other.id === module.id) continue;
+    if (isEnclosed && other.type === 'pergola') continue;
     for (let dx = 0; dx < other.width; dx++) {
       for (let dy = 0; dy < other.height; dy++) {
         occupied.add(`${other.gridX + dx},${other.gridY + dy}`);

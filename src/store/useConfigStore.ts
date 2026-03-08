@@ -13,6 +13,7 @@ interface ConfigState {
   removeModule: (id: string) => void;
   rotateModule: (id: string) => void;
   moveModule: (id: string, newX: number, newY: number) => void;
+  resizeModule: (id: string, newWidth: number, newHeight: number) => void;
   setModuleOption: (moduleId: string, key: string, value: string | boolean) => void;
   setModuleWalls: (moduleId: string, walls: WallConfig) => void;
   reset: () => void;
@@ -70,6 +71,16 @@ export const useConfigStore = create<ConfigState>()(
           modules: state.modules.map((m) => {
             if (m.id !== id) return m;
             return { ...m, gridX: newX, gridY: newY };
+          }),
+        }));
+      },
+
+      resizeModule: (id: string, newWidth: number, newHeight: number) => {
+        set((state) => ({
+          modules: state.modules.map((m) => {
+            if (m.id !== id) return m;
+            // Reset walls on resize (dimensions changed, like rotateModule)
+            return { ...m, width: newWidth, height: newHeight, walls: undefined };
           }),
         }));
       },

@@ -1,4 +1,4 @@
-export type ModuleType = 'sauna' | 'technik' | 'ruhe' | 'umkleide' | 'sanitaer' | 'living';
+export type ModuleType = 'sauna' | 'technik' | 'ruhe' | 'umkleide' | 'sanitaer' | 'living' | 'pergola';
 
 export interface ModuleDefinition {
   type: ModuleType;

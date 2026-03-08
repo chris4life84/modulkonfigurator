@@ -56,7 +56,7 @@ interface GridDragInternal {
 const DRAG_THRESHOLD_PX = 6;
 
 export function GridEditorStep() {
-  const { modules, addModule, removeModule, rotateModule, moveModule } = useConfigStore();
+  const { modules, addModule, removeModule, rotateModule, moveModule, setModuleOption } = useConfigStore();
   const { viewMode, setViewMode } = useViewMode();
   const [catalogSelection, setCatalogSelection] = useState<SelectedCatalogItem | null>(null);
   const [dragItem, setDragItem] = useState<SelectedCatalogItem | null>(null);
@@ -164,12 +164,16 @@ export function GridEditorStep() {
             return;
           }
 
+          // Freistehend pergola: can move freely (skip sharesEdge constraint)
+          const isFreistehend = mod.type === 'pergola' && mod.options.freistehend === true;
+
           // Precompute valid positions for this module
           const validPositions = getValidMovePlacements(
             modules,
             pending.moduleId,
             mod.width,
             mod.height,
+            isFreistehend,
           );
           const validSet = new Set(validPositions.map((p) => `${p.x},${p.y}`));
 
@@ -439,6 +443,12 @@ export function GridEditorStep() {
                   }}
                   onRotate={(id) => rotateModule(id)}
                   onClose={() => setSelectedModuleId(null)}
+                  onToggleFreistehend={(id) => {
+                    const mod = modules.find((m) => m.id === id);
+                    if (mod) {
+                      setModuleOption(id, 'freistehend', !mod.options.freistehend);
+                    }
+                  }}
                 />
                 <ModuleConfigPanel moduleId={selectedModuleId} />
               </>

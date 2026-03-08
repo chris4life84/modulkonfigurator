@@ -132,6 +132,10 @@ export function getDefaultWallConfig(
       };
       break;
 
+    case 'pergola':
+      raw = emptyWallConfig();
+      break;
+
     default:
       raw = emptyWallConfig();
       break;
