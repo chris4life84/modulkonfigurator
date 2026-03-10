@@ -172,7 +172,7 @@ interface WallSegmentMeshProps {
 
 function WallSegmentMesh({ segment, wallWidth, wallHeight, texture, isImageBased, isInterior = false }: WallSegmentMeshProps) {
   // PBR textures: wall texture for exterior, wood for fallback
-  const pbrMaps = useMemo(() => isInterior ? null : (loadWallPBR() ?? loadWoodPBR()), [isInterior]);
+  const pbrMaps = useMemo(() => isInterior ? null : (loadWoodPBR() ?? loadWallPBR()), [isInterior]);
 
   const clonedTexture = useMemo(() => {
     const t = texture.clone();

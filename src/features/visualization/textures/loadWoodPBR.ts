@@ -47,31 +47,19 @@ export function loadWoodPBR(): WoodPBRMaps | null {
     const loader = new THREE.TextureLoader();
 
     const diffuse = configureTex(
-      loader.load('/textures/pbr/wood/diff_1k.jpg', undefined, undefined, () => { _cached = null; }),
+      loader.load('/textures/pbr/wood/wall_color_2k.png', undefined, undefined, () => { _cached = null; }),
       true,
     );
     const roughness = configureTex(
-      loader.load('/textures/pbr/wood/rough_1k.jpg'),
+      loader.load('/textures/pbr/wood/wall_rough_2k.png'),
       false,
     );
-    const bump = configureTex(
-      loader.load('/textures/pbr/wood/disp_1k.jpg'),
+    const normal = configureTex(
+      loader.load('/textures/pbr/wood/wall_normal_2k.png'),
       false,
     );
 
-    _cached = { diffuse, roughness, bump };
-
-    // Optional normal map (user may export from Blender later)
-    loader.load(
-      '/textures/pbr/wood/nor_1k.png',
-      (tex) => {
-        if (_cached) {
-          _cached.normal = configureTex(tex, false);
-        }
-      },
-      undefined,
-      () => { /* Normal map not available – that's fine */ },
-    );
+    _cached = { diffuse, roughness, normal };
 
     return _cached;
   } catch {
