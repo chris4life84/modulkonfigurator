@@ -22,28 +22,33 @@ function configureTex(tex: THREE.Texture, srgb: boolean): THREE.Texture {
 }
 
 /**
- * Ground plane with seamless grass texture + granite foundation pad.
- * The procedural Sky provides the backdrop; fog blends grass edges
- * into the horizon naturally — no alpha fade needed.
+ * Ground plane with Grass005 PBR texture + granite foundation pad.
+ * Full PBR: Color, Normal, Roughness maps for realistic grass rendering.
  */
 export function GroundPlane({ size = 100, modules = [] }: GroundPlaneProps) {
-  // Load leafy grass PBR textures (Polyhaven leafy_grass_2k)
   const grassMaps = useMemo(() => {
     const loader = new THREE.TextureLoader();
+    const repeat = 25;
 
-    const diffuse = configureTex(
-      loader.load('/textures/pbr/grass/rocky_terrain_02_diff_4k.jpg'),
+    const color = configureTex(
+      loader.load('/textures/pbr/grass/grass005_color_2k.png'),
       true,
     );
-    diffuse.repeat.set(20, 20); // 4K texture — fewer tiles needed for detail
+    color.repeat.set(repeat, repeat);
 
-    const bump = configureTex(
-      loader.load('/textures/pbr/grass/rocky_terrain_02_disp_4k.png'),
+    const normal = configureTex(
+      loader.load('/textures/pbr/grass/grass005_normal_2k.png'),
       false,
     );
-    bump.repeat.set(20, 20);
+    normal.repeat.set(repeat, repeat);
 
-    return { diffuse, bump };
+    const roughness = configureTex(
+      loader.load('/textures/pbr/grass/grass005_rough_2k.png'),
+      false,
+    );
+    roughness.repeat.set(repeat, repeat);
+
+    return { color, normal, roughness };
   }, []);
 
   return (
@@ -52,10 +57,9 @@ export function GroundPlane({ size = 100, modules = [] }: GroundPlaneProps) {
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow>
         <planeGeometry args={[size, size]} />
         <meshStandardMaterial
-          map={grassMaps.diffuse}
-          bumpMap={grassMaps.bump}
-          bumpScale={0.15}
-          roughness={0.92}
+          map={grassMaps.color}
+          normalMap={grassMaps.normal}
+          roughnessMap={grassMaps.roughness}
           metalness={0}
           side={THREE.DoubleSide}
         />
@@ -70,7 +74,7 @@ export function GroundPlane({ size = 100, modules = [] }: GroundPlaneProps) {
 /** Granite pad that sits under the module group */
 function FoundationPad({ modules }: { modules: PlacedModule[] }) {
   const bbox = getBoundingBox(modules);
-  const padding = 0.3; // Extra space around modules
+  const padding = 0.3;
 
   const width = bbox.widthM + padding * 2;
   const depth = bbox.heightM + padding * 2;
@@ -78,7 +82,6 @@ function FoundationPad({ modules }: { modules: PlacedModule[] }) {
   const centerZ = (bbox.minY * GRID_CELL_SIZE + bbox.maxY * GRID_CELL_SIZE) / 2;
   const height = 0.04;
 
-  // Load granite tile PBR textures (Polyhaven granite_tile_2k)
   const graniteMaps = useMemo(() => {
     const loader = new THREE.TextureLoader();
 
@@ -86,7 +89,6 @@ function FoundationPad({ modules }: { modules: PlacedModule[] }) {
       loader.load('/textures/pbr/granite/granite_tile_diff_2k.jpg'),
       true,
     );
-    // ~1m per tile → realistic granite slab size
     diffuse.repeat.set(width / 1.0, depth / 1.0);
 
     const bump = configureTex(

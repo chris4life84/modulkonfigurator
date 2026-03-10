@@ -50,7 +50,15 @@ export const MODULE_OPTIONS: OptionDefinition[] = [
     defaultValue: 'wand',
     appliesTo: ['pergola'],
   },
+  {
+    key: 'pv_panels',
+    label: 'Photovoltaik',
+    type: 'checkbox',
+    defaultValue: false,
+    appliesTo: ['sauna', 'ruhe', 'living', 'umkleide', 'sanitaer', 'technik'],
+  },
 ];
 
 export const FENSTER_PRICE = 650;
 export const ISOLIERUNG_PRICE = 1200;
+export const PV_PRICE = 4500;

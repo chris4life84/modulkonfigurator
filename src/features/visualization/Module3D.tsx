@@ -7,6 +7,7 @@ import { getDefaultWallConfig } from '../../types/walls';
 import { getSharedWallSegments, getWallRanges, type SharedWallSegments } from '../../utils/walls';
 import { WoodWall } from './WoodWall';
 import { RoofPanel } from './RoofPanel';
+import { SolarPanels3D } from './SolarPanels3D';
 // CornerPost removed for clean continuous plank aesthetic
 import { DoorOpening } from './DoorOpening';
 import { WindowOpening } from './WindowOpening';
@@ -237,6 +238,15 @@ export function Module3D({ module: m, allModules, color, label, selected, onClic
         overhangLeft={pergolaAdjacent.left ? 0 : undefined}
         overhangRight={pergolaAdjacent.right ? 0 : undefined}
       />
+
+      {/* Optional solar panels on roof */}
+      {m.options.pv_panels === true && (
+        <SolarPanels3D
+          moduleWidth={widthM}
+          moduleDepth={depthM}
+          roofY={OUTER_HEIGHT}
+        />
+      )}
 
       {/* Interior partition walls at shared boundaries */}
       {wallConfig.interiorWalls && Object.entries(wallConfig.interiorWalls).map(([side, openings]) => {

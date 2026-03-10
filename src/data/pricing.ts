@@ -1,6 +1,6 @@
 import type { PlacedModule } from '../types/grid';
 import { MODULE_DEFINITIONS } from './module-types';
-import { MODULE_OPTIONS, FENSTER_PRICE, ISOLIERUNG_PRICE } from './options';
+import { MODULE_OPTIONS, FENSTER_PRICE, ISOLIERUNG_PRICE, PV_PRICE } from './options';
 
 export function calculateModulePrice(module: PlacedModule): number {
   const def = MODULE_DEFINITIONS[module.type];
@@ -23,6 +23,9 @@ export function calculateModulePrice(module: PlacedModule): number {
     }
     if (opt.key === 'isolierung' && value === true) {
       price += ISOLIERUNG_PRICE;
+    }
+    if (opt.key === 'pv_panels' && value === true) {
+      price += PV_PRICE;
     }
   }
 
