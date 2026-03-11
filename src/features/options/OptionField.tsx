@@ -11,17 +11,24 @@ interface OptionFieldProps {
 export function OptionField({ option, value, onChange, compact }: OptionFieldProps) {
   if (option.type === 'checkbox') {
     return (
-      <label className="flex items-center gap-3 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={value === true}
-          onChange={(e) => onChange(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300 text-wood-600 focus:ring-wood-500"
-        />
-        <span className={compact ? 'text-xs text-gray-700' : 'text-sm text-gray-700'}>
-          {option.label}
-        </span>
-      </label>
+      <div>
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={value === true}
+            onChange={(e) => onChange(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-wood-600 focus:ring-wood-500"
+          />
+          <span className={compact ? 'text-xs text-gray-700' : 'text-sm text-gray-700'}>
+            {option.label}
+          </span>
+        </label>
+        {option.description && (
+          <p className={`ml-7 mt-0.5 text-gray-400 ${compact ? 'text-[10px]' : 'text-xs'}`}>
+            {option.description}
+          </p>
+        )}
+      </div>
     );
   }
 

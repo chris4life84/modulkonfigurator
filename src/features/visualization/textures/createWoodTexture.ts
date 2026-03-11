@@ -32,12 +32,6 @@ export function loadWoodImageTexture(): THREE.Texture | null {
       (tex) => {
         tex.needsUpdate = true;
       },
-      // onProgress
-      undefined,
-      // onError – fallback to procedural
-      () => {
-        _imageTexture = null;
-      },
     );
 
     // Rotate 90° for horizontal lamellen

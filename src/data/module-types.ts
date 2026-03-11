@@ -59,7 +59,11 @@ export const MODULE_DEFINITIONS: Record<string, ModuleDefinition> = {
     type: 'pergola',
     name: 'Pergola',
     description: 'Aluminium-Pergola mit konfigurierbarem Dach',
-    availableSizes: [[6, 4], [6, 6], [8, 6]],
+    availableSizes: [
+      [4,4],[5,4],[5,5],[6,4],[6,5],[6,6],[7,4],[7,5],[7,6],[7,7],
+      [8,4],[8,5],[8,6],[8,7],[8,8],[9,4],[9,5],[9,6],[9,7],[9,8],[9,9],
+      [10,4],[10,5],[10,6],[10,7],[10,8],[10,9],[10,10],
+    ],
     basePrice: 3200,
     color: '#6B7280',
     icon: '☀️',

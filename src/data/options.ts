@@ -24,8 +24,9 @@ export const MODULE_OPTIONS: OptionDefinition[] = [
     key: 'isolierung',
     label: 'Premium-Isolierung',
     type: 'checkbox',
-    defaultValue: false,
-    appliesTo: ['living'],
+    defaultValue: true,
+    appliesTo: ['sauna', 'ruhe', 'living', 'umkleide', 'sanitaer', 'technik'],
+    description: 'Vollständig isoliert inkl. Wände, Decken, Boden und Unterspannbahn',
   },
   {
     key: 'dachtyp',
@@ -61,4 +62,3 @@ export const MODULE_OPTIONS: OptionDefinition[] = [
 
 export const FENSTER_PRICE = 650;
 export const ISOLIERUNG_PRICE = 1200;
-export const PV_PRICE = 4500;

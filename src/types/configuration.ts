@@ -18,6 +18,8 @@ export interface OptionDefinition {
   defaultValue: string | boolean;
   /** Which module types this option applies to */
   appliesTo: string[];
+  /** Optional description text shown below the option label */
+  description?: string;
 }
 
 export interface ConfigSummary {

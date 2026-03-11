@@ -25,11 +25,16 @@ const HAUS_BLOCKS: { w: number; h: number }[] = [
   { w: 6, h: 6 },
 ];
 
-const PERGOLA_BLOCKS: { w: number; h: number }[] = [
-  { w: 6, h: 4 },
-  { w: 6, h: 6 },
-  { w: 8, h: 6 },
-];
+// Generate all pergola blocks from 2.0m to 5.0m (0.5m steps), width >= height (28 combos)
+const PERGOLA_BLOCKS: { w: number; h: number }[] = (() => {
+  const blocks: { w: number; h: number }[] = [];
+  for (let wm = 2.0; wm <= 5.0; wm += 0.5) {
+    for (let hm = 2.0; hm <= wm + 0.01; hm += 0.5) {
+      blocks.push({ w: Math.round(wm / GRID_CELL_SIZE), h: Math.round(hm / GRID_CELL_SIZE) });
+    }
+  }
+  return blocks;
+})();
 
 /** Snap a meter value to the nearest valid grid cell multiple */
 function snapToGrid(meters: number): number {
@@ -59,14 +64,23 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
     setter: (v: number) => void,
   ) => {
     const v = Number(value);
-    if (!isNaN(v) && v >= GRID_CELL_SIZE && v <= 9) {
+    const minM = category === 'pergola' ? 2.0 : GRID_CELL_SIZE;
+    const maxM = category === 'pergola' ? 5.0 : 9;
+    if (!isNaN(v) && v >= minM && v <= maxM) {
       setter(snapToGrid(v));
     }
   };
 
   const handleCategoryChange = (cat: Category) => {
     setCategory(cat);
-    onSelect(null); // Clear selection when switching
+    onSelect(null);
+    if (cat === 'pergola') {
+      setCustomWm(3.0);
+      setCustomHm(3.0);
+    } else {
+      setCustomWm(4.5);
+      setCustomHm(3.0);
+    }
   };
 
   return (
@@ -104,44 +118,77 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
         Klicken = platzieren · Ziehen = gezielt platzieren
       </p>
 
-      <div className="mt-2 flex gap-2">
-        {blocks.map(({ w, h }) => {
-          const isSelected =
-            selection?.width === w && selection?.height === h && selection?.type === blockType;
-          const sizeLabel = `${(w * GRID_CELL_SIZE).toFixed(1)}×${(h * GRID_CELL_SIZE).toFixed(1)}m`;
-          const isVertical = w < h;
-          const isLarge = w >= 6 && h >= 6;
+      {category === 'pergola' ? (
+        /* Compact grid for 28 pergola templates */
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {blocks.map(({ w, h }) => {
+            const isSelected =
+              selection?.width === w && selection?.height === h && selection?.type === blockType;
+            const wm = (w * GRID_CELL_SIZE).toFixed(1);
+            const hm = (h * GRID_CELL_SIZE).toFixed(1);
 
-          return (
-            <DraggableCatalogItem
-              key={`${w}x${h}`}
-              type={blockType}
-              width={w}
-              height={h}
-              isSelected={isSelected}
-              color={blockColor}
-              onClick={() =>
-                onSelect(
-                  isSelected ? null : { type: blockType, width: w, height: h },
-                )
-              }
-            >
-              {/* Proportional shape indicator */}
-              <div className="flex items-center justify-center mb-1">
-                <div
-                  className="rounded-[2px] transition-colors"
-                  style={{
-                    width: isLarge ? 24 : isVertical ? 12 : 24,
-                    height: isLarge ? 24 : isVertical ? 24 : 12,
-                    backgroundColor: isSelected ? blockColor : `${blockColor}40`,
-                  }}
-                />
-              </div>
-              <span className="block text-[11px] font-medium leading-tight">{sizeLabel}</span>
-            </DraggableCatalogItem>
-          );
-        })}
-      </div>
+            return (
+              <DraggableCatalogItem
+                key={`${w}x${h}`}
+                type={blockType}
+                width={w}
+                height={h}
+                isSelected={isSelected}
+                color={blockColor}
+                compact
+                onClick={() =>
+                  onSelect(
+                    isSelected ? null : { type: blockType, width: w, height: h },
+                  )
+                }
+              >
+                <span className="block text-[10px] font-medium leading-tight whitespace-nowrap">
+                  {wm}×{hm}
+                </span>
+              </DraggableCatalogItem>
+            );
+          })}
+        </div>
+      ) : (
+        /* Standard layout for house blocks */
+        <div className="mt-2 flex gap-2">
+          {blocks.map(({ w, h }) => {
+            const isSelected =
+              selection?.width === w && selection?.height === h && selection?.type === blockType;
+            const sizeLabel = `${(w * GRID_CELL_SIZE).toFixed(1)}×${(h * GRID_CELL_SIZE).toFixed(1)}m`;
+            const isVertical = w < h;
+            const isLarge = w >= 6 && h >= 6;
+
+            return (
+              <DraggableCatalogItem
+                key={`${w}x${h}`}
+                type={blockType}
+                width={w}
+                height={h}
+                isSelected={isSelected}
+                color={blockColor}
+                onClick={() =>
+                  onSelect(
+                    isSelected ? null : { type: blockType, width: w, height: h },
+                  )
+                }
+              >
+                <div className="flex items-center justify-center mb-1">
+                  <div
+                    className="rounded-[2px] transition-colors"
+                    style={{
+                      width: isLarge ? 24 : isVertical ? 12 : 24,
+                      height: isLarge ? 24 : isVertical ? 24 : 12,
+                      backgroundColor: isSelected ? blockColor : `${blockColor}40`,
+                    }}
+                  />
+                </div>
+                <span className="block text-[11px] font-medium leading-tight">{sizeLabel}</span>
+              </DraggableCatalogItem>
+            );
+          })}
+        </div>
+      )}
 
       {/* Custom size block */}
       <div className="mt-3 rounded-lg border border-dashed border-gray-300 p-2.5">
@@ -150,8 +197,8 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
           <label className="text-[11px] text-gray-500 shrink-0">B:</label>
           <input
             type="number"
-            min={GRID_CELL_SIZE}
-            max={9}
+            min={category === 'pergola' ? 2.0 : GRID_CELL_SIZE}
+            max={category === 'pergola' ? 5.0 : 9}
             step={GRID_CELL_SIZE}
             value={customWm}
             onChange={(e) => handleMeterInput(e.target.value, setCustomWm)}
@@ -161,8 +208,8 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
           <label className="text-[11px] text-gray-500 shrink-0 ml-2">T:</label>
           <input
             type="number"
-            min={GRID_CELL_SIZE}
-            max={9}
+            min={category === 'pergola' ? 2.0 : GRID_CELL_SIZE}
+            max={category === 'pergola' ? 5.0 : 9}
             step={GRID_CELL_SIZE}
             value={customHm}
             onChange={(e) => handleMeterInput(e.target.value, setCustomHm)}
@@ -188,6 +235,16 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
         >
           {customWm.toFixed(1)} × {customHm.toFixed(1)}m platzieren
         </button>
+        {category === 'pergola' && (
+          <a
+            href="https://www.modul-garten.de/pergolakonfigurator/index.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 block text-[10px] text-blue-500 hover:text-blue-700 hover:underline"
+          >
+            Modul-Garten.de – Neues Layout Demo ↗
+          </a>
+        )}
       </div>
 
       <p className="mt-2 text-[10px] text-gray-400 leading-snug">

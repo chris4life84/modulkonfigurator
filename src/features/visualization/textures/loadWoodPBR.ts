@@ -47,7 +47,7 @@ export function loadWoodPBR(): WoodPBRMaps | null {
     const loader = new THREE.TextureLoader();
 
     const diffuse = configureTex(
-      loader.load('/textures/pbr/wood/wall_color_2k.png', undefined, undefined, () => { _cached = null; }),
+      loader.load('/textures/pbr/wood/wall_color_2k.png'),
       true,
     );
     const roughness = configureTex(
@@ -123,9 +123,7 @@ export function loadWallPBR(): WoodPBRMaps | null {
     const loader = new THREE.TextureLoader();
 
     const diffuse = configureTex(
-      loader.load('/textures/pbr/wall/diff_2k.jpg', undefined, undefined, () => {
-        _wallCached = null;
-      }),
+      loader.load('/textures/pbr/wall/diff_2k.jpg'),
       true,
     );
     const roughness = configureTex(

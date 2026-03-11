@@ -2,9 +2,17 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import type { WallOpening } from '../../types/walls';
 import { createWoodTexture, loadWoodImageTexture } from './textures/createWoodTexture';
-import { loadWoodPBR, loadWallPBR, clonePBRMaps } from './textures/loadWoodPBR';
+import { loadWoodPBR, loadWallPBR, clonePBRMaps, type WoodPBRMaps } from './textures/loadWoodPBR';
 
 const WALL_THICKNESS = 0.13;
+
+// Shared edge material for box side faces at wall corners.
+// Color matched to PaintedWood007C average tone — blends with PBR wall texture.
+const wallEdgeMaterial = new THREE.MeshStandardMaterial({
+  color: '#C4B48A',
+  roughness: 0.8,
+  metalness: 0,
+});
 
 interface WoodWallProps {
   /** Wall width in meters */
@@ -124,6 +132,10 @@ export function WoodWall({
   const texture = imageTexture ?? canvasTexture;
   const isImageBased = !!imageTexture;
 
+  // Load PBR maps ONCE at wall level — shared by all segments for consistency
+  // PBR maps for both exterior AND interior walls (same wood texture)
+  const pbrMaps = useMemo(() => loadWoodPBR() ?? loadWallPBR(), []);
+
   // Clamp openings to match OpeningsGroup (15cm margin from wall edges)
   // This ensures the hole in the wall matches the rendered window/door frame
   const clampedOpenings = useMemo(() => {
@@ -155,6 +167,7 @@ export function WoodWall({
           texture={texture}
           isImageBased={isImageBased}
           isInterior={isInterior}
+          pbrMaps={pbrMaps}
         />
       ))}
     </group>
@@ -168,11 +181,11 @@ interface WallSegmentMeshProps {
   texture: THREE.Texture;
   isImageBased: boolean;
   isInterior?: boolean;
+  /** PBR maps passed from parent WoodWall for consistent texture across all segments */
+  pbrMaps: WoodPBRMaps | null;
 }
 
-function WallSegmentMesh({ segment, wallWidth, wallHeight, texture, isImageBased, isInterior = false }: WallSegmentMeshProps) {
-  // PBR textures: wall texture for exterior, wood for fallback
-  const pbrMaps = useMemo(() => isInterior ? null : (loadWoodPBR() ?? loadWallPBR()), [isInterior]);
+function WallSegmentMesh({ segment, wallWidth, wallHeight, texture, isImageBased, isInterior = false, pbrMaps }: WallSegmentMeshProps) {
 
   const clonedTexture = useMemo(() => {
     const t = texture.clone();
@@ -203,15 +216,6 @@ function WallSegmentMesh({ segment, wallWidth, wallHeight, texture, isImageBased
   // Interior walls: smooth flat color without wood texture
   // Exterior walls: PBR wood texture with diffuse + roughnessMap + bumpMap
   const faceMaterial = useMemo(() => {
-    // Interior walls: smooth, flat color (no wood pattern)
-    if (isInterior) {
-      return new THREE.MeshStandardMaterial({
-        color: '#E8E0D8',
-        roughness: 0.6,
-        metalness: 0,
-      });
-    }
-
     if (pbrMaps) {
       const scale = 1.0;
       const repeat: [number, number] = [segment.w / scale, segment.h / scale];
@@ -245,6 +249,13 @@ function WallSegmentMesh({ segment, wallWidth, wallHeight, texture, isImageBased
     });
   }, [pbrMaps, clonedTexture, segment, isInterior]);
 
+  // Multi-material: textured front/back faces, plain edge material for box sides.
+  // BoxGeometry groups: 0=+X, 1=-X, 2=+Y, 3=-Y, 4=+Z(front), 5=-Z(back)
+  const meshMaterial = useMemo((): THREE.Material | THREE.Material[] => {
+    const edge = wallEdgeMaterial;
+    return [edge, edge, edge, edge, faceMaterial, faceMaterial];
+  }, [faceMaterial, isInterior]);
+
   // Position segment center relative to wall origin (bottom-left)
   const cx = segment.x + segment.w / 2 - wallWidth / 2;
   const cy = segment.y + segment.h / 2;
@@ -254,7 +265,7 @@ function WallSegmentMesh({ segment, wallWidth, wallHeight, texture, isImageBased
       position={[cx, cy, 0]}
       castShadow
       receiveShadow
-      material={faceMaterial}
+      material={meshMaterial}
     >
       <boxGeometry args={[segment.w, segment.h, WALL_THICKNESS]} />
     </mesh>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import * as THREE from 'three';
 import { Html } from '@react-three/drei';
 import type { PlacedModule } from '../../types/grid';
 import { GRID_CELL_SIZE } from '../../types/grid';
@@ -8,15 +9,17 @@ import { getSharedWallSegments, getWallRanges, type SharedWallSegments } from '.
 import { WoodWall } from './WoodWall';
 import { RoofPanel } from './RoofPanel';
 import { SolarPanels3D } from './SolarPanels3D';
-// CornerPost removed for clean continuous plank aesthetic
 import { DoorOpening } from './DoorOpening';
 import { WindowOpening } from './WindowOpening';
 import { WOOD_COLORS } from './textures/createWoodTexture';
+import { loadWoodPBR, loadWallPBR, clonePBRMaps } from './textures/loadWoodPBR';
 
 const OUTER_HEIGHT = 2.5;
 const WALL_THICKNESS = 0.13;
 const FLOOR_THICKNESS = 0.08; // 8cm visible ledge ("Absatz")
 const SUPPORT_HEIGHT = 0.10; // 10cm aluminum support posts – module floats slightly
+const CEILING_HEIGHT = OUTER_HEIGHT - 0.05;  // 2.45m — just below roof underside
+const CEILING_THICKNESS = 0.02; // 2cm panel
 
 /** Compute positions for aluminum support posts under a module */
 function getAluminumSupportPositions(widthM: number, depthM: number): [number, number][] {
@@ -120,6 +123,33 @@ export function Module3D({ module: m, allModules, color, label, selected, onClic
     }
     for (let dy = 0; dy < m.height; dy++) {
       if (pergolaCells.has(`${m.gridX + m.width},${m.gridY + dy}`)) { sides.right = true; break; }
+    }
+    return sides;
+  }, [m.id, m.gridX, m.gridY, m.width, m.height, allModules]);
+
+  // Detect which sides have an adjacent non-pergola module — for PV group layout
+  const pvAdjacentSides = useMemo(() => {
+    const sides = { front: false, back: false, left: false, right: false };
+    const nonPergolaCells = new Set<string>();
+    for (const other of allModules) {
+      if (other.id === m.id || other.type === 'pergola') continue;
+      for (let dx = 0; dx < other.width; dx++) {
+        for (let dy = 0; dy < other.height; dy++) {
+          nonPergolaCells.add(`${other.gridX + dx},${other.gridY + dy}`);
+        }
+      }
+    }
+    for (let dx = 0; dx < m.width; dx++) {
+      if (nonPergolaCells.has(`${m.gridX + dx},${m.gridY + m.height}`)) { sides.front = true; break; }
+    }
+    for (let dx = 0; dx < m.width; dx++) {
+      if (nonPergolaCells.has(`${m.gridX + dx},${m.gridY - 1}`)) { sides.back = true; break; }
+    }
+    for (let dy = 0; dy < m.height; dy++) {
+      if (nonPergolaCells.has(`${m.gridX - 1},${m.gridY + dy}`)) { sides.left = true; break; }
+    }
+    for (let dy = 0; dy < m.height; dy++) {
+      if (nonPergolaCells.has(`${m.gridX + m.width},${m.gridY + dy}`)) { sides.right = true; break; }
     }
     return sides;
   }, [m.id, m.gridX, m.gridY, m.width, m.height, allModules]);
@@ -245,6 +275,21 @@ export function Module3D({ module: m, allModules, color, label, selected, onClic
           moduleWidth={widthM}
           moduleDepth={depthM}
           roofY={OUTER_HEIGHT}
+          panelCount={typeof m.options.pv_panel_count === 'number' ? m.options.pv_panel_count : undefined}
+          adjacentFront={pvAdjacentSides.front}
+          adjacentBack={pvAdjacentSides.back}
+          adjacentLeft={pvAdjacentSides.left}
+          adjacentRight={pvAdjacentSides.right}
+          moduleAbsX={m.gridX * GRID_CELL_SIZE}
+          moduleAbsZ={m.gridY * GRID_CELL_SIZE}
+        />
+      )}
+
+      {/* Ceiling panel – hides roof structure from interior, same wood texture as walls */}
+      {m.type !== 'pergola' && (
+        <CeilingPanel
+          width={widthM - WALL_THICKNESS * 2}
+          depth={depthM - WALL_THICKNESS * 2}
         />
       )}
 
@@ -328,6 +373,43 @@ export function Module3D({ module: m, allModules, color, label, selected, onClic
 
       </group>{/* Close elevated module body group */}
     </group>
+  );
+}
+
+/** Ceiling panel with wood PBR texture (same as exterior walls) */
+function CeilingPanel({ width, depth }: { width: number; depth: number }) {
+  const pbrMaps = useMemo(() => loadWoodPBR() ?? loadWallPBR(), []);
+
+  const material = useMemo(() => {
+    if (pbrMaps) {
+      const scale = 1.0;
+      const repeat: [number, number] = [width / scale, depth / scale];
+      const offset: [number, number] = [0, 0];
+      const cloned = clonePBRMaps(pbrMaps, repeat, offset, 0);
+
+      const mat = new THREE.MeshStandardMaterial({
+        map: cloned.diffuse,
+        roughnessMap: cloned.roughness,
+        roughness: 1.0,
+        metalness: 0,
+      });
+      if (cloned.normal) {
+        mat.normalMap = cloned.normal;
+        mat.normalScale = new THREE.Vector2(0.8, 0.8);
+      }
+      return mat;
+    }
+    return new THREE.MeshStandardMaterial({ color: '#C4B48A', roughness: 0.8 });
+  }, [pbrMaps, width, depth]);
+
+  return (
+    <mesh
+      position={[0, CEILING_HEIGHT + CEILING_THICKNESS / 2, 0]}
+      receiveShadow
+      material={material}
+    >
+      <boxGeometry args={[width, CEILING_THICKNESS, depth]} />
+    </mesh>
   );
 }
 

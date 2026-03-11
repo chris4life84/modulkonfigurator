@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
+import { PV_PANEL_W, PV_PANEL_D, PV_MARGIN, PV_GAP } from '../../utils/pvCalculation';
 
 interface SolarPanels3DProps {
   /** Module width in meters */
@@ -8,46 +9,30 @@ interface SolarPanels3DProps {
   moduleDepth: number;
   /** Y position of the roof top surface */
   roofY: number;
+  /** If provided, limit rendered panels to this count (1 to maxPanels) */
+  panelCount?: number;
+  /** Adjacency: true if side touches another non-pergola module */
+  adjacentFront?: boolean;
+  adjacentBack?: boolean;
+  adjacentLeft?: boolean;
+  adjacentRight?: boolean;
+  /** Absolute position of module's top-left corner in world meters */
+  moduleAbsX?: number;
+  moduleAbsZ?: number;
 }
 
-// Panel dimensions (realistic residential PV panel)
-const PANEL_W = 1.0;   // Width of a single panel (m)
-const PANEL_D = 1.7;   // Depth of a single panel (m)
-const PANEL_H = 0.04;  // Thickness (m)
-const FRAME_T = 0.015; // Aluminium frame thickness (m)
+// Panel thickness
+const PANEL_H = 0.04;
+const FRAME_T = 0.015;
 
 // Layout
-const MARGIN = 0.20;   // Distance from roof edge (m)
-const GAP = 0.06;      // Gap between panels (m)
-const ROOF_THICKNESS = 0.10; // Must match RoofPanel
+const MARGIN = PV_MARGIN;
+const GAP = PV_GAP;
+const ROOF_THICKNESS = 0.10;
 
-// Shared geometries (created once, reused by all instances)
-const panelGeometry = new THREE.BoxGeometry(PANEL_W, PANEL_H, PANEL_D);
-
-// Frame geometry: thin strips on all 4 edges of a panel
-const frameParts = (() => {
-  const hw = PANEL_W / 2;
-  const hd = PANEL_D / 2;
-  const top = new THREE.BoxGeometry(PANEL_W + FRAME_T * 2, FRAME_T, FRAME_T);
-  const bottom = new THREE.BoxGeometry(PANEL_W + FRAME_T * 2, FRAME_T, FRAME_T);
-  const left = new THREE.BoxGeometry(FRAME_T, FRAME_T, PANEL_D);
-  const right = new THREE.BoxGeometry(FRAME_T, FRAME_T, PANEL_D);
-
-  // Position the frame strips relative to panel center
-  top.translate(0, PANEL_H / 2, -hd - FRAME_T / 2);
-  bottom.translate(0, PANEL_H / 2, hd + FRAME_T / 2);
-  left.translate(-hw - FRAME_T / 2, PANEL_H / 2, 0);
-  right.translate(hw + FRAME_T / 2, PANEL_H / 2, 0);
-
-  const merged = new THREE.BufferGeometry();
-  const geo = new THREE.BufferGeometry();
-  geo.copy(top);
-  const geos = [top, bottom, left, right];
-
-  // Merge all frame pieces into one geometry
-  const mergedGeo = mergeBufferGeometries(geos);
-  return mergedGeo;
-})();
+// Mounting rails
+const RAIL_WIDTH = 0.03;
+const RAIL_DEPTH = 0.025;
 
 /** Simple merge of box geometries (all have same attribute layout) */
 function mergeBufferGeometries(geometries: THREE.BufferGeometry[]): THREE.BufferGeometry {
@@ -82,6 +67,31 @@ function mergeBufferGeometries(geometries: THREE.BufferGeometry[]): THREE.Buffer
   return merged;
 }
 
+/** Create panel + frame geometries for a given panel size */
+function createPanelGeometries(pw: number, pd: number) {
+  const panelGeo = new THREE.BoxGeometry(pw, PANEL_H, pd);
+
+  const hw = pw / 2;
+  const hd = pd / 2;
+  const top = new THREE.BoxGeometry(pw + FRAME_T * 2, FRAME_T, FRAME_T);
+  const bottom = new THREE.BoxGeometry(pw + FRAME_T * 2, FRAME_T, FRAME_T);
+  const left = new THREE.BoxGeometry(FRAME_T, FRAME_T, pd);
+  const right = new THREE.BoxGeometry(FRAME_T, FRAME_T, pd);
+
+  top.translate(0, PANEL_H / 2, -hd - FRAME_T / 2);
+  bottom.translate(0, PANEL_H / 2, hd + FRAME_T / 2);
+  left.translate(-hw - FRAME_T / 2, PANEL_H / 2, 0);
+  right.translate(hw + FRAME_T / 2, PANEL_H / 2, 0);
+
+  const frameGeo = mergeBufferGeometries([top, bottom, left, right]);
+
+  return { panelGeo, frameGeo };
+}
+
+// Pre-create geometries for both orientations (reused across all instances)
+const normalGeos = createPanelGeometries(PV_PANEL_W, PV_PANEL_D);
+const rotatedGeos = createPanelGeometries(PV_PANEL_D, PV_PANEL_W);
+
 // Shared materials
 const panelMaterial = new THREE.MeshStandardMaterial({
   color: '#1a2744',
@@ -95,51 +105,147 @@ const frameMaterial = new THREE.MeshStandardMaterial({
   metalness: 0.7,
 });
 
+const railMaterial = new THREE.MeshStandardMaterial({
+  color: '#B0B0B0',
+  roughness: 0.35,
+  metalness: 0.8,
+});
+
 /**
  * Renders a grid of photovoltaic panels on top of a module roof.
- * Automatically calculates how many panels fit based on roof dimensions.
+ * Uses a global grid alignment so panels line up across adjacent modules.
+ * Removes margins on shared sides for efficient use of combined roof space.
  */
-export function SolarPanels3D({ moduleWidth, moduleDepth, roofY }: SolarPanels3DProps) {
-  const panelPositions = useMemo(() => {
-    const availW = moduleWidth - MARGIN * 2;
-    const availD = moduleDepth - MARGIN * 2;
+export function SolarPanels3D({
+  moduleWidth, moduleDepth, roofY, panelCount,
+  adjacentFront = false, adjacentBack = false,
+  adjacentLeft = false, adjacentRight = false,
+  moduleAbsX = 0, moduleAbsZ = 0,
+}: SolarPanels3DProps) {
+  const layout = useMemo(() => {
+    // Per-side margins: 0 on shared sides, MARGIN on outer edges
+    const mLeft = adjacentLeft ? 0 : MARGIN;
+    const mRight = adjacentRight ? 0 : MARGIN;
+    const mBack = adjacentBack ? 0 : MARGIN;
+    const mFront = adjacentFront ? 0 : MARGIN;
 
-    const cols = Math.floor((availW + GAP) / (PANEL_W + GAP));
-    const rows = Math.floor((availD + GAP) / (PANEL_D + GAP));
+    const availW = moduleWidth - mLeft - mRight;
+    const availD = moduleDepth - mBack - mFront;
 
-    if (cols <= 0 || rows <= 0) return [];
+    if (availW < 0.5 || availD < 0.5) return null;
 
-    // Center the panel grid on the roof
-    const gridW = cols * PANEL_W + (cols - 1) * GAP;
-    const gridD = rows * PANEL_D + (rows - 1) * GAP;
-    const startX = -gridW / 2 + PANEL_W / 2;
-    const startZ = -gridD / 2 + PANEL_D / 2;
+    // Try both orientations, pick better one
+    const colsN = Math.max(0, Math.floor((availW + GAP) / (PV_PANEL_W + GAP)));
+    const rowsN = Math.max(0, Math.floor((availD + GAP) / (PV_PANEL_D + GAP)));
+    const normalCount = colsN * rowsN;
+
+    const colsR = Math.max(0, Math.floor((availW + GAP) / (PV_PANEL_D + GAP)));
+    const rowsR = Math.max(0, Math.floor((availD + GAP) / (PV_PANEL_W + GAP)));
+    const rotatedCount = colsR * rowsR;
+
+    const rotated = rotatedCount > normalCount;
+    const effW = rotated ? PV_PANEL_D : PV_PANEL_W;
+    const effD = rotated ? PV_PANEL_W : PV_PANEL_D;
+
+    // GLOBAL GRID ALIGNMENT:
+    // Panels are placed on a global grid (absolute world coordinates).
+    // Each module renders only panels that fit entirely within its usable roof area.
+    const stepW = effW + GAP;
+    const stepD = effD + GAP;
+
+    // Usable area in absolute coordinates
+    const absLeft = moduleAbsX + mLeft;
+    const absRight = moduleAbsX + moduleWidth - mRight;
+    const absBack = moduleAbsZ + mBack;
+    const absFront = moduleAbsZ + moduleDepth - mFront;
+
+    // Module center in absolute coordinates (for converting to local coords)
+    const moduleCenterX = moduleAbsX + moduleWidth / 2;
+    const moduleCenterZ = moduleAbsZ + moduleDepth / 2;
+
+    // Find panel positions from the global grid that fit within this module's area
+    // Global grid: panel center at (c * stepW + effW/2, r * stepD + effD/2)
+    // with a small global offset (MARGIN) so panels don't start at world origin edge
+    const globalOffsetX = MARGIN;
+    const globalOffsetZ = MARGIN;
+
+    const firstCol = Math.max(0, Math.floor((absLeft - globalOffsetX) / stepW));
+    const firstRow = Math.max(0, Math.floor((absBack - globalOffsetZ) / stepD));
 
     const positions: [number, number][] = [];
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        positions.push([
-          startX + c * (PANEL_W + GAP),
-          startZ + r * (PANEL_D + GAP),
-        ]);
+    for (let c = firstCol; c < 1000; c++) {
+      const panelCenterX = globalOffsetX + c * stepW + effW / 2;
+      const panelLeft = panelCenterX - effW / 2;
+      const panelRight = panelCenterX + effW / 2;
+      if (panelLeft < absLeft - 0.01) continue;
+      if (panelRight > absRight + 0.01) break;
+
+      for (let r = firstRow; r < 1000; r++) {
+        const panelCenterZ = globalOffsetZ + r * stepD + effD / 2;
+        const panelBack = panelCenterZ - effD / 2;
+        const panelFront = panelCenterZ + effD / 2;
+        if (panelBack < absBack - 0.01) continue;
+        if (panelFront > absFront + 0.01) break;
+
+        // Convert to module-local coordinates
+        const localX = panelCenterX - moduleCenterX;
+        const localZ = panelCenterZ - moduleCenterZ;
+        positions.push([localX, localZ]);
       }
     }
-    return positions;
-  }, [moduleWidth, moduleDepth]);
 
-  if (panelPositions.length === 0) return null;
+    if (positions.length === 0) return null;
 
-  // Panels sit on top of the roof slab
-  const panelY = roofY + ROOF_THICKNESS + PANEL_H / 2 + 0.005;
+    // Limit panels if panelCount is specified
+    const limited = panelCount !== undefined && panelCount < positions.length
+      ? positions.slice(0, Math.max(1, panelCount))
+      : positions;
+
+    // Compute rail X positions (2 rails per column, running in Z direction)
+    // Use unique X positions from the panel positions
+    const panelXSet = new Set<number>();
+    for (const [px] of limited) panelXSet.add(Math.round(px * 1000) / 1000);
+    const railXPositions: number[] = [];
+    for (const px of panelXSet) {
+      railXPositions.push(px - effW * 0.3);
+      railXPositions.push(px + effW * 0.3);
+    }
+
+    // Rail Z extent: from min to max panel Z position
+    const zValues = limited.map(([, pz]) => pz);
+    const minZ = Math.min(...zValues) - effD / 2;
+    const maxZ = Math.max(...zValues) + effD / 2;
+    const railLength = maxZ - minZ + 0.08;
+    const railCenterZ = (minZ + maxZ) / 2;
+
+    return { positions: limited, rotated, railXPositions, railLength, railCenterZ };
+  }, [moduleWidth, moduleDepth, panelCount,
+      adjacentFront, adjacentBack, adjacentLeft, adjacentRight,
+      moduleAbsX, moduleAbsZ]);
+
+  if (!layout || layout.positions.length === 0) return null;
+
+  const { positions, rotated, railXPositions, railLength, railCenterZ } = layout;
+  const geos = rotated ? rotatedGeos : normalGeos;
+
+  // Panels float above roof on mounting rails
+  const railY = roofY + ROOF_THICKNESS + RAIL_DEPTH / 2 + 0.002;
+  const panelY = roofY + ROOF_THICKNESS + RAIL_DEPTH + PANEL_H / 2 + 0.003;
 
   return (
     <group>
-      {panelPositions.map(([px, pz], i) => (
+      {/* Mounting rails – aluminum tracks running in Z direction */}
+      {railXPositions.map((rx, i) => (
+        <mesh key={`rail-${i}`} position={[rx, railY, railCenterZ]} material={railMaterial} castShadow>
+          <boxGeometry args={[RAIL_WIDTH, RAIL_DEPTH, railLength]} />
+        </mesh>
+      ))}
+
+      {/* Solar panels on top of rails */}
+      {positions.map(([px, pz], i) => (
         <group key={i} position={[px, panelY, pz]}>
-          {/* Solar cell surface */}
-          <mesh geometry={panelGeometry} material={panelMaterial} castShadow receiveShadow />
-          {/* Aluminium frame */}
-          <mesh geometry={frameParts} material={frameMaterial} />
+          <mesh geometry={geos.panelGeo} material={panelMaterial} castShadow receiveShadow />
+          <mesh geometry={geos.frameGeo} material={frameMaterial} />
         </group>
       ))}
     </group>

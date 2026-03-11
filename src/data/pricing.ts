@@ -1,6 +1,8 @@
 import type { PlacedModule } from '../types/grid';
+import { GRID_CELL_SIZE } from '../types/grid';
 import { MODULE_DEFINITIONS } from './module-types';
-import { MODULE_OPTIONS, FENSTER_PRICE, ISOLIERUNG_PRICE, PV_PRICE } from './options';
+import { MODULE_OPTIONS, FENSTER_PRICE, ISOLIERUNG_PRICE } from './options';
+import { calculatePVPrice, calculateMaxPanels } from '../utils/pvCalculation';
 
 export function calculateModulePrice(module: PlacedModule): number {
   const def = MODULE_DEFINITIONS[module.type];
@@ -25,7 +27,16 @@ export function calculateModulePrice(module: PlacedModule): number {
       price += ISOLIERUNG_PRICE;
     }
     if (opt.key === 'pv_panels' && value === true) {
-      price += PV_PRICE;
+      const panelCount = module.options.pv_panel_count;
+      if (typeof panelCount === 'number' && panelCount > 0) {
+        price += calculatePVPrice(panelCount);
+      } else {
+        // Fallback: calculate max panels for this module's roof
+        const widthM = module.width * GRID_CELL_SIZE;
+        const depthM = module.height * GRID_CELL_SIZE;
+        const { maxPanels } = calculateMaxPanels(widthM, depthM);
+        price += calculatePVPrice(maxPanels);
+      }
     }
   }
 

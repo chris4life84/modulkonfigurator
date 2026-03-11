@@ -65,6 +65,7 @@ export function VisualizationContainer({
             modules={modules}
             selectedModuleId={selectedModuleId}
             onModuleClick={interactive ? onModuleClick : undefined}
+            onBackgroundClick={interactive ? onBackgroundClick : undefined}
           />
         </Suspense>
       ) : (

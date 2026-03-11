@@ -346,23 +346,24 @@ export function Pergola3D({ module: m, allModules, color, label, selected, onCli
         )}
 
         {/* ── EPDM roof membrane ── */}
+        {/* EPDM membrane covers the full beam frame + overhang (like a real membrane) */}
         {roofType === 'epdm' && (
           <group>
-            {/* Support slats */}
+            {/* Support slats (span beam frame width) */}
             {slats.filter((_, i) => i % 3 === 0 || i === slats.length - 1).map((sz, i) => (
-              <mesh key={`eslat-${i}`} position={[roofXCenter, slatTop + SLAT_H / 2, sz]} castShadow>
-                <boxGeometry args={[roofWidth + 0.04, SLAT_H, SLAT_W]} />
+              <mesh key={`eslat-${i}`} position={[beamXCenter, slatTop + SLAT_H / 2, sz]} castShadow>
+                <boxGeometry args={[beamXWidth + BEAM_W + 0.04, SLAT_H, SLAT_W]} />
                 <meshStandardMaterial color="#484848" roughness={0.35} metalness={0.7} />
               </mesh>
             ))}
-            {/* EPDM membrane */}
+            {/* EPDM membrane – covers full beam frame + 3cm overhang per side */}
             <mesh
-              position={[roofXCenter, slatTop + SLAT_H + 0.003, roofZCenter]}
+              position={[beamXCenter, slatTop + SLAT_H + 0.003, longBeamCenterZ]}
               material={epdmMaterial}
               receiveShadow
               castShadow
             >
-              <boxGeometry args={[roofWidth + 0.02, 0.006, roofDepth + 0.02]} />
+              <boxGeometry args={[beamXWidth + BEAM_W + 0.06, 0.006, longBeamDepth + 0.06]} />
             </mesh>
           </group>
         )}

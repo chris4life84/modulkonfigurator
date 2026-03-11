@@ -15,7 +15,7 @@ export interface PlacedModule {
   width: number;
   /** Height in grid cells (e.g. 3 = 1.5m, 6 = 3.0m at 0.5m cell size) */
   height: number;
-  options: Record<string, string | boolean>;
+  options: Record<string, string | boolean | number>;
   /** Wall configuration for doors/windows. If undefined, defaults are used. */
   walls?: WallConfig;
 }

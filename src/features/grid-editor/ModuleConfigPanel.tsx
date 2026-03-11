@@ -4,6 +4,7 @@ import { MODULE_OPTIONS } from '../../data/options';
 import { MODULE_DEFINITIONS } from '../../data/module-types';
 import { GRID_CELL_SIZE } from '../../types/grid';
 import { canResize } from '../../utils/grid';
+import { calculateMaxPanels, calculateKWp, calculatePVPrice } from '../../utils/pvCalculation';
 import { OptionField } from '../options/OptionField';
 import { WallConfigurator } from '../options/WallConfigurator';
 import { t } from '../../utils/i18n';
@@ -72,6 +73,44 @@ export function ModuleConfigPanel({ moduleId }: ModuleConfigPanelProps) {
               />
             ))
           )}
+
+          {/* PV Panel Configuration (shown when pv_panels is enabled) */}
+          {module.options.pv_panels === true && module.type !== 'pergola' && (() => {
+            const widthM = module.width * GRID_CELL_SIZE;
+            const depthM = module.height * GRID_CELL_SIZE;
+            const { maxPanels } = calculateMaxPanels(widthM, depthM);
+            if (maxPanels <= 0) return null;
+
+            const rawCount = module.options.pv_panel_count;
+            const panelCount = typeof rawCount === 'number'
+              ? Math.min(Math.max(1, rawCount), maxPanels)
+              : maxPanels;
+            const kwp = calculateKWp(panelCount);
+            const pvPrice = calculatePVPrice(panelCount);
+
+            return (
+              <div className="rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-700">PV-Module</span>
+                  <span className="text-[11px] text-gray-500">
+                    {panelCount} Panels · {kwp.toFixed(1)} kWp · {pvPrice.toLocaleString('de-DE')} €
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={maxPanels}
+                  value={panelCount}
+                  onChange={(e) => setModuleOption(module.id, 'pv_panel_count', Number(e.target.value))}
+                  className="w-full h-1.5 accent-amber-500 cursor-pointer"
+                />
+                <div className="flex justify-between text-[10px] text-gray-400">
+                  <span>1 Panel ({calculateKWp(1).toFixed(1)} kWp)</span>
+                  <span>{maxPanels} Panels (max)</span>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Pergola dimension controls */}
           {module.type === 'pergola' && (

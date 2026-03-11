@@ -9,6 +9,8 @@ interface DraggableCatalogItemProps {
   color: string;
   onClick: () => void;
   children: React.ReactNode;
+  /** Use compact layout (smaller padding, no flex-1) */
+  compact?: boolean;
 }
 
 export function DraggableCatalogItem({
@@ -19,6 +21,7 @@ export function DraggableCatalogItem({
   color,
   onClick,
   children,
+  compact,
 }: DraggableCatalogItemProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `catalog-${type}-${width}x${height}`,
@@ -31,7 +34,7 @@ export function DraggableCatalogItem({
       {...listeners}
       {...attributes}
       onClick={onClick}
-      className={`flex-1 min-w-0 rounded-lg border-2 px-2 py-2 text-center transition-all touch-manipulation
+      className={`${compact ? 'px-1.5 py-1 rounded-md border' : 'flex-1 min-w-0 rounded-lg border-2 px-2 py-2'} text-center transition-all touch-manipulation
         ${isDragging ? 'opacity-50 scale-95' : ''}
         ${
           isSelected

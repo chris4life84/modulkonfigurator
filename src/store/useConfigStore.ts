@@ -14,7 +14,7 @@ interface ConfigState {
   rotateModule: (id: string) => void;
   moveModule: (id: string, newX: number, newY: number) => void;
   resizeModule: (id: string, newWidth: number, newHeight: number) => void;
-  setModuleOption: (moduleId: string, key: string, value: string | boolean) => void;
+  setModuleOption: (moduleId: string, key: string, value: string | boolean | number) => void;
   setModuleWalls: (moduleId: string, walls: WallConfig) => void;
   reset: () => void;
 }
@@ -85,7 +85,7 @@ export const useConfigStore = create<ConfigState>()(
         }));
       },
 
-      setModuleOption: (moduleId: string, key: string, value: string | boolean) => {
+      setModuleOption: (moduleId: string, key: string, value: string | boolean | number) => {
         set((state) => ({
           modules: state.modules.map((m) => {
             if (m.id !== moduleId) return m;

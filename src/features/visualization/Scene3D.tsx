@@ -16,6 +16,7 @@ interface Scene3DProps {
   modules: PlacedModule[];
   selectedModuleId?: string | null;
   onModuleClick?: (id: string) => void;
+  onBackgroundClick?: () => void;
 }
 
 function computeCamera(modules: PlacedModule[]) {
@@ -31,7 +32,7 @@ function computeCamera(modules: PlacedModule[]) {
   };
 }
 
-export function Scene3D({ modules, selectedModuleId, onModuleClick }: Scene3DProps) {
+export function Scene3D({ modules, selectedModuleId, onModuleClick, onBackgroundClick }: Scene3DProps) {
   const camera = useMemo(() => computeCamera(modules), [modules]);
   const shadowCenter = useMemo(() => {
     if (modules.length === 0) return [0, 0, 0] as [number, number, number];
@@ -53,7 +54,7 @@ export function Scene3D({ modules, selectedModuleId, onModuleClick }: Scene3DPro
         toneMappingExposure: 1.5,
       }}
       onPointerMissed={() => {
-        /* deselect when clicking empty space */
+        onBackgroundClick?.();
       }}
     >
       <Suspense fallback={null}>
@@ -81,8 +82,7 @@ export function Scene3D({ modules, selectedModuleId, onModuleClick }: Scene3DPro
         {/* Modules */}
         {modules.map((m) => {
           const def = MODULE_DEFINITIONS[m.type];
-          const sharedProps = {
-            key: m.id,
+          const props = {
             module: m,
             allModules: modules,
             color: def?.color ?? '#9ca3af',
@@ -91,9 +91,9 @@ export function Scene3D({ modules, selectedModuleId, onModuleClick }: Scene3DPro
             onClick: onModuleClick ? () => onModuleClick(m.id) : undefined,
           };
           if (m.type === 'pergola') {
-            return <Pergola3D {...sharedProps} />;
+            return <Pergola3D key={m.id} {...props} />;
           }
-          return <Module3D {...sharedProps} />;
+          return <Module3D key={m.id} {...props} />;
         })}
 
         {/* Direction labels */}
