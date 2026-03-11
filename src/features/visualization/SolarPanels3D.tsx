@@ -113,14 +113,12 @@ const railMaterial = new THREE.MeshStandardMaterial({
 
 /**
  * Renders a grid of photovoltaic panels on top of a module roof.
- * Uses a global grid alignment so panels line up across adjacent modules.
- * Removes margins on shared sides for efficient use of combined roof space.
+ * Uses module-centered placement with per-side margin reduction for adjacent modules.
  */
 export function SolarPanels3D({
   moduleWidth, moduleDepth, roofY, panelCount,
   adjacentFront = false, adjacentBack = false,
   adjacentLeft = false, adjacentRight = false,
-  moduleAbsX = 0, moduleAbsZ = 0,
 }: SolarPanels3DProps) {
   const layout = useMemo(() => {
     // Per-side margins: 0 on shared sides, MARGIN on outer edges
@@ -144,53 +142,27 @@ export function SolarPanels3D({
     const rotatedCount = colsR * rowsR;
 
     const rotated = rotatedCount > normalCount;
+    const cols = rotated ? colsR : colsN;
+    const rows = rotated ? rowsR : rowsN;
     const effW = rotated ? PV_PANEL_D : PV_PANEL_W;
     const effD = rotated ? PV_PANEL_W : PV_PANEL_D;
 
-    // GLOBAL GRID ALIGNMENT:
-    // Panels are placed on a global grid (absolute world coordinates).
-    // Each module renders only panels that fit entirely within its usable roof area.
+    if (cols === 0 || rows === 0) return null;
+
+    // Center the panel grid within the usable area (module-local coordinates)
     const stepW = effW + GAP;
     const stepD = effD + GAP;
+    const gridW = cols * effW + (cols - 1) * GAP;
+    const gridD = rows * effD + (rows - 1) * GAP;
 
-    // Usable area in absolute coordinates
-    const absLeft = moduleAbsX + mLeft;
-    const absRight = moduleAbsX + moduleWidth - mRight;
-    const absBack = moduleAbsZ + mBack;
-    const absFront = moduleAbsZ + moduleDepth - mFront;
-
-    // Module center in absolute coordinates (for converting to local coords)
-    const moduleCenterX = moduleAbsX + moduleWidth / 2;
-    const moduleCenterZ = moduleAbsZ + moduleDepth / 2;
-
-    // Find panel positions from the global grid that fit within this module's area
-    // Global grid: panel center at (c * stepW + effW/2, r * stepD + effD/2)
-    // with a small global offset (MARGIN) so panels don't start at world origin edge
-    const globalOffsetX = MARGIN;
-    const globalOffsetZ = MARGIN;
-
-    const firstCol = Math.max(0, Math.floor((absLeft - globalOffsetX) / stepW));
-    const firstRow = Math.max(0, Math.floor((absBack - globalOffsetZ) / stepD));
+    // Start position: offset from module center
+    const startX = -moduleWidth / 2 + mLeft + (availW - gridW) / 2 + effW / 2;
+    const startZ = -moduleDepth / 2 + mBack + (availD - gridD) / 2 + effD / 2;
 
     const positions: [number, number][] = [];
-    for (let c = firstCol; c < 1000; c++) {
-      const panelCenterX = globalOffsetX + c * stepW + effW / 2;
-      const panelLeft = panelCenterX - effW / 2;
-      const panelRight = panelCenterX + effW / 2;
-      if (panelLeft < absLeft - 0.01) continue;
-      if (panelRight > absRight + 0.01) break;
-
-      for (let r = firstRow; r < 1000; r++) {
-        const panelCenterZ = globalOffsetZ + r * stepD + effD / 2;
-        const panelBack = panelCenterZ - effD / 2;
-        const panelFront = panelCenterZ + effD / 2;
-        if (panelBack < absBack - 0.01) continue;
-        if (panelFront > absFront + 0.01) break;
-
-        // Convert to module-local coordinates
-        const localX = panelCenterX - moduleCenterX;
-        const localZ = panelCenterZ - moduleCenterZ;
-        positions.push([localX, localZ]);
+    for (let c = 0; c < cols; c++) {
+      for (let r = 0; r < rows; r++) {
+        positions.push([startX + c * stepW, startZ + r * stepD]);
       }
     }
 
@@ -202,7 +174,6 @@ export function SolarPanels3D({
       : positions;
 
     // Compute rail X positions (2 rails per column, running in Z direction)
-    // Use unique X positions from the panel positions
     const panelXSet = new Set<number>();
     for (const [px] of limited) panelXSet.add(Math.round(px * 1000) / 1000);
     const railXPositions: number[] = [];
@@ -220,8 +191,7 @@ export function SolarPanels3D({
 
     return { positions: limited, rotated, railXPositions, railLength, railCenterZ };
   }, [moduleWidth, moduleDepth, panelCount,
-      adjacentFront, adjacentBack, adjacentLeft, adjacentRight,
-      moduleAbsX, moduleAbsZ]);
+      adjacentFront, adjacentBack, adjacentLeft, adjacentRight]);
 
   if (!layout || layout.positions.length === 0) return null;
 

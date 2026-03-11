@@ -18,7 +18,7 @@ const OUTER_HEIGHT = 2.5;
 const WALL_THICKNESS = 0.13;
 const FLOOR_THICKNESS = 0.08; // 8cm visible ledge ("Absatz")
 const SUPPORT_HEIGHT = 0.10; // 10cm aluminum support posts – module floats slightly
-const CEILING_HEIGHT = OUTER_HEIGHT - 0.05;  // 2.45m — just below roof underside
+const CEILING_HEIGHT = OUTER_HEIGHT - 0.15;  // 2.35m — hides roof structure from interior
 const CEILING_THICKNESS = 0.02; // 2cm panel
 
 /** Compute positions for aluminum support posts under a module */
@@ -288,8 +288,8 @@ export function Module3D({ module: m, allModules, color, label, selected, onClic
       {/* Ceiling panel – hides roof structure from interior, same wood texture as walls */}
       {m.type !== 'pergola' && (
         <CeilingPanel
-          width={widthM - WALL_THICKNESS * 2}
-          depth={depthM - WALL_THICKNESS * 2}
+          width={widthM}
+          depth={depthM}
         />
       )}
 
