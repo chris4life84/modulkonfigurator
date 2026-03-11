@@ -74,17 +74,25 @@ export function getValidPlacements(
   height: number,
 ): GridPosition[] {
   if (modules.length === 0) {
-    return [{ x: 0, y: 0 }];
+    // First module: offer positions around origin
+    const positions: GridPosition[] = [];
+    const pad = 8;
+    for (let x = -pad; x <= pad; x++) {
+      for (let y = -pad; y <= pad; y++) {
+        positions.push({ x, y });
+      }
+    }
+    return positions;
   }
 
   const bbox = getBoundingBox(modules);
   const positions: GridPosition[] = [];
 
-  // Search area: bounding box expanded by max module dimension
-  const searchPad = Math.max(width, height) + 1;
+  // Search area: bounding box expanded generously for free placement
+  const searchPad = Math.max(width, height) + 10;
   for (let x = bbox.minX - searchPad; x <= bbox.maxX + searchPad; x++) {
     for (let y = bbox.minY - searchPad; y <= bbox.maxY + searchPad; y++) {
-      if (!overlaps(modules, x, y, width, height) && sharesEdge(modules, x, y, width, height)) {
+      if (!overlaps(modules, x, y, width, height)) {
         positions.push({ x, y });
       }
     }
@@ -99,41 +107,9 @@ function isFreistehendPergola(m: PlacedModule): boolean {
 }
 
 /** Check if all modules form a connected group using BFS */
-export function isConnected(modules: PlacedModule[]): boolean {
-  // Freistehend pergolas are independent — exclude from connectivity check
-  const connectedModules = modules.filter((m) => !isFreistehendPergola(m));
-  if (connectedModules.length <= 1) return true;
-
-  // Build adjacency: which module indices touch which
-  const adjacency: Set<number>[] = connectedModules.map(() => new Set());
-
-  for (let i = 0; i < connectedModules.length; i++) {
-    const cellsI = getOccupiedCells(connectedModules[i]);
-    for (let j = i + 1; j < connectedModules.length; j++) {
-      const cellsJ = getOccupiedCells(connectedModules[j]);
-      if (modulesShareEdge(cellsI, cellsJ)) {
-        adjacency[i].add(j);
-        adjacency[j].add(i);
-      }
-    }
-  }
-
-  // BFS from module 0
-  const visited = new Set<number>();
-  const queue = [0];
-  visited.add(0);
-
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    for (const neighbor of adjacency[current]) {
-      if (!visited.has(neighbor)) {
-        visited.add(neighbor);
-        queue.push(neighbor);
-      }
-    }
-  }
-
-  return visited.size === connectedModules.length;
+export function isConnected(_modules: PlacedModule[]): boolean {
+  // Free placement: modules don't need to form a connected group
+  return true;
 }
 
 function modulesShareEdge(cellsA: GridPosition[], cellsB: GridPosition[]): boolean {
@@ -175,14 +151,11 @@ export function getValidMovePlacements(
 
   const bbox = getBoundingBox(modules);
   const positions: GridPosition[] = [];
-  // Larger search area for freistehend (can be placed further from building)
-  const searchPad = Math.max(width, height) + (skipSharesEdge ? 5 : 1);
+  const searchPad = Math.max(width, height) + 10;
 
   for (let x = bbox.minX - searchPad; x <= bbox.maxX + searchPad; x++) {
     for (let y = bbox.minY - searchPad; y <= bbox.maxY + searchPad; y++) {
-      const noOverlap = !overlaps(others, x, y, width, height);
-      const edgeOk = skipSharesEdge || sharesEdge(others, x, y, width, height);
-      if (noOverlap && edgeOk) {
+      if (!overlaps(others, x, y, width, height)) {
         positions.push({ x, y });
       }
     }
@@ -203,12 +176,7 @@ export function canRotate(modules: PlacedModule[], moduleId: string): boolean {
   // Check overlap with rotated dimensions at same position
   if (overlaps(others, mod.gridX, mod.gridY, newW, newH)) return false;
 
-  // Freistehend pergolas don't need to share an edge
-  if (!isFreistehendPergola(mod) && others.length > 0 && !sharesEdge(others, mod.gridX, mod.gridY, newW, newH)) return false;
-
-  const simulated = others.map((m) => ({ ...m }));
-  simulated.push({ ...mod, width: newW, height: newH });
-  return isConnected(simulated);
+  return true;
 }
 
 /** Check if a module can be resized to new dimensions (no overlap, stays connected) */
@@ -227,26 +195,12 @@ export function canResize(
   // Check overlap with new dimensions at same position
   if (overlaps(others, mod.gridX, mod.gridY, newWidth, newHeight)) return false;
 
-  // Freistehend pergolas don't need to share an edge
-  if (!isFreistehendPergola(mod) && others.length > 0 && !sharesEdge(others, mod.gridX, mod.gridY, newWidth, newHeight)) return false;
-
-  // Check full connectivity
-  const simulated = others.map((m) => ({ ...m }));
-  simulated.push({ ...mod, width: newWidth, height: newHeight });
-  return isConnected(simulated);
+  return true;
 }
 
 /** Check if removing a module would break connectivity */
 export function canRemove(modules: PlacedModule[], moduleId: string): boolean {
-  const mod = modules.find((m) => m.id === moduleId);
-  if (!mod) return false;
-
-  // Freistehend pergola: always removable (not part of connected group)
-  if (isFreistehendPergola(mod)) return true;
-
-  const remaining = modules.filter((m) => m.id !== moduleId);
-  if (remaining.length === 0) return false; // Cannot remove last module
-  return isConnected(remaining);
+  return modules.some((m) => m.id === moduleId);
 }
 
 /** Convert browser pixel coordinates to SVG grid coordinates */
@@ -297,7 +251,6 @@ export function isValidMovePosition(
   const others = modules.filter((m) => m.id !== moduleId);
   if (others.length === 0) return true;
   if (overlaps(others, newX, newY, mod.width, mod.height)) return false;
-  if (!sharesEdge(others, newX, newY, mod.width, mod.height)) return false;
   return true;
 }
 

@@ -21,6 +21,7 @@ import {
   getValidMovePlacements,
   screenToSvgGrid,
   findNearestValidPlacement,
+  canRemove,
 } from '../../utils/grid';
 import { selectTotalPrice } from '../../store/selectors';
 import { formatPrice } from '../../data/pricing';
@@ -164,16 +165,13 @@ export function GridEditorStep() {
             return;
           }
 
-          // Freistehend pergola: can move freely (skip sharesEdge constraint)
-          const isFreistehend = mod.type === 'pergola' && mod.options.freistehend === true;
-
-          // Precompute valid positions for this module
+          // Precompute valid positions for this module (free placement)
           const validPositions = getValidMovePlacements(
             modules,
             pending.moduleId,
             mod.width,
             mod.height,
-            isFreistehend,
+            true,
           );
           const validSet = new Set(validPositions.map((p) => `${p.x},${p.y}`));
 
@@ -268,7 +266,7 @@ export function GridEditorStep() {
     setDragItem(null);
   }, []);
 
-  // Escape key cancels any active mode
+  // Keyboard shortcuts: Escape cancels, Delete/Backspace removes selected module
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -278,10 +276,18 @@ export function GridEditorStep() {
         setGridDrag(null);
         pendingDragRef.current = null;
       }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedModuleId) {
+        // Don't delete when typing in an input
+        if ((e.target as HTMLElement)?.tagName === 'INPUT' || (e.target as HTMLElement)?.tagName === 'TEXTAREA') return;
+        if (canRemove(modules, selectedModuleId)) {
+          removeModule(selectedModuleId);
+          setSelectedModuleId(null);
+        }
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [selectedModuleId, modules, removeModule]);
 
   const handleBackgroundClick = useCallback(() => {
     setCatalogSelection(null);
@@ -392,6 +398,7 @@ export function GridEditorStep() {
               onModuleClick={handleModuleClick}
               onModulePointerDown={handleModulePointerDown}
               onRotate={(id) => rotateModule(id)}
+              onRemove={(id) => { removeModule(id); setSelectedModuleId(null); }}
               onBackgroundClick={handleBackgroundClick}
               svgRef={svgRef}
             />
@@ -408,16 +415,32 @@ export function GridEditorStep() {
 
             {/* Placement mode hint */}
             {catalogSelection && (
-              <div className="mt-2 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-                <span className="text-sm text-green-700">
-                  {t('editor.placement_hint')}
-                </span>
-                <button
-                  onClick={handleCancelPlacement}
-                  className="ml-auto rounded-md border border-green-300 bg-white px-2.5 py-1 text-xs font-medium text-green-700 hover:bg-green-100"
-                >
-                  {t('editor.cancel')}
-                </button>
+              <div className="mt-2 space-y-1.5">
+                <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+                  <span className="text-sm text-green-700">
+                    {t('editor.placement_hint')}
+                  </span>
+                  <button
+                    onClick={handleCancelPlacement}
+                    className="ml-auto rounded-md border border-green-300 bg-white px-2.5 py-1 text-xs font-medium text-green-700 hover:bg-green-100"
+                  >
+                    {t('editor.cancel')}
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5">
+                  <svg className="h-3.5 w-3.5 shrink-0 text-amber-500" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.75 4a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0V5zm.75 6.5a.75.75 0 100-1.5.75.75 0 000 1.5z" />
+                  </svg>
+                  <span className="text-xs text-amber-700">
+                    Verschieben, Drehen und Löschen erst nach Platzierung möglich.
+                  </span>
+                  <button
+                    onClick={handleCancelPlacement}
+                    className="ml-auto shrink-0 rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100"
+                  >
+                    Zur Bearbeitung
+                  </button>
+                </div>
               </div>
             )}
           </div>

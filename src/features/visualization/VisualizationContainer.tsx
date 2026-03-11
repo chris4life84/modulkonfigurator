@@ -27,6 +27,7 @@ interface VisualizationContainerProps {
   onModuleClick?: (id: string) => void;
   onModulePointerDown?: (id: string, e: React.PointerEvent) => void;
   onRotate?: (id: string) => void;
+  onRemove?: (id: string) => void;
   onBackgroundClick?: () => void;
   interactive?: boolean;
   svgRef?: React.Ref<SVGSVGElement>;
@@ -42,6 +43,7 @@ export function VisualizationContainer({
   onModuleClick,
   onModulePointerDown,
   onRotate,
+  onRemove,
   onBackgroundClick,
   interactive = true,
   svgRef,
@@ -80,6 +82,7 @@ export function VisualizationContainer({
           onModuleClick={onModuleClick}
           onModulePointerDown={onModulePointerDown}
           onRotate={onRotate}
+          onRemove={onRemove}
           onBackgroundClick={onBackgroundClick}
           interactive={interactive}
         />

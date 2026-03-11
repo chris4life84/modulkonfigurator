@@ -1,7 +1,7 @@
 import { useMemo, useRef, forwardRef } from 'react';
 import type { PlacedModule, GridPosition } from '../../types/grid';
 import { MODULE_DEFINITIONS } from '../../data/module-types';
-import { getBoundingBox, canRotate } from '../../utils/grid';
+import { getBoundingBox, canRotate, canRemove } from '../../utils/grid';
 import { SVGGrid } from './SVGGrid';
 import { SVGModule } from './SVGModule';
 import type { GridDragState } from './VisualizationContainer';
@@ -16,6 +16,7 @@ interface GridCanvasProps {
   onModuleClick?: (id: string) => void;
   onModulePointerDown?: (id: string, e: React.PointerEvent) => void;
   onRotate?: (id: string) => void;
+  onRemove?: (id: string) => void;
   onBackgroundClick?: () => void;
   interactive?: boolean;
 }
@@ -32,6 +33,7 @@ export const GridCanvas = forwardRef<SVGSVGElement, GridCanvasProps>(
       onModuleClick,
       onModulePointerDown,
       onRotate,
+      onRemove,
       onBackgroundClick,
       interactive = true,
     },
@@ -99,72 +101,61 @@ export const GridCanvas = forwardRef<SVGSVGElement, GridCanvasProps>(
           );
         })}
 
-        {/* Rotate icon on selected module */}
-        {selectedModuleId && !gridDrag && onRotate && (() => {
+        {/* Action icons on selected module (rotate + delete) */}
+        {selectedModuleId && !gridDrag && (() => {
           const mod = modules.find((m) => m.id === selectedModuleId);
           if (!mod) return null;
-          // Only show for non-square modules
-          const isSquare = mod.width === mod.height;
-          if (isSquare) return null;
 
-          const rotatable = canRotate(modules, selectedModuleId);
-          const r = 0.7; // icon circle radius
-          const cx = mod.gridX + mod.width - 0.15;
-          const cy = mod.gridY + 0.15;
-          const iconColor = rotatable ? '#1e293b' : '#b0b0b0';
+          const isSquare = mod.width === mod.height;
+          const rotatable = !isSquare && canRotate(modules, selectedModuleId);
+          const removable = canRemove(modules, selectedModuleId);
+          const r = 0.8; // icon circle radius
 
           return (
-            <g
-              className={rotatable ? 'cursor-pointer' : ''}
-              style={{ pointerEvents: rotatable ? 'auto' : 'none' }}
-              onPointerDown={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (rotatable) onRotate(selectedModuleId);
-              }}
-            >
-              {/* White circle background */}
-              <circle
-                cx={cx}
-                cy={cy}
-                r={r}
-                fill="white"
-                stroke={iconColor}
-                strokeWidth={0.1}
-                opacity={rotatable ? 0.95 : 0.55}
-              />
-              {/* Rotate arrow icon */}
-              <g
-                transform={`translate(${cx - 0.38}, ${cy - 0.38}) scale(${0.76 / 16})`}
-                opacity={rotatable ? 1 : 0.45}
-              >
-                <path
-                  d="M13 8a5 5 0 0 1-9.33 2.5"
-                  fill="none"
-                  stroke={iconColor}
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M3 8a5 5 0 0 1 9.33-2.5"
-                  fill="none"
-                  stroke={iconColor}
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                />
-                <polyline
-                  points="13,4 13,8 9,8"
-                  fill="none"
-                  stroke={iconColor}
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </g>
-            </g>
+            <>
+              {/* Rotate icon – top right */}
+              {onRotate && !isSquare && (() => {
+                const cx = mod.gridX + mod.width - 0.15;
+                const cy = mod.gridY + 0.15;
+                const iconColor = rotatable ? '#1e293b' : '#b0b0b0';
+                return (
+                  <g
+                    className={rotatable ? 'cursor-pointer' : ''}
+                    style={{ pointerEvents: rotatable ? 'auto' : 'none' }}
+                    onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                    onClick={(e) => { e.stopPropagation(); if (rotatable) onRotate(selectedModuleId); }}
+                  >
+                    <circle cx={cx} cy={cy} r={r} fill="white" stroke={iconColor} strokeWidth={0.1} opacity={rotatable ? 0.95 : 0.55} />
+                    <g transform={`translate(${cx - 0.42}, ${cy - 0.42}) scale(${0.84 / 16})`} opacity={rotatable ? 1 : 0.45}>
+                      <path d="M13 8a5 5 0 0 1-9.33 2.5" fill="none" stroke={iconColor} strokeWidth="1.8" strokeLinecap="round" />
+                      <path d="M3 8a5 5 0 0 1 9.33-2.5" fill="none" stroke={iconColor} strokeWidth="1.8" strokeLinecap="round" />
+                      <polyline points="13,4 13,8 9,8" fill="none" stroke={iconColor} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </g>
+                  </g>
+                );
+              })()}
+
+              {/* Delete icon – top left */}
+              {onRemove && removable && (() => {
+                const cx = mod.gridX + 0.15;
+                const cy = mod.gridY + 0.15;
+                return (
+                  <g
+                    className="cursor-pointer"
+                    style={{ pointerEvents: 'auto' }}
+                    onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                    onClick={(e) => { e.stopPropagation(); onRemove(selectedModuleId); }}
+                  >
+                    <circle cx={cx} cy={cy} r={r} fill="white" stroke="#ef4444" strokeWidth={0.1} opacity={0.95} />
+                    <g transform={`translate(${cx - 0.38}, ${cy - 0.42}) scale(${0.84 / 16})`}>
+                      <path d="M3 6h10" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+                      <path d="M5 6V4.5a1.5 1.5 0 0 1 1.5-1.5h3a1.5 1.5 0 0 1 1.5 1.5V6" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+                      <path d="M4.5 6l.5 8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1l.5-8" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+                    </g>
+                  </g>
+                );
+              })()}
+            </>
           );
         })()}
 
