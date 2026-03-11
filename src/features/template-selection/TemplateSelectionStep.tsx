@@ -32,8 +32,18 @@ export function TemplateSelectionStep() {
               </span>
             </div>
             <p className="text-sm text-gray-600">{tpl.description}</p>
-            <div className="mt-3 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 p-3">
-              <TemplateMiniPreview modules={tpl.modules} />
+            <div className="mt-3 overflow-hidden rounded-lg bg-gradient-to-br from-gray-50 to-gray-100">
+              {tpl.image ? (
+                <img
+                  src={tpl.image}
+                  alt={tpl.name}
+                  className="h-40 w-full object-cover"
+                />
+              ) : (
+                <div className="p-3">
+                  <TemplateMiniPreview modules={tpl.modules} />
+                </div>
+              )}
             </div>
           </Card>
         ))}
