@@ -127,11 +127,45 @@ const railMaterial = new THREE.MeshStandardMaterial({
   metalness: 0.8,
 });
 
-const strutMaterial = new THREE.MeshStandardMaterial({
-  color: '#A8A8A8',
+const bracketMaterial = new THREE.MeshStandardMaterial({
+  color: '#B0B0B0',
   roughness: 0.35,
-  metalness: 0.75,
+  metalness: 0.8,
 });
+
+/**
+ * Creates a right-triangle prism (wedge) for panel tilt brackets.
+ * Vertical back edge at Z=0, base extends toward +Z, hypotenuse on top.
+ * Width (thickness) along X axis.
+ */
+function createWedgeGeometry(height: number, baseLen: number, width: number): THREE.BufferGeometry {
+  const hw = width / 2;
+
+  const positions = new Float32Array([
+    // Right face (+X)
+     hw, 0,      0,        // 0: bottom-back
+     hw, height, 0,        // 1: top-back
+     hw, 0,      baseLen,  // 2: bottom-front
+    // Left face (-X)
+    -hw, 0,      0,        // 3: bottom-back
+    -hw, height, 0,        // 4: top-back
+    -hw, 0,      baseLen,  // 5: bottom-front
+  ]);
+
+  const indices = new Uint16Array([
+    0, 1, 2,        // Right triangle face
+    3, 5, 4,        // Left triangle face
+    0, 2, 5, 0, 5, 3,  // Bottom
+    3, 4, 1, 3, 1, 0,  // Back (vertical)
+    1, 4, 5, 1, 5, 2,  // Hypotenuse (slanted)
+  ]);
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geo.setIndex(new THREE.BufferAttribute(indices, 1));
+  geo.computeVertexNormals();
+  return geo;
+}
 
 /**
  * Renders a grid of photovoltaic panels on top of a module roof.
@@ -247,31 +281,29 @@ export function SolarPanels3D({
   // Panels: raised by yLift so tilted lowest edge just touches rail tops
   const panelY = roofY + ROOF_THICKNESS + RAIL_DEPTH + PANEL_H / 2 + 0.003 + yLift;
 
-  // --- Support strut geometry per panel ---
-  // The strut sits on the elevated (back) side of each tilted panel.
-  // It's an angled bar from rail top to the high edge of the panel.
-  // Height of the elevated side above rail top:
-  const strutHeight = 2 * yLift; // full elevation difference high-side vs low-side
-  const STRUT_THICKNESS = 0.015;
-  // Strut length (hypotenuse of the right triangle: base along roof + height)
-  const strutBaseLength = safeOrientation === 'E' || safeOrientation === 'W' ? effW : effD;
-  // The strut spans from low edge to high edge along the tilt direction
-  const strutLength = Math.sqrt(strutHeight * strutHeight + (strutBaseLength * 0.4) ** 2);
-  // Strut tilt angle (from vertical)
-  const strutAngle = Math.atan2(strutBaseLength * 0.4, strutHeight);
+  // --- Triangular wedge brackets (Aufständerung) per panel ---
+  // Each panel gets two small right-triangle brackets on the elevated (back) side,
+  // sitting on the rails. Like real solar mounting tilt frames.
+  const bracketHeight = 2 * yLift; // height difference high-side vs low-side
 
-  // Offset direction for the strut (placed on the high/back side of panel)
-  // Panel faces compassDir → high side is OPPOSITE direction
-  const strutOffsetX = safeOrientation === 'E' ? -effW * 0.3
-    : safeOrientation === 'W' ? effW * 0.3 : 0;
-  const strutOffsetZ = safeOrientation === 'S' ? -effD * 0.3
-    : safeOrientation === 'N' ? effD * 0.3 : 0;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const bracketGeo = useMemo(() => {
+    if (bracketHeight < 0.01) return null;
+    const baseLen = bracketHeight * 0.8; // horizontal foot length
+    return createWedgeGeometry(bracketHeight, baseLen, 0.018);
+  }, [bracketHeight]);
 
-  // Strut rotation to lean from rail toward the high edge
-  const strutRotX = safeOrientation === 'S' ? strutAngle
-    : safeOrientation === 'N' ? -strutAngle : 0;
-  const strutRotZ = safeOrientation === 'E' ? -strutAngle
-    : safeOrientation === 'W' ? strutAngle : 0;
+  // Bracket Y-rotation so that base extends from high side toward low side
+  const bracketRotY = safeOrientation === 'N' ? Math.PI
+    : safeOrientation === 'E' ? -Math.PI / 2
+    : safeOrientation === 'W' ? Math.PI / 2
+    : 0; // S default: vertical back at -Z, base toward +Z
+
+  // High-side offset from panel center (where bracket back edge sits)
+  const highSideX = safeOrientation === 'E' ? -effW * 0.38
+    : safeOrientation === 'W' ? effW * 0.38 : 0;
+  const highSideZ = safeOrientation === 'S' ? -effD * 0.38
+    : safeOrientation === 'N' ? effD * 0.38 : 0;
 
   return (
     <group>
@@ -290,22 +322,29 @@ export function SolarPanels3D({
         </group>
       ))}
 
-      {/* Support struts – angled braces on the elevated side of each panel */}
-      {strutHeight > 0.01 && positions.map(([px, pz], i) => (
-        <mesh
-          key={`strut-${i}`}
-          position={[
-            px + strutOffsetX,
-            railTopY + strutHeight / 2,
-            pz + strutOffsetZ,
-          ]}
-          rotation={[strutRotX, 0, strutRotZ]}
-          material={strutMaterial}
-          castShadow
-        >
-          <boxGeometry args={[STRUT_THICKNESS, strutLength, STRUT_THICKNESS]} />
-        </mesh>
-      ))}
+      {/* Triangular wedge brackets – two per panel on the elevated side */}
+      {bracketGeo && positions.map(([px, pz], i) => {
+        // Two brackets per panel, spread perpendicular to the tilt direction
+        const perpOffsets: [number, number][] =
+          safeOrientation === 'E' || safeOrientation === 'W'
+            ? [[0, -effD * 0.28], [0, effD * 0.28]]
+            : [[-effW * 0.28, 0], [effW * 0.28, 0]];
+
+        return perpOffsets.map(([ox, oz], j) => (
+          <mesh
+            key={`bracket-${i}-${j}`}
+            geometry={bracketGeo}
+            position={[
+              px + highSideX + ox,
+              railTopY,
+              pz + highSideZ + oz,
+            ]}
+            rotation={[0, bracketRotY, 0]}
+            material={bracketMaterial}
+            castShadow
+          />
+        ));
+      })}
     </group>
   );
 }
