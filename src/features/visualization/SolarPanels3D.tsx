@@ -2,19 +2,15 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import { PV_PANEL_W, PV_PANEL_D, PV_MARGIN, PV_GAP } from '../../utils/pvCalculation';
 
-/** Compass direction for PV panel orientation */
-export type PVOrientation = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
+/** Compass direction for PV panel orientation (cardinal only) */
+export type PVOrientation = 'N' | 'E' | 'S' | 'W';
 
 /** Compass heading in radians (clockwise from North = -Z) */
 const COMPASS_ANGLES: Record<PVOrientation, number> = {
   N: 0,
-  NE: Math.PI / 4,
   E: Math.PI / 2,
-  SE: (3 * Math.PI) / 4,
   S: Math.PI,
-  SW: (5 * Math.PI) / 4,
   W: (3 * Math.PI) / 2,
-  NW: (7 * Math.PI) / 4,
 };
 
 /** Fixed tilt angle in radians (~15°) */
@@ -131,6 +127,12 @@ const railMaterial = new THREE.MeshStandardMaterial({
   metalness: 0.8,
 });
 
+const strutMaterial = new THREE.MeshStandardMaterial({
+  color: '#A8A8A8',
+  roughness: 0.35,
+  metalness: 0.75,
+});
+
 /**
  * Renders a grid of photovoltaic panels on top of a module roof.
  * Uses module-centered placement with per-side margin reduction for adjacent modules.
@@ -225,7 +227,9 @@ export function SolarPanels3D({
 
   // Compute tilt rotation from compass direction
   // Coordinate system: N = -Z, E = +X, S = +Z, W = -X
-  const compassAngle = COMPASS_ANGLES[orientation];
+  // Fallback to S if orientation is not a valid cardinal direction (e.g. legacy diagonal values)
+  const safeOrientation: PVOrientation = orientation in COMPASS_ANGLES ? orientation : 'S';
+  const compassAngle = COMPASS_ANGLES[safeOrientation];
   const tiltX = -TILT_ANGLE * Math.cos(compassAngle);
   const tiltZ = -TILT_ANGLE * Math.sin(compassAngle);
 
@@ -239,8 +243,35 @@ export function SolarPanels3D({
 
   // Base Y positions (rails sit on roof, panels on top of rails)
   const railY = roofY + ROOF_THICKNESS + RAIL_DEPTH / 2 + 0.002;
+  const railTopY = roofY + ROOF_THICKNESS + RAIL_DEPTH + 0.002;
   // Panels: raised by yLift so tilted lowest edge just touches rail tops
   const panelY = roofY + ROOF_THICKNESS + RAIL_DEPTH + PANEL_H / 2 + 0.003 + yLift;
+
+  // --- Support strut geometry per panel ---
+  // The strut sits on the elevated (back) side of each tilted panel.
+  // It's an angled bar from rail top to the high edge of the panel.
+  // Height of the elevated side above rail top:
+  const strutHeight = 2 * yLift; // full elevation difference high-side vs low-side
+  const STRUT_THICKNESS = 0.015;
+  // Strut length (hypotenuse of the right triangle: base along roof + height)
+  const strutBaseLength = safeOrientation === 'E' || safeOrientation === 'W' ? effW : effD;
+  // The strut spans from low edge to high edge along the tilt direction
+  const strutLength = Math.sqrt(strutHeight * strutHeight + (strutBaseLength * 0.4) ** 2);
+  // Strut tilt angle (from vertical)
+  const strutAngle = Math.atan2(strutBaseLength * 0.4, strutHeight);
+
+  // Offset direction for the strut (placed on the high/back side of panel)
+  // Panel faces compassDir → high side is OPPOSITE direction
+  const strutOffsetX = safeOrientation === 'E' ? -effW * 0.3
+    : safeOrientation === 'W' ? effW * 0.3 : 0;
+  const strutOffsetZ = safeOrientation === 'S' ? -effD * 0.3
+    : safeOrientation === 'N' ? effD * 0.3 : 0;
+
+  // Strut rotation to lean from rail toward the high edge
+  const strutRotX = safeOrientation === 'S' ? strutAngle
+    : safeOrientation === 'N' ? -strutAngle : 0;
+  const strutRotZ = safeOrientation === 'E' ? -strutAngle
+    : safeOrientation === 'W' ? strutAngle : 0;
 
   return (
     <group>
@@ -257,6 +288,23 @@ export function SolarPanels3D({
           <mesh geometry={geos.panelGeo} material={panelMaterial} castShadow receiveShadow />
           <mesh geometry={geos.frameGeo} material={frameMaterial} />
         </group>
+      ))}
+
+      {/* Support struts – angled braces on the elevated side of each panel */}
+      {strutHeight > 0.01 && positions.map(([px, pz], i) => (
+        <mesh
+          key={`strut-${i}`}
+          position={[
+            px + strutOffsetX,
+            railTopY + strutHeight / 2,
+            pz + strutOffsetZ,
+          ]}
+          rotation={[strutRotX, 0, strutRotZ]}
+          material={strutMaterial}
+          castShadow
+        >
+          <boxGeometry args={[STRUT_THICKNESS, strutLength, STRUT_THICKNESS]} />
+        </mesh>
       ))}
     </group>
   );

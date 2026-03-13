@@ -87,8 +87,10 @@ export function ModuleConfigPanel({ moduleId }: ModuleConfigPanelProps) {
               : maxPanels;
             const kwp = calculateKWp(panelCount);
             const pvPrice = calculatePVPrice(panelCount);
-            const currentOrientation = (typeof module.options.pv_orientation === 'string'
-              ? module.options.pv_orientation : 'S') as string;
+            const VALID_ORIENTATIONS = ['N', 'E', 'S', 'W'];
+            const rawOrientation = typeof module.options.pv_orientation === 'string'
+              ? module.options.pv_orientation : 'S';
+            const currentOrientation = VALID_ORIENTATIONS.includes(rawOrientation) ? rawOrientation : 'S';
 
             return (
               <div className="rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2.5 space-y-2">
@@ -185,53 +187,52 @@ export function ModuleConfigPanel({ moduleId }: ModuleConfigPanelProps) {
   );
 }
 
-// --- Compass direction picker for PV orientation ---
-const COMPASS_DIRECTIONS = [
-  { key: 'N', label: 'N', angle: 0 },
-  { key: 'NE', label: 'NO', angle: 45 },
-  { key: 'E', label: 'O', angle: 90 },
-  { key: 'SE', label: 'SO', angle: 135 },
-  { key: 'S', label: 'S', angle: 180 },
-  { key: 'SW', label: 'SW', angle: 225 },
-  { key: 'W', label: 'W', angle: 270 },
-  { key: 'NW', label: 'NW', angle: 315 },
+// --- Compass direction picker for PV orientation (cardinal only) ---
+const CARDINAL_DIRECTIONS = [
+  { key: 'N', label: 'N' },
+  { key: 'E', label: 'O' },
+  { key: 'S', label: 'S' },
+  { key: 'W', label: 'W' },
 ] as const;
 
 const DIRECTION_NAMES: Record<string, string> = {
-  N: 'Nord', NE: 'Nordost', E: 'Ost', SE: 'Südost',
-  S: 'Süd', SW: 'Südwest', W: 'West', NW: 'Nordwest',
+  N: 'Nord', E: 'Ost', S: 'Süd', W: 'West',
 };
 
 function CompassPicker({ value, onChange }: { value: string; onChange: (dir: string) => void }) {
-  // Compass layout: 3x3 grid with center dot
-  // Row 0: NW  N  NE
-  // Row 1: W   ·  E
-  // Row 2: SW  S  SE
-  const grid: (typeof COMPASS_DIRECTIONS[number] | null)[][] = [
-    [COMPASS_DIRECTIONS[7], COMPASS_DIRECTIONS[0], COMPASS_DIRECTIONS[1]],
-    [COMPASS_DIRECTIONS[6], null,                   COMPASS_DIRECTIONS[2]],
-    [COMPASS_DIRECTIONS[5], COMPASS_DIRECTIONS[4], COMPASS_DIRECTIONS[3]],
+  // Compass layout: 3x3 grid with only N/E/S/W + center dot
+  // Row 0:  ·  N  ·
+  // Row 1:  W  ·  E
+  // Row 2:  ·  S  ·
+  type DirEntry = { key: string; label: string } | null;
+  const grid: DirEntry[][] = [
+    [null, { key: 'N', label: 'N' }, null],
+    [{ key: 'W', label: 'W' }, null, { key: 'E', label: 'O' }],
+    [null, { key: 'S', label: 'S' }, null],
   ];
 
   return (
     <div className="pt-1">
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-xs font-medium text-gray-600">Ausrichtung</span>
-        <span className="text-[11px] text-gray-400">{DIRECTION_NAMES[value]} (15°)</span>
+        <span className="text-[11px] text-gray-400">{DIRECTION_NAMES[value] ?? value} (15°)</span>
       </div>
       <div className="inline-grid grid-cols-3 gap-0.5">
         {grid.map((row, ri) =>
           row.map((dir, ci) => {
             if (!dir) {
-              // Center cell: compass indicator
-              return (
-                <div key={`c-${ri}-${ci}`} className="w-8 h-8 flex items-center justify-center">
-                  <svg viewBox="0 0 16 16" className="w-4 h-4 text-gray-300">
-                    <circle cx="8" cy="8" r="2" fill="currentColor" />
-                    <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="0.8" />
-                  </svg>
-                </div>
-              );
+              // Empty corner cell or center compass indicator
+              if (ri === 1 && ci === 1) {
+                return (
+                  <div key={`c-${ri}-${ci}`} className="w-8 h-8 flex items-center justify-center">
+                    <svg viewBox="0 0 16 16" className="w-4 h-4 text-gray-300">
+                      <circle cx="8" cy="8" r="2" fill="currentColor" />
+                      <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="0.8" />
+                    </svg>
+                  </div>
+                );
+              }
+              return <div key={`e-${ri}-${ci}`} className="w-8 h-8" />;
             }
             const isActive = value === dir.key;
             return (
