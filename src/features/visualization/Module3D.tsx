@@ -511,6 +511,8 @@ function OpeningsGroup({
               width={item.opening.width}
               height={item.opening.height}
               position={[0, 0, 0]}
+              hingeSide={item.opening.hingeSide}
+              opensOutward={item.opening.opensOutward}
             />
           )}
           {item.opening.type === 'terrace-door' && (
@@ -519,6 +521,8 @@ function OpeningsGroup({
               height={item.opening.height}
               position={[0, 0, 0]}
               double
+              hingeSide={item.opening.hingeSide}
+              opensOutward={item.opening.opensOutward}
             />
           )}
           {item.opening.type === 'window' && (

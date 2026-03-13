@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import type { PlacedModule } from '../../types/grid';
 import { GRID_CELL_SIZE } from '../../types/grid';
 import type { WallConfig, WallSide, WallOpening } from '../../types/walls';
-import { getDefaultWallConfig } from '../../types/walls';
+import { getDefaultWallConfig, DOOR_SPECS, WINDOW_SPECS } from '../../types/walls';
 import { useConfigStore } from '../../store/useConfigStore';
 import { getSharedWalls } from '../../utils/walls';
 import { t } from '../../utils/i18n';
@@ -51,11 +51,11 @@ function createOpeningForState(
   }
   if (state === 'door') {
     const w = Math.min(1.0, maxW);
-    return [{ type: 'door', position: 0.5, width: w, height: 2.0, offsetY: 0 }];
+    return [{ type: 'door', position: 0.5, width: w, height: 2.0, offsetY: 0, hingeSide: 'left', opensOutward: true }];
   }
   // terrace-door
   const w = Math.min(2.0, maxW);
-  return [{ type: 'terrace-door', position: 0.5, width: w, height: 2.0, offsetY: 0 }];
+  return [{ type: 'terrace-door', position: 0.5, width: w, height: 2.0, offsetY: 0, hingeSide: 'left', opensOutward: true }];
 }
 
 const WALL_LABELS: Record<WallSide, string> = {
@@ -224,6 +224,23 @@ export function WallConfigurator({ module, allModules }: WallConfiguratorProps) 
     }
   };
 
+  const handleOpeningPropertyChange = (side: WallSide, prop: 'hingeSide' | 'opensOutward', value: string | boolean, isInterior = false) => {
+    if (isInterior) {
+      const openings = wallConfig.interiorWalls?.[side];
+      if (!openings || openings.length === 0) return;
+      const updated = openings.map((o) => ({ ...o, [prop]: value }));
+      setModuleWalls(module.id, {
+        ...wallConfig,
+        interiorWalls: { ...wallConfig.interiorWalls, [side]: updated },
+      });
+    } else {
+      const openings = wallConfig[side];
+      if (openings.length === 0) return;
+      const updated = openings.map((o) => ({ ...o, [prop]: value }));
+      setModuleWalls(module.id, { ...wallConfig, [side]: updated });
+    }
+  };
+
   // --- Render selected side controls ---
   const isShared = sharedWalls.has(selectedSide);
   const wallWidthM = getWallWidthM(selectedSide);
@@ -282,6 +299,7 @@ export function WallConfigurator({ module, allModules }: WallConfiguratorProps) 
           wallWidthM={wallWidthM}
           onStateChange={(state) => handleInteriorWallChange(selectedSide, state)}
           onDimensionChange={(dim, val) => handleDimensionChange(selectedSide, dim, val, true)}
+          onOpeningPropertyChange={(prop, val) => handleOpeningPropertyChange(selectedSide, prop, val, true)}
         />
       ) : (
         <ExteriorWallControls
@@ -291,6 +309,7 @@ export function WallConfigurator({ module, allModules }: WallConfiguratorProps) 
           wallWidthM={wallWidthM}
           onStateChange={(state) => handleWallChange(selectedSide, state)}
           onDimensionChange={(dim, val) => handleDimensionChange(selectedSide, dim, val)}
+          onOpeningPropertyChange={(prop, val) => handleOpeningPropertyChange(selectedSide, prop, val)}
         />
       )}
     </div>
@@ -305,6 +324,7 @@ function ExteriorWallControls({
   wallWidthM,
   onStateChange,
   onDimensionChange,
+  onOpeningPropertyChange,
 }: {
   side: WallSide;
   wallConfig: WallConfig;
@@ -312,9 +332,11 @@ function ExteriorWallControls({
   wallWidthM: number;
   onStateChange: (state: WallState) => void;
   onDimensionChange: (dim: 'width' | 'height' | 'offsetY', val: number) => void;
+  onOpeningPropertyChange: (prop: 'hingeSide' | 'opensOutward', val: string | boolean) => void;
 }) {
   const state = getWallState(wallConfig[side]);
   const opening = wallConfig[side][0];
+  const isDoor = state === 'door' || state === 'terrace-door';
 
   return (
     <div>
@@ -347,6 +369,18 @@ function ExteriorWallControls({
           onOffsetYChange={(v) => onDimensionChange('offsetY', v)}
         />
       )}
+
+      {isDoor && opening && (
+        <DoorDirectionControls
+          opening={opening}
+          onOpeningPropertyChange={onOpeningPropertyChange}
+        />
+      )}
+
+      {/* Material & glazing info */}
+      {state !== 'wall' && (
+        <MaterialInfo isDoor={isDoor} />
+      )}
     </div>
   );
 }
@@ -359,6 +393,7 @@ function InteriorWallControls({
   wallWidthM,
   onStateChange,
   onDimensionChange,
+  onOpeningPropertyChange,
 }: {
   side: WallSide;
   wallConfig: WallConfig;
@@ -366,9 +401,11 @@ function InteriorWallControls({
   wallWidthM: number;
   onStateChange: (state: InteriorState) => void;
   onDimensionChange: (dim: 'width' | 'height', val: number) => void;
+  onOpeningPropertyChange: (prop: 'hingeSide' | 'opensOutward', val: string | boolean) => void;
 }) {
   const intState = getInteriorState(wallConfig, side);
   const intOpening = wallConfig.interiorWalls?.[side]?.[0];
+  const isDoor = intState === 'door' || intState === 'terrace-door';
 
   return (
     <div>
@@ -397,6 +434,13 @@ function InteriorWallControls({
           wallWidthM={wallWidthM}
           onWidthChange={(v) => onDimensionChange('width', v)}
           onHeightChange={(v) => onDimensionChange('height', v)}
+        />
+      )}
+
+      {isDoor && intOpening && (
+        <DoorDirectionControls
+          opening={intOpening}
+          onOpeningPropertyChange={onOpeningPropertyChange}
         />
       )}
     </div>
@@ -474,6 +518,94 @@ function DimensionInputs({
           Max. {wallWidthM.toFixed(1)} m Breite
         </p>
       )}
+    </div>
+  );
+}
+
+// --- Door direction controls (hinge side + open direction) ---
+function DoorDirectionControls({
+  opening,
+  onOpeningPropertyChange,
+}: {
+  opening: WallOpening;
+  onOpeningPropertyChange: (prop: 'hingeSide' | 'opensOutward', val: string | boolean) => void;
+}) {
+  const hingeSide = opening.hingeSide ?? 'left';
+  const opensOutward = opening.opensOutward ?? true;
+
+  const options: { label: string; hinge: 'left' | 'right'; outward: boolean }[] = [
+    { label: 'Scharnier links — öffnet nach außen', hinge: 'left', outward: true },
+    { label: 'Scharnier rechts — öffnet nach außen', hinge: 'right', outward: true },
+    { label: 'Scharnier links — öffnet nach innen', hinge: 'left', outward: false },
+    { label: 'Scharnier rechts — öffnet nach innen', hinge: 'right', outward: false },
+  ];
+
+  return (
+    <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5">
+      <p className="text-xs font-medium text-gray-600 mb-2">Öffnungsrichtung</p>
+      <div className="grid grid-cols-1 gap-1.5">
+        {options.map((opt) => {
+          const isActive = hingeSide === opt.hinge && opensOutward === opt.outward;
+          return (
+            <button
+              key={`${opt.hinge}-${opt.outward}`}
+              type="button"
+              onClick={() => {
+                onOpeningPropertyChange('hingeSide', opt.hinge);
+                onOpeningPropertyChange('opensOutward', opt.outward);
+              }}
+              className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs text-left transition-colors ${
+                isActive
+                  ? 'border-wood-500 bg-wood-50 text-wood-700 font-medium'
+                  : 'border-gray-200 text-gray-500 hover:border-wood-300 hover:bg-white'
+              }`}
+            >
+              {/* Door direction mini icon */}
+              <svg viewBox="0 0 20 20" className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="1.2">
+                {/* Door frame */}
+                <rect x="3" y="2" width="14" height="16" rx="0.5" />
+                {/* Hinge marker */}
+                <circle
+                  cx={opt.hinge === 'left' ? 4.5 : 15.5}
+                  cy="10"
+                  r="1"
+                  fill="currentColor"
+                  stroke="none"
+                />
+                {/* Swing arc */}
+                <path
+                  d={
+                    opt.hinge === 'left'
+                      ? (opt.outward
+                        ? 'M 17 2 Q 17 10, 5 10'
+                        : 'M 17 18 Q 17 10, 5 10')
+                      : (opt.outward
+                        ? 'M 3 2 Q 3 10, 15 10'
+                        : 'M 3 18 Q 3 10, 15 10')
+                  }
+                  strokeDasharray="2 1.5"
+                />
+              </svg>
+              <span>{opt.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// --- Material / glazing info ---
+function MaterialInfo({ isDoor }: { isDoor: boolean }) {
+  const specs = isDoor ? DOOR_SPECS : WINDOW_SPECS;
+  return (
+    <div className="mt-2 flex items-start gap-1.5 px-1">
+      <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor">
+        <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3a1 1 0 110 2 1 1 0 010-2zm1 8H7v-1h1V7.5H7v-1h2V11h1v1z" />
+      </svg>
+      <span className="text-[11px] text-gray-400 leading-tight">
+        {specs.glazing} · {specs.glassType} · {specs.material}
+      </span>
     </div>
   );
 }

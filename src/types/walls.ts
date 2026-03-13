@@ -13,7 +13,25 @@ export interface WallOpening {
   height: number;
   /** Bottom edge above floor in meters (0 for floor-to-ceiling) */
   offsetY: number;
+  /** Hinge side as seen from outside the module. Default: 'left' */
+  hingeSide?: 'left' | 'right';
+  /** Whether door opens outward (away from interior). Default: true */
+  opensOutward?: boolean;
 }
+
+/** Glazing & material specs for doors */
+export const DOOR_SPECS = {
+  glazing: '2-Fach Isolier-Verglasung',
+  glassType: 'Energiesparscheiben',
+  material: 'Kiefernholz',
+} as const;
+
+/** Glazing & material specs for windows */
+export const WINDOW_SPECS = {
+  glazing: '2-Fach Isolier-Verglasung',
+  glassType: 'Energiesparscheiben',
+  material: 'Kiefernholz',
+} as const;
 
 export interface WallConfig {
   front: WallOpening[];
@@ -74,7 +92,7 @@ export function getDefaultWallConfig(
   switch (type) {
     case 'sauna':
       raw = {
-        front: [{ type: 'door', position: 0.5, width: 1.0, height: 2.0, offsetY: 0 }],
+        front: [{ type: 'door', position: 0.5, width: 1.0, height: 2.0, offsetY: 0, hingeSide: 'left', opensOutward: true }],
         back: [],
         left: isLarge
           ? [{ type: 'window', position: 0.5, width: 1.0, height: 1.0, offsetY: 0.8 }]
@@ -85,7 +103,7 @@ export function getDefaultWallConfig(
 
     case 'living':
       raw = {
-        front: [{ type: 'terrace-door', position: 0.5, width: 2.0, height: 2.0, offsetY: 0 }],
+        front: [{ type: 'terrace-door', position: 0.5, width: 2.0, height: 2.0, offsetY: 0, hingeSide: 'left', opensOutward: true }],
         back: isLarge
           ? [{ type: 'window', position: 0.5, width: 2.0, height: 2.0, offsetY: 0 }]
           : [],
@@ -96,7 +114,7 @@ export function getDefaultWallConfig(
 
     case 'ruhe':
       raw = {
-        front: [{ type: 'door', position: 0.5, width: 1.0, height: 2.0, offsetY: 0 }],
+        front: [{ type: 'door', position: 0.5, width: 1.0, height: 2.0, offsetY: 0, hingeSide: 'left', opensOutward: true }],
         back: isLarge
           ? [{ type: 'window', position: 0.5, width: 2.0, height: 2.0, offsetY: 0 }]
           : [{ type: 'window', position: 0.5, width: 2.0, height: 2.0, offsetY: 0 }],
@@ -107,7 +125,7 @@ export function getDefaultWallConfig(
 
     case 'umkleide':
       raw = {
-        front: [{ type: 'door', position: 0.5, width: 1.0, height: 2.0, offsetY: 0 }],
+        front: [{ type: 'door', position: 0.5, width: 1.0, height: 2.0, offsetY: 0, hingeSide: 'left', opensOutward: true }],
         back: [],
         left: [],
         right: [],
@@ -116,7 +134,7 @@ export function getDefaultWallConfig(
 
     case 'sanitaer':
       raw = {
-        front: [{ type: 'door', position: 0.5, width: 1.0, height: 2.0, offsetY: 0 }],
+        front: [{ type: 'door', position: 0.5, width: 1.0, height: 2.0, offsetY: 0, hingeSide: 'left', opensOutward: true }],
         back: [],
         left: [],
         right: [{ type: 'window', position: 0.5, width: 0.5, height: 0.4, offsetY: 1.6 }],
@@ -127,7 +145,7 @@ export function getDefaultWallConfig(
       raw = {
         front: [],
         back: [],
-        left: [{ type: 'door', position: 0.5, width: 1.0, height: 2.0, offsetY: 0 }],
+        left: [{ type: 'door', position: 0.5, width: 1.0, height: 2.0, offsetY: 0, hingeSide: 'left', opensOutward: true }],
         right: [],
       };
       break;

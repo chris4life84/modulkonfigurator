@@ -4,6 +4,16 @@ const FRAME_THICKNESS = 0.04;
 const FRAME_DEPTH = 0.13;
 const GLASS_THICKNESS = 0.012;
 
+// Door handle constants
+const HANDLE_HEIGHT = 1.05; // Height above floor
+const HANDLE_INSET = 0.08; // Distance from frame edge
+
+const handleMaterial = new THREE.MeshStandardMaterial({
+  color: '#C0C0C0',
+  roughness: 0.3,
+  metalness: 0.8,
+});
+
 interface DoorOpeningProps {
   /** Door width in meters */
   width: number;
@@ -13,11 +23,21 @@ interface DoorOpeningProps {
   position: [number, number, number];
   /** True for double terrace door (2 panes + center divider) */
   double?: boolean;
+  /** Hinge side as seen from outside ('left' or 'right'). Default: 'left' */
+  hingeSide?: 'left' | 'right';
+  /** Whether door opens outward. Default: true */
+  opensOutward?: boolean;
 }
 
-export function DoorOpening({ width, height, position, double = false }: DoorOpeningProps) {
+export function DoorOpening({
+  width, height, position, double = false,
+  hingeSide = 'left', opensOutward = true,
+}: DoorOpeningProps) {
   const halfW = width / 2;
   const halfH = height / 2;
+
+  // Handle Z offset: outside face (+Z) or inside face (-Z) of the glass
+  const handleZ = opensOutward ? GLASS_THICKNESS / 2 + 0.015 : -(GLASS_THICKNESS / 2 + 0.015);
 
   return (
     <group position={position}>
@@ -55,11 +75,11 @@ export function DoorOpening({ width, height, position, double = false }: DoorOpe
         position={[halfW, halfH, 0]}
         size={[FRAME_THICKNESS, height, FRAME_DEPTH]}
       />
-      {/* Frame - center divider (only for double door) */}
+      {/* Frame - center divider (only for double door, full thickness) */}
       {double && (
         <FrameBar
           position={[0, halfH, 0]}
-          size={[FRAME_THICKNESS * 0.6, height, FRAME_DEPTH]}
+          size={[FRAME_THICKNESS, height, FRAME_DEPTH]}
         />
       )}
       {/* Frame - top */}
@@ -71,6 +91,73 @@ export function DoorOpening({ width, height, position, double = false }: DoorOpe
       <mesh position={[0, FRAME_THICKNESS / 2, 0]}>
         <boxGeometry args={[width + FRAME_THICKNESS, FRAME_THICKNESS, FRAME_DEPTH + 0.02]} />
         <meshStandardMaterial color="#4A4A4A" roughness={0.4} metalness={0.2} />
+      </mesh>
+
+      {/* Door handles */}
+      {double ? (
+        <>
+          {/* Double door: handles on both sides of center divider */}
+          <DoorHandle
+            x={-(FRAME_THICKNESS / 2 + HANDLE_INSET)}
+            y={HANDLE_HEIGHT}
+            z={handleZ}
+            facingRight
+          />
+          <DoorHandle
+            x={FRAME_THICKNESS / 2 + HANDLE_INSET}
+            y={HANDLE_HEIGHT}
+            z={handleZ}
+            facingRight={false}
+          />
+        </>
+      ) : (
+        /* Single door: handle on the side opposite to hinges */
+        <DoorHandle
+          x={hingeSide === 'left'
+            ? halfW - FRAME_THICKNESS - HANDLE_INSET
+            : -(halfW - FRAME_THICKNESS - HANDLE_INSET)}
+          y={HANDLE_HEIGHT}
+          z={handleZ}
+          facingRight={hingeSide === 'left'}
+        />
+      )}
+    </group>
+  );
+}
+
+/** L-shaped door handle: rosette plate + horizontal lever + short downward tip */
+function DoorHandle({
+  x, y, z, facingRight,
+}: {
+  x: number;
+  y: number;
+  z: number;
+  facingRight: boolean;
+}) {
+  const leverDir = facingRight ? -1 : 1;
+
+  return (
+    <group position={[x, y, z]}>
+      {/* Rosette (mounting plate) */}
+      <mesh rotation={[Math.PI / 2, 0, 0]} material={handleMaterial}>
+        <cylinderGeometry args={[0.022, 0.022, 0.008, 16]} />
+      </mesh>
+
+      {/* Horizontal lever */}
+      <mesh
+        position={[leverDir * 0.05, 0, 0.004]}
+        rotation={[0, 0, 0]}
+        material={handleMaterial}
+      >
+        <boxGeometry args={[0.10, 0.012, 0.012]} />
+      </mesh>
+
+      {/* Downward tip at the end of lever */}
+      <mesh
+        position={[leverDir * 0.095, -0.015, 0.004]}
+        material={handleMaterial}
+      >
+        <boxGeometry args={[0.012, 0.03, 0.012]} />
       </mesh>
     </group>
   );
