@@ -87,6 +87,8 @@ export function ModuleConfigPanel({ moduleId }: ModuleConfigPanelProps) {
               : maxPanels;
             const kwp = calculateKWp(panelCount);
             const pvPrice = calculatePVPrice(panelCount);
+            const currentOrientation = (typeof module.options.pv_orientation === 'string'
+              ? module.options.pv_orientation : 'S') as string;
 
             return (
               <div className="rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2.5 space-y-2">
@@ -108,6 +110,12 @@ export function ModuleConfigPanel({ moduleId }: ModuleConfigPanelProps) {
                   <span>1 Panel ({calculateKWp(1).toFixed(1)} kWp)</span>
                   <span>{maxPanels} Panels (max)</span>
                 </div>
+
+                {/* Compass orientation picker */}
+                <CompassPicker
+                  value={currentOrientation}
+                  onChange={(dir) => setModuleOption(module.id, 'pv_orientation', dir)}
+                />
               </div>
             );
           })()}
@@ -173,6 +181,77 @@ export function ModuleConfigPanel({ moduleId }: ModuleConfigPanelProps) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// --- Compass direction picker for PV orientation ---
+const COMPASS_DIRECTIONS = [
+  { key: 'N', label: 'N', angle: 0 },
+  { key: 'NE', label: 'NO', angle: 45 },
+  { key: 'E', label: 'O', angle: 90 },
+  { key: 'SE', label: 'SO', angle: 135 },
+  { key: 'S', label: 'S', angle: 180 },
+  { key: 'SW', label: 'SW', angle: 225 },
+  { key: 'W', label: 'W', angle: 270 },
+  { key: 'NW', label: 'NW', angle: 315 },
+] as const;
+
+const DIRECTION_NAMES: Record<string, string> = {
+  N: 'Nord', NE: 'Nordost', E: 'Ost', SE: 'Südost',
+  S: 'Süd', SW: 'Südwest', W: 'West', NW: 'Nordwest',
+};
+
+function CompassPicker({ value, onChange }: { value: string; onChange: (dir: string) => void }) {
+  // Compass layout: 3x3 grid with center dot
+  // Row 0: NW  N  NE
+  // Row 1: W   ·  E
+  // Row 2: SW  S  SE
+  const grid: (typeof COMPASS_DIRECTIONS[number] | null)[][] = [
+    [COMPASS_DIRECTIONS[7], COMPASS_DIRECTIONS[0], COMPASS_DIRECTIONS[1]],
+    [COMPASS_DIRECTIONS[6], null,                   COMPASS_DIRECTIONS[2]],
+    [COMPASS_DIRECTIONS[5], COMPASS_DIRECTIONS[4], COMPASS_DIRECTIONS[3]],
+  ];
+
+  return (
+    <div className="pt-1">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-medium text-gray-600">Ausrichtung</span>
+        <span className="text-[11px] text-gray-400">{DIRECTION_NAMES[value]} (15°)</span>
+      </div>
+      <div className="inline-grid grid-cols-3 gap-0.5">
+        {grid.map((row, ri) =>
+          row.map((dir, ci) => {
+            if (!dir) {
+              // Center cell: compass indicator
+              return (
+                <div key={`c-${ri}-${ci}`} className="w-8 h-8 flex items-center justify-center">
+                  <svg viewBox="0 0 16 16" className="w-4 h-4 text-gray-300">
+                    <circle cx="8" cy="8" r="2" fill="currentColor" />
+                    <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="0.8" />
+                  </svg>
+                </div>
+              );
+            }
+            const isActive = value === dir.key;
+            return (
+              <button
+                key={dir.key}
+                type="button"
+                onClick={() => onChange(dir.key)}
+                className={`w-8 h-8 rounded text-[10px] font-semibold transition-colors ${
+                  isActive
+                    ? 'bg-amber-500 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700'
+                }`}
+                title={DIRECTION_NAMES[dir.key]}
+              >
+                {dir.label}
+              </button>
+            );
+          }),
+        )}
+      </div>
     </div>
   );
 }

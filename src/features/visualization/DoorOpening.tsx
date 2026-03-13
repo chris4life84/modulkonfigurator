@@ -103,11 +103,9 @@ export function DoorOpening({
           facingRight={hingeSide === 'left'}
         />
       ) : (
-        /* Single door: handle on the side opposite to hinges */
+        /* Single door: handle on the frame opposite to hinges */
         <DoorHandle
-          x={hingeSide === 'left'
-            ? halfW - FRAME_THICKNESS - HANDLE_INSET
-            : -(halfW - FRAME_THICKNESS - HANDLE_INSET)}
+          x={hingeSide === 'left' ? halfW : -halfW}
           y={HANDLE_HEIGHT}
           z={handleZ}
           facingRight={hingeSide === 'left'}

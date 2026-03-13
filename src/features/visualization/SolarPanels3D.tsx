@@ -2,6 +2,24 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import { PV_PANEL_W, PV_PANEL_D, PV_MARGIN, PV_GAP } from '../../utils/pvCalculation';
 
+/** Compass direction for PV panel orientation */
+export type PVOrientation = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
+
+/** Compass heading in radians (clockwise from North = -Z) */
+const COMPASS_ANGLES: Record<PVOrientation, number> = {
+  N: 0,
+  NE: Math.PI / 4,
+  E: Math.PI / 2,
+  SE: (3 * Math.PI) / 4,
+  S: Math.PI,
+  SW: (5 * Math.PI) / 4,
+  W: (3 * Math.PI) / 2,
+  NW: (7 * Math.PI) / 4,
+};
+
+/** Fixed tilt angle in radians (~15°) */
+const TILT_ANGLE = 0.262;
+
 interface SolarPanels3DProps {
   /** Module width in meters */
   moduleWidth: number;
@@ -19,6 +37,8 @@ interface SolarPanels3DProps {
   /** Absolute position of module's top-left corner in world meters */
   moduleAbsX?: number;
   moduleAbsZ?: number;
+  /** Compass direction the panels face (default: 'S' for south) */
+  orientation?: PVOrientation;
 }
 
 // Panel thickness
@@ -119,6 +139,7 @@ export function SolarPanels3D({
   moduleWidth, moduleDepth, roofY, panelCount,
   adjacentFront = false, adjacentBack = false,
   adjacentLeft = false, adjacentRight = false,
+  orientation = 'S',
 }: SolarPanels3DProps) {
   const layout = useMemo(() => {
     // Per-side margins: 0 on shared sides, MARGIN on outer edges
@@ -202,8 +223,14 @@ export function SolarPanels3D({
   const railY = roofY + ROOF_THICKNESS + RAIL_DEPTH / 2 + 0.002;
   const panelY = roofY + ROOF_THICKNESS + RAIL_DEPTH + PANEL_H / 2 + 0.003;
 
+  // Compute tilt rotation from compass direction
+  // Coordinate system: N = -Z, E = +X, S = +Z, W = -X
+  const compassAngle = COMPASS_ANGLES[orientation];
+  const tiltX = -TILT_ANGLE * Math.cos(compassAngle);
+  const tiltZ = -TILT_ANGLE * Math.sin(compassAngle);
+
   return (
-    <group>
+    <group rotation={[tiltX, 0, tiltZ]}>
       {/* Mounting rails – aluminum tracks running in Z direction */}
       {railXPositions.map((rx, i) => (
         <mesh key={`rail-${i}`} position={[rx, railY, railCenterZ]} material={railMaterial} castShadow>

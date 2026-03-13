@@ -8,7 +8,7 @@ import { getDefaultWallConfig } from '../../types/walls';
 import { getSharedWallSegments, getWallRanges, type SharedWallSegments } from '../../utils/walls';
 import { WoodWall } from './WoodWall';
 import { RoofPanel } from './RoofPanel';
-import { SolarPanels3D } from './SolarPanels3D';
+import { SolarPanels3D, type PVOrientation } from './SolarPanels3D';
 import { DoorOpening } from './DoorOpening';
 import { WindowOpening } from './WindowOpening';
 import { WOOD_COLORS } from './textures/createWoodTexture';
@@ -282,6 +282,7 @@ export function Module3D({ module: m, allModules, color, label, selected, onClic
           adjacentRight={pvAdjacentSides.right}
           moduleAbsX={m.gridX * GRID_CELL_SIZE}
           moduleAbsZ={m.gridY * GRID_CELL_SIZE}
+          orientation={typeof m.options.pv_orientation === 'string' ? m.options.pv_orientation as PVOrientation : undefined}
         />
       )}
 
