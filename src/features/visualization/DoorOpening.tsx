@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 const FRAME_THICKNESS = 0.04;
-const FRAME_DEPTH = 0.13;
+const FRAME_DEPTH = 0.132; // 2mm wider than wall (0.13) to prevent Z-fighting
 const GLASS_THICKNESS = 0.012;
 
 // Door handle constants
@@ -36,8 +36,10 @@ export function DoorOpening({
   const halfW = width / 2;
   const halfH = height / 2;
 
-  // Handle Z offset: outside face (+Z) or inside face (-Z) of the glass
-  const handleZ = opensOutward ? GLASS_THICKNESS / 2 + 0.015 : -(GLASS_THICKNESS / 2 + 0.015);
+  // Handle Z offsets: handles on BOTH sides of the door (inside + outside)
+  // Placed near the frame surfaces so they're clearly visible from each side
+  const handleZOuter = FRAME_DEPTH / 2 - 0.02;   // ~+0.046 (near outer frame surface)
+  const handleZInner = -(FRAME_DEPTH / 2 - 0.02); // ~-0.046 (near inner frame surface)
 
   return (
     <group position={position}>
@@ -93,23 +95,29 @@ export function DoorOpening({
         <meshStandardMaterial color="#4A4A4A" roughness={0.4} metalness={0.2} />
       </mesh>
 
-      {/* Door handles */}
+      {/* Door handles – both sides (outside + inside), same position */}
       {double ? (
-        /* Double door: ONE handle on the center divider, side based on hingeSide */
-        <DoorHandle
-          x={0}
-          y={HANDLE_HEIGHT}
-          z={handleZ}
-          facingRight={hingeSide === 'left'}
-        />
+        <>
+          {/* Double door: handles on center divider, both faces */}
+          <DoorHandle x={0} y={HANDLE_HEIGHT} z={handleZOuter} facingRight={hingeSide === 'left'} />
+          <DoorHandle x={0} y={HANDLE_HEIGHT} z={handleZInner} facingRight={hingeSide === 'left'} />
+        </>
       ) : (
-        /* Single door: handle on the frame opposite to hinges */
-        <DoorHandle
-          x={hingeSide === 'left' ? halfW : -halfW}
-          y={HANDLE_HEIGHT}
-          z={handleZ}
-          facingRight={hingeSide === 'left'}
-        />
+        <>
+          {/* Single door: handles on frame opposite to hinges, both faces */}
+          <DoorHandle
+            x={hingeSide === 'left' ? halfW : -halfW}
+            y={HANDLE_HEIGHT}
+            z={handleZOuter}
+            facingRight={hingeSide === 'left'}
+          />
+          <DoorHandle
+            x={hingeSide === 'left' ? halfW : -halfW}
+            y={HANDLE_HEIGHT}
+            z={handleZInner}
+            facingRight={hingeSide === 'left'}
+          />
+        </>
       )}
     </group>
   );
@@ -195,6 +203,9 @@ function FrameBar({
         color="#555555"
         roughness={0.3}
         metalness={0.3}
+        polygonOffset
+        polygonOffsetFactor={-1}
+        polygonOffsetUnits={-1}
       />
     </mesh>
   );

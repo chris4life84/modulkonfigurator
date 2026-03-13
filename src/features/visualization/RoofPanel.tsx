@@ -4,6 +4,7 @@ import { createRoofTexture } from './textures/createRoofTexture';
 const ROOF_THICKNESS = 0.10;
 const OVERHANG = 0.10;
 const FASCIA_HEIGHT = 0.03;
+const FASCIA_DEPTH = 0.015;
 
 interface RoofPanelProps {
   /** Width of the module in meters */
@@ -55,25 +56,27 @@ export function RoofPanel({
         />
       </mesh>
 
-      {/* Fascia strips on all 4 edges (darker trim) */}
+      {/* Fascia strips on all 4 edges (darker trim).
+          Front/back strips shortened by FASCIA_DEPTH on each end to avoid
+          overlap (Z-fighting) with side strips at corners. */}
       {/* Front fascia (+Z) */}
       <mesh position={[offsetX, -FASCIA_HEIGHT / 2, halfD + overhangFront]}>
-        <boxGeometry args={[totalWidth, FASCIA_HEIGHT + ROOF_THICKNESS, 0.015]} />
+        <boxGeometry args={[totalWidth - FASCIA_DEPTH * 2, FASCIA_HEIGHT + ROOF_THICKNESS, FASCIA_DEPTH]} />
         <meshStandardMaterial color="#3A3A3A" roughness={0.5} metalness={0.1} />
       </mesh>
       {/* Back fascia (-Z) */}
       <mesh position={[offsetX, -FASCIA_HEIGHT / 2, -(halfD + overhangBack)]}>
-        <boxGeometry args={[totalWidth, FASCIA_HEIGHT + ROOF_THICKNESS, 0.015]} />
+        <boxGeometry args={[totalWidth - FASCIA_DEPTH * 2, FASCIA_HEIGHT + ROOF_THICKNESS, FASCIA_DEPTH]} />
         <meshStandardMaterial color="#3A3A3A" roughness={0.5} metalness={0.1} />
       </mesh>
-      {/* Left fascia (-X) */}
+      {/* Left fascia (-X) – full depth, wraps corners */}
       <mesh position={[-(halfW + overhangLeft), -FASCIA_HEIGHT / 2, offsetZ]}>
-        <boxGeometry args={[0.015, FASCIA_HEIGHT + ROOF_THICKNESS, totalDepth]} />
+        <boxGeometry args={[FASCIA_DEPTH, FASCIA_HEIGHT + ROOF_THICKNESS, totalDepth]} />
         <meshStandardMaterial color="#3A3A3A" roughness={0.5} metalness={0.1} />
       </mesh>
-      {/* Right fascia (+X) */}
+      {/* Right fascia (+X) – full depth, wraps corners */}
       <mesh position={[halfW + overhangRight, -FASCIA_HEIGHT / 2, offsetZ]}>
-        <boxGeometry args={[0.015, FASCIA_HEIGHT + ROOF_THICKNESS, totalDepth]} />
+        <boxGeometry args={[FASCIA_DEPTH, FASCIA_HEIGHT + ROOF_THICKNESS, totalDepth]} />
         <meshStandardMaterial color="#3A3A3A" roughness={0.5} metalness={0.1} />
       </mesh>
     </group>
