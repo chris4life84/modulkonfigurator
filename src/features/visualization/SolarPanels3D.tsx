@@ -219,9 +219,9 @@ export function SolarPanels3D({
   const { positions, rotated, railXPositions, railLength, railCenterZ } = layout;
   const geos = rotated ? rotatedGeos : normalGeos;
 
-  // Panels float above roof on mounting rails
-  const railY = roofY + ROOF_THICKNESS + RAIL_DEPTH / 2 + 0.002;
-  const panelY = roofY + ROOF_THICKNESS + RAIL_DEPTH + PANEL_H / 2 + 0.003;
+  // Effective panel dimensions (used for Y compensation)
+  const effW = rotated ? PV_PANEL_D : PV_PANEL_W;
+  const effD = rotated ? PV_PANEL_W : PV_PANEL_D;
 
   // Compute tilt rotation from compass direction
   // Coordinate system: N = -Z, E = +X, S = +Z, W = -X
@@ -229,18 +229,31 @@ export function SolarPanels3D({
   const tiltX = -TILT_ANGLE * Math.cos(compassAngle);
   const tiltZ = -TILT_ANGLE * Math.sin(compassAngle);
 
+  // Y lift: raise each panel so its lowest tilted edge clears the roof surface.
+  // When a panel at (±effW/2, 0, ±effD/2) rotates by [tiltX, 0, tiltZ],
+  // the maximum downward corner displacement is:
+  const yLift = TILT_ANGLE * (
+    (effD / 2) * Math.abs(Math.cos(compassAngle)) +
+    (effW / 2) * Math.abs(Math.sin(compassAngle))
+  );
+
+  // Base Y positions (rails sit on roof, panels on top of rails)
+  const railY = roofY + ROOF_THICKNESS + RAIL_DEPTH / 2 + 0.002;
+  // Panels: raised by yLift so tilted lowest edge just touches rail tops
+  const panelY = roofY + ROOF_THICKNESS + RAIL_DEPTH + PANEL_H / 2 + 0.003 + yLift;
+
   return (
-    <group rotation={[tiltX, 0, tiltZ]}>
-      {/* Mounting rails – aluminum tracks running in Z direction */}
+    <group>
+      {/* Mounting rails – flat aluminum tracks on roof */}
       {railXPositions.map((rx, i) => (
         <mesh key={`rail-${i}`} position={[rx, railY, railCenterZ]} material={railMaterial} castShadow>
           <boxGeometry args={[RAIL_WIDTH, RAIL_DEPTH, railLength]} />
         </mesh>
       ))}
 
-      {/* Solar panels on top of rails */}
+      {/* Solar panels – each tilted individually around its own center */}
       {positions.map(([px, pz], i) => (
-        <group key={i} position={[px, panelY, pz]}>
+        <group key={i} position={[px, panelY, pz]} rotation={[tiltX, 0, tiltZ]}>
           <mesh geometry={geos.panelGeo} material={panelMaterial} castShadow receiveShadow />
           <mesh geometry={geos.frameGeo} material={frameMaterial} />
         </group>
