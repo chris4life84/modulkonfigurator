@@ -324,6 +324,67 @@ export function Module3D({ module: m, allModules, color, label, selected, onClic
         );
       })}
 
+      {/* Interior door/window 3D components (frames + handles on shared boundaries) */}
+      {wallConfig.interiorWalls && Object.entries(wallConfig.interiorWalls).map(([side, openings]) => {
+        if (!openings || openings.length === 0) return null;
+        const ws = side as WallSide;
+        const isFB = ws === 'front' || ws === 'back';
+        const wallW = isFB ? widthM : depthM;
+        const basePos: [number, number, number] =
+          ws === 'front' ? [0, 0, halfD - WALL_THICKNESS / 2] :
+          ws === 'back' ? [0, 0, -halfD + WALL_THICKNESS / 2] :
+          ws === 'left' ? [-halfW + WALL_THICKNESS / 2, 0, 0] :
+          [halfW - WALL_THICKNESS / 2, 0, 0];
+        const rot =
+          ws === 'front' ? 0 :
+          ws === 'back' ? Math.PI :
+          ws === 'left' ? Math.PI / 2 :
+          -Math.PI / 2;
+
+        return openings.map((o, i) => {
+          const clamped = clampOpeningToWall(o, wallW);
+          // Position along wall – flip sign for back/right (same as OpeningsGroup)
+          const signFlip = (ws === 'back' || ws === 'right') ? -1 : 1;
+          const offset = signFlip * (clamped.position - 0.5) * wallW;
+          // Apply offset along the wall's local X axis
+          const pos: [number, number, number] = isFB
+            ? [basePos[0] + offset, clamped.offsetY, basePos[2]]
+            : [basePos[0], clamped.offsetY, basePos[2] + offset];
+
+          return (
+            <group key={`interior-opening-${side}-${i}`} position={pos} rotation={[0, rot, 0]}>
+              {clamped.type === 'door' && (
+                <DoorOpening
+                  width={clamped.width}
+                  height={clamped.height}
+                  position={[0, 0, 0]}
+                  hingeSide={clamped.hingeSide}
+                  opensOutward={clamped.opensOutward}
+                />
+              )}
+              {clamped.type === 'terrace-door' && (
+                <DoorOpening
+                  width={clamped.width}
+                  height={clamped.height}
+                  position={[0, 0, 0]}
+                  double
+                  hingeSide={clamped.hingeSide}
+                  opensOutward={clamped.opensOutward}
+                />
+              )}
+              {clamped.type === 'window' && (
+                <WindowOpening
+                  width={clamped.width}
+                  height={clamped.height}
+                  position={[0, 0, 0]}
+                  floorLevel={clamped.offsetY < 0.01}
+                />
+              )}
+            </group>
+          );
+        });
+      })}
+
       {/* Door and window openings – only on fully non-shared walls */}
       <OpeningsGroup
         wallConfig={wallConfig}
@@ -414,6 +475,18 @@ function CeilingPanel({ width, depth }: { width: number; depth: number }) {
   );
 }
 
+/** Clamp opening dimensions and position to fit within the given wall width */
+function clampOpeningToWall(o: WallOpening, wallW: number): WallOpening {
+  const margin = 0.15; // 15cm from each wall edge (≥ wall thickness)
+  const w = Math.min(o.width, Math.max(0.3, wallW - margin * 2));
+  const h = Math.min(o.height, OUTER_HEIGHT);
+  const halfW = w / 2;
+  const minPos = (halfW + margin) / wallW;
+  const maxPos = 1 - minPos;
+  const pos = Math.max(minPos, Math.min(maxPos, o.position));
+  return { ...o, width: w, height: h, position: pos };
+}
+
 /** Render door/window openings – only on fully non-shared wall sides */
 function OpeningsGroup({
   wallConfig,
@@ -430,19 +503,6 @@ function OpeningsGroup({
   const halfW = widthM / 2;
   const halfD = depthM / 2;
 
-  /** Clamp opening dimensions and position to fit within the given wall width */
-  const clampToWall = (o: WallOpening, wallW: number): WallOpening => {
-    const margin = 0.15; // 15cm from each wall edge (≥ wall thickness)
-    const w = Math.min(o.width, Math.max(0.3, wallW - margin * 2));
-    const h = Math.min(o.height, OUTER_HEIGHT);
-    // Clamp position so opening center stays far enough from edges
-    const halfW = w / 2;
-    const minPos = (halfW + margin) / wallW;
-    const maxPos = 1 - minPos;
-    const pos = Math.max(minPos, Math.min(maxPos, o.position));
-    return { ...o, width: w, height: h, position: pos };
-  };
-
   const allOpenings: {
     opening: WallOpening;
     side: WallSide;
@@ -453,7 +513,7 @@ function OpeningsGroup({
   // Only render openings on fully non-shared walls
   if (isFullWall(sharedSegments.front)) {
     for (const o of wallConfig.front) {
-      const clamped = clampToWall(o, widthM);
+      const clamped = clampOpeningToWall(o, widthM);
       const cx = (clamped.position - 0.5) * widthM;
       allOpenings.push({
         opening: clamped,
@@ -466,7 +526,7 @@ function OpeningsGroup({
 
   if (isFullWall(sharedSegments.back)) {
     for (const o of wallConfig.back) {
-      const clamped = clampToWall(o, widthM);
+      const clamped = clampOpeningToWall(o, widthM);
       const cx = -(clamped.position - 0.5) * widthM;
       allOpenings.push({
         opening: clamped,
@@ -479,7 +539,7 @@ function OpeningsGroup({
 
   if (isFullWall(sharedSegments.left)) {
     for (const o of wallConfig.left) {
-      const clamped = clampToWall(o, depthM);
+      const clamped = clampOpeningToWall(o, depthM);
       const cz = (clamped.position - 0.5) * depthM;
       allOpenings.push({
         opening: clamped,
@@ -492,7 +552,7 @@ function OpeningsGroup({
 
   if (isFullWall(sharedSegments.right)) {
     for (const o of wallConfig.right) {
-      const clamped = clampToWall(o, depthM);
+      const clamped = clampOpeningToWall(o, depthM);
       const cz = -(clamped.position - 0.5) * depthM;
       allOpenings.push({
         opening: clamped,

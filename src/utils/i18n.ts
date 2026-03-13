@@ -11,7 +11,7 @@ const strings: Record<string, string> = {
   'nav.finish': 'Konfiguration abschließen',
 
   'template.select': 'Vorlage auswählen',
-  'template.description': 'Wählen Sie eine Vorlage als Ausgangspunkt. Sie können die Konfiguration anschließend frei erweitern.',
+  'template.description': 'Starten Sie mit einer Vorlage und erweitern Sie diese beliebig im 3D-Konfigurator – oder beginnen Sie mit einer leeren Szene.',
 
   'editor.catalog.title': 'Module hinzufügen',
   'editor.catalog.select': 'Modul auswählen und auf eine grüne Position klicken',
