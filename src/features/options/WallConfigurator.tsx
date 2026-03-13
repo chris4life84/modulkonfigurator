@@ -224,11 +224,11 @@ export function WallConfigurator({ module, allModules }: WallConfiguratorProps) 
     }
   };
 
-  const handleOpeningPropertyChange = (side: WallSide, prop: 'hingeSide' | 'opensOutward', value: string | boolean, isInterior = false) => {
+  const handleOpeningPropertyChange = (side: WallSide, changes: Partial<Pick<WallOpening, 'hingeSide' | 'opensOutward'>>, isInterior = false) => {
     if (isInterior) {
       const openings = wallConfig.interiorWalls?.[side];
       if (!openings || openings.length === 0) return;
-      const updated = openings.map((o) => ({ ...o, [prop]: value }));
+      const updated = openings.map((o) => ({ ...o, ...changes }));
       setModuleWalls(module.id, {
         ...wallConfig,
         interiorWalls: { ...wallConfig.interiorWalls, [side]: updated },
@@ -236,7 +236,7 @@ export function WallConfigurator({ module, allModules }: WallConfiguratorProps) 
     } else {
       const openings = wallConfig[side];
       if (openings.length === 0) return;
-      const updated = openings.map((o) => ({ ...o, [prop]: value }));
+      const updated = openings.map((o) => ({ ...o, ...changes }));
       setModuleWalls(module.id, { ...wallConfig, [side]: updated });
     }
   };
@@ -299,7 +299,7 @@ export function WallConfigurator({ module, allModules }: WallConfiguratorProps) 
           wallWidthM={wallWidthM}
           onStateChange={(state) => handleInteriorWallChange(selectedSide, state)}
           onDimensionChange={(dim, val) => handleDimensionChange(selectedSide, dim, val, true)}
-          onOpeningPropertyChange={(prop, val) => handleOpeningPropertyChange(selectedSide, prop, val, true)}
+          onOpeningPropertyChange={(changes) => handleOpeningPropertyChange(selectedSide, changes, true)}
         />
       ) : (
         <ExteriorWallControls
@@ -309,7 +309,7 @@ export function WallConfigurator({ module, allModules }: WallConfiguratorProps) 
           wallWidthM={wallWidthM}
           onStateChange={(state) => handleWallChange(selectedSide, state)}
           onDimensionChange={(dim, val) => handleDimensionChange(selectedSide, dim, val)}
-          onOpeningPropertyChange={(prop, val) => handleOpeningPropertyChange(selectedSide, prop, val)}
+          onOpeningPropertyChange={(changes) => handleOpeningPropertyChange(selectedSide, changes)}
         />
       )}
     </div>
@@ -332,7 +332,7 @@ function ExteriorWallControls({
   wallWidthM: number;
   onStateChange: (state: WallState) => void;
   onDimensionChange: (dim: 'width' | 'height' | 'offsetY', val: number) => void;
-  onOpeningPropertyChange: (prop: 'hingeSide' | 'opensOutward', val: string | boolean) => void;
+  onOpeningPropertyChange: (changes: Partial<Pick<WallOpening, 'hingeSide' | 'opensOutward'>>) => void;
 }) {
   const state = getWallState(wallConfig[side]);
   const opening = wallConfig[side][0];
@@ -401,7 +401,7 @@ function InteriorWallControls({
   wallWidthM: number;
   onStateChange: (state: InteriorState) => void;
   onDimensionChange: (dim: 'width' | 'height', val: number) => void;
-  onOpeningPropertyChange: (prop: 'hingeSide' | 'opensOutward', val: string | boolean) => void;
+  onOpeningPropertyChange: (changes: Partial<Pick<WallOpening, 'hingeSide' | 'opensOutward'>>) => void;
 }) {
   const intState = getInteriorState(wallConfig, side);
   const intOpening = wallConfig.interiorWalls?.[side]?.[0];
@@ -528,7 +528,7 @@ function DoorDirectionControls({
   onOpeningPropertyChange,
 }: {
   opening: WallOpening;
-  onOpeningPropertyChange: (prop: 'hingeSide' | 'opensOutward', val: string | boolean) => void;
+  onOpeningPropertyChange: (changes: Partial<Pick<WallOpening, 'hingeSide' | 'opensOutward'>>) => void;
 }) {
   const hingeSide = opening.hingeSide ?? 'left';
   const opensOutward = opening.opensOutward ?? true;
@@ -550,10 +550,7 @@ function DoorDirectionControls({
             <button
               key={`${opt.hinge}-${opt.outward}`}
               type="button"
-              onClick={() => {
-                onOpeningPropertyChange('hingeSide', opt.hinge);
-                onOpeningPropertyChange('opensOutward', opt.outward);
-              }}
+              onClick={() => onOpeningPropertyChange({ hingeSide: opt.hinge, opensOutward: opt.outward })}
               className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs text-left transition-colors ${
                 isActive
                   ? 'border-wood-500 bg-wood-50 text-wood-700 font-medium'

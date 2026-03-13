@@ -25,10 +25,10 @@ const HAUS_BLOCKS: { w: number; h: number }[] = [
   { w: 6, h: 6 },
 ];
 
-// Generate all pergola blocks from 2.0m to 5.0m (0.5m steps), width >= height (28 combos)
+// Generate all pergola blocks from 2.0m to 6.0m (0.5m steps), width >= height
 const PERGOLA_BLOCKS: { w: number; h: number }[] = (() => {
   const blocks: { w: number; h: number }[] = [];
-  for (let wm = 2.0; wm <= 5.0; wm += 0.5) {
+  for (let wm = 2.0; wm <= 6.0; wm += 0.5) {
     for (let hm = 2.0; hm <= wm + 0.01; hm += 0.5) {
       blocks.push({ w: Math.round(wm / GRID_CELL_SIZE), h: Math.round(hm / GRID_CELL_SIZE) });
     }
@@ -65,7 +65,7 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
   ) => {
     const v = Number(value);
     const minM = category === 'pergola' ? 2.0 : GRID_CELL_SIZE;
-    const maxM = category === 'pergola' ? 5.0 : 9;
+    const maxM = category === 'pergola' ? 6.0 : 9;
     if (!isNaN(v) && v >= minM && v <= maxM) {
       setter(snapToGrid(v));
     }
@@ -198,7 +198,7 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
           <input
             type="number"
             min={category === 'pergola' ? 2.0 : GRID_CELL_SIZE}
-            max={category === 'pergola' ? 5.0 : 9}
+            max={category === 'pergola' ? 6.0 : 9}
             step={GRID_CELL_SIZE}
             value={customWm}
             onChange={(e) => handleMeterInput(e.target.value, setCustomWm)}
@@ -209,7 +209,7 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
           <input
             type="number"
             min={category === 'pergola' ? 2.0 : GRID_CELL_SIZE}
-            max={category === 'pergola' ? 5.0 : 9}
+            max={category === 'pergola' ? 6.0 : 9}
             step={GRID_CELL_SIZE}
             value={customHm}
             onChange={(e) => handleMeterInput(e.target.value, setCustomHm)}

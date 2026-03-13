@@ -95,21 +95,13 @@ export function DoorOpening({
 
       {/* Door handles */}
       {double ? (
-        <>
-          {/* Double door: handles on both sides of center divider */}
-          <DoorHandle
-            x={-(FRAME_THICKNESS / 2 + HANDLE_INSET)}
-            y={HANDLE_HEIGHT}
-            z={handleZ}
-            facingRight
-          />
-          <DoorHandle
-            x={FRAME_THICKNESS / 2 + HANDLE_INSET}
-            y={HANDLE_HEIGHT}
-            z={handleZ}
-            facingRight={false}
-          />
-        </>
+        /* Double door: ONE handle on the center divider, side based on hingeSide */
+        <DoorHandle
+          x={0}
+          y={HANDLE_HEIGHT}
+          z={handleZ}
+          facingRight={hingeSide === 'left'}
+        />
       ) : (
         /* Single door: handle on the side opposite to hinges */
         <DoorHandle
