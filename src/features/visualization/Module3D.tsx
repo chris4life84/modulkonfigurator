@@ -294,6 +294,9 @@ export function Module3D({ module: m, allModules, color, label, selected, onClic
         <CeilingPanel
           width={widthM}
           depth={depthM}
+          hasSkylight={m.options.dachfenster === true}
+          skylightWidth={typeof m.options.dachfenster_w === 'number' ? m.options.dachfenster_w : undefined}
+          skylightDepth={typeof m.options.dachfenster_d === 'number' ? m.options.dachfenster_d : undefined}
         />
       )}
 
@@ -441,15 +444,32 @@ export function Module3D({ module: m, allModules, color, label, selected, onClic
   );
 }
 
-/** Ceiling panel with wood PBR texture (same as exterior walls) */
-function CeilingPanel({ width, depth }: { width: number; depth: number }) {
-  const pbrMaps = useMemo(() => loadWoodPBR() ?? loadWallPBR(), []);
+/** Default skylight dimensions (must match RoofPanel defaults) */
+const SKYLIGHT_DEFAULT_W = 0.8;
+const SKYLIGHT_DEFAULT_D = 0.6;
 
-  const material = useMemo(() => {
+/** Ceiling panel with wood PBR texture (same as exterior walls).
+ *  When a skylight is active, renders 4 segments around the opening
+ *  so you can look through the roof glass from inside. */
+function CeilingPanel({ width, depth, hasSkylight = false, skylightWidth, skylightDepth }: {
+  width: number;
+  depth: number;
+  hasSkylight?: boolean;
+  skylightWidth?: number;
+  skylightDepth?: number;
+}) {
+  const pbrMaps = useMemo(() => loadWoodPBR() ?? loadWallPBR(), []);
+  const y = CEILING_HEIGHT + CEILING_THICKNESS / 2;
+
+  // Clamp skylight to fit within module (same logic as RoofPanel)
+  const slW = Math.min(skylightWidth ?? SKYLIGHT_DEFAULT_W, width - 0.3);
+  const slD = Math.min(skylightDepth ?? SKYLIGHT_DEFAULT_D, depth - 0.3);
+
+  const makeMaterial = (segW: number, segD: number, offX: number, offZ: number) => {
     if (pbrMaps) {
       const scale = 1.0;
-      const repeat: [number, number] = [width / scale, depth / scale];
-      const offset: [number, number] = [0, 0];
+      const repeat: [number, number] = [segW / scale, segD / scale];
+      const offset: [number, number] = [offX / scale, offZ / scale];
       const cloned = clonePBRMaps(pbrMaps, repeat, offset, 0);
 
       const mat = new THREE.MeshStandardMaterial({
@@ -465,16 +485,59 @@ function CeilingPanel({ width, depth }: { width: number; depth: number }) {
       return mat;
     }
     return new THREE.MeshStandardMaterial({ color: '#C4B48A', roughness: 0.8 });
-  }, [pbrMaps, width, depth]);
+  };
+
+  if (!hasSkylight) {
+    const material = makeMaterial(width, depth, 0, 0);
+    return (
+      <mesh position={[0, y, 0]} receiveShadow material={material}>
+        <boxGeometry args={[width, CEILING_THICKNESS, depth]} />
+      </mesh>
+    );
+  }
+
+  // 4 segments around the skylight cutout (same approach as RoofWithCutout)
+  const halfSW = slW / 2;
+  const halfSD = slD / 2;
+  const halfW = width / 2;
+  const halfD = depth / 2;
+
+  const frontD = halfD - halfSD;   // +Z side
+  const backD = halfD - halfSD;    // -Z side (symmetric, centered)
+  const leftW = halfW - halfSW;    // -X side
+  const rightW = halfW - halfSW;   // +X side
 
   return (
-    <mesh
-      position={[0, CEILING_HEIGHT + CEILING_THICKNESS / 2, 0]}
-      receiveShadow
-      material={material}
-    >
-      <boxGeometry args={[width, CEILING_THICKNESS, depth]} />
-    </mesh>
+    <group>
+      {/* Front ceiling segment (+Z) */}
+      {frontD > 0.01 && (
+        <mesh position={[0, y, halfSD + frontD / 2]} receiveShadow
+          material={makeMaterial(width, frontD, 0, halfSD)}>
+          <boxGeometry args={[width, CEILING_THICKNESS, frontD]} />
+        </mesh>
+      )}
+      {/* Back ceiling segment (-Z) */}
+      {backD > 0.01 && (
+        <mesh position={[0, y, -halfSD - backD / 2]} receiveShadow
+          material={makeMaterial(width, backD, 0, 0)}>
+          <boxGeometry args={[width, CEILING_THICKNESS, backD]} />
+        </mesh>
+      )}
+      {/* Left ceiling segment (-X, spans skylight depth only) */}
+      {leftW > 0.01 && (
+        <mesh position={[-halfSW - leftW / 2, y, 0]} receiveShadow
+          material={makeMaterial(leftW, slD, 0, halfD - halfSD)}>
+          <boxGeometry args={[leftW, CEILING_THICKNESS, slD]} />
+        </mesh>
+      )}
+      {/* Right ceiling segment (+X, spans skylight depth only) */}
+      {rightW > 0.01 && (
+        <mesh position={[halfSW + rightW / 2, y, 0]} receiveShadow
+          material={makeMaterial(rightW, slD, halfW + halfSW, halfD - halfSD)}>
+          <boxGeometry args={[rightW, CEILING_THICKNESS, slD]} />
+        </mesh>
+      )}
+    </group>
   );
 }
 
