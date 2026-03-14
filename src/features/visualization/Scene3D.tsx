@@ -153,31 +153,31 @@ function DirectionLabels({ modules }: { modules: PlacedModule[] }) {
   }, [modules]);
 
   const labelStyle: React.CSSProperties = {
-    color: '#555',
-    fontSize: '5px',
-    fontWeight: 500,
-    letterSpacing: '0.1em',
+    color: '#8a9099',
+    fontSize: '4px',
+    fontWeight: 400,
+    letterSpacing: '0.12em',
     textTransform: 'uppercase' as const,
     pointerEvents: 'none' as const,
     userSelect: 'none' as const,
     whiteSpace: 'nowrap' as const,
-    background: 'rgba(255,255,255,0.55)',
+    background: 'rgba(255,255,255,0.45)',
     padding: '1px 3px',
     borderRadius: '2px',
   };
 
   return (
     <>
-      <Html position={positions.front} center distanceFactor={40} style={{ pointerEvents: 'none' }}>
+      <Html position={positions.front} center distanceFactor={55} style={{ pointerEvents: 'none' }}>
         <div style={labelStyle}>Vorne</div>
       </Html>
-      <Html position={positions.back} center distanceFactor={40} style={{ pointerEvents: 'none' }}>
+      <Html position={positions.back} center distanceFactor={55} style={{ pointerEvents: 'none' }}>
         <div style={labelStyle}>Hinten</div>
       </Html>
-      <Html position={positions.left} center distanceFactor={40} style={{ pointerEvents: 'none' }}>
+      <Html position={positions.left} center distanceFactor={55} style={{ pointerEvents: 'none' }}>
         <div style={labelStyle}>Links</div>
       </Html>
-      <Html position={positions.right} center distanceFactor={40} style={{ pointerEvents: 'none' }}>
+      <Html position={positions.right} center distanceFactor={55} style={{ pointerEvents: 'none' }}>
         <div style={labelStyle}>Rechts</div>
       </Html>
     </>

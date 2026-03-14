@@ -267,6 +267,9 @@ export function Module3D({ module: m, allModules, color, label, selected, onClic
         overhangBack={pergolaAdjacent.back ? 0 : undefined}
         overhangLeft={pergolaAdjacent.left ? 0 : undefined}
         overhangRight={pergolaAdjacent.right ? 0 : undefined}
+        hasSkylight={m.options.dachfenster === true}
+        skylightWidth={typeof m.options.dachfenster_w === 'number' ? m.options.dachfenster_w : undefined}
+        skylightDepth={typeof m.options.dachfenster_d === 'number' ? m.options.dachfenster_d : undefined}
       />
 
       {/* Optional solar panels on roof */}

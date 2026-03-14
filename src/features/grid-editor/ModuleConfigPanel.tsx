@@ -5,6 +5,7 @@ import { MODULE_DEFINITIONS } from '../../data/module-types';
 import { GRID_CELL_SIZE } from '../../types/grid';
 import { canResize } from '../../utils/grid';
 import { calculateMaxPanels, calculateKWp, calculatePVPrice } from '../../utils/pvCalculation';
+import { SKYLIGHT_DEFAULT_W, SKYLIGHT_DEFAULT_D, SKYLIGHT_MIN, SKYLIGHT_MAX_W, SKYLIGHT_MAX_D } from '../../features/visualization/RoofPanel';
 import { OptionField } from '../options/OptionField';
 import { WallConfigurator } from '../options/WallConfigurator';
 import { t } from '../../utils/i18n';
@@ -16,8 +17,11 @@ interface ModuleConfigPanelProps {
 /** Generate cell counts from 1.0m to 9.0m in GRID_CELL_SIZE steps */
 const DIMENSION_OPTIONS = Array.from({ length: 17 }, (_, i) => i + 2); // 2..18 cells = 1.0..9.0m
 
+// Enclosed module types that can be switched between (pergola excluded – structurally different)
+const ENCLOSED_TYPES = ['living', 'sauna', 'technik', 'ruhe', 'umkleide', 'sanitaer'] as const;
+
 export function ModuleConfigPanel({ moduleId }: ModuleConfigPanelProps) {
-  const { modules, setModuleOption, resizeModule } = useConfigStore();
+  const { modules, setModuleOption, setModuleType, resizeModule } = useConfigStore();
   const [collapsed, setCollapsed] = useState(false);
 
   const module = modules.find((m) => m.id === moduleId);
@@ -60,6 +64,27 @@ export function ModuleConfigPanel({ moduleId }: ModuleConfigPanelProps) {
       {/* Content */}
       {!collapsed && (
         <div className="px-4 pb-4 space-y-3">
+          {/* Module type selector (not for pergola – structurally different) */}
+          {module.type !== 'pergola' && (
+            <div className="space-y-1">
+              <label className="text-[11px] font-medium text-gray-500">Modultyp</label>
+              <select
+                value={module.type}
+                onChange={(e) => setModuleType(module.id, e.target.value as typeof ENCLOSED_TYPES[number])}
+                className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm bg-white focus:border-amber-400 focus:ring-1 focus:ring-amber-200 transition-colors"
+              >
+                {ENCLOSED_TYPES.map((t) => {
+                  const d = MODULE_DEFINITIONS[t];
+                  return (
+                    <option key={t} value={t}>
+                      {d.icon} {d.name}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          )}
+
           {applicableOptions.length === 0 ? (
             <p className="text-xs text-gray-400">{t('options.no_options')}</p>
           ) : (
@@ -68,11 +93,79 @@ export function ModuleConfigPanel({ moduleId }: ModuleConfigPanelProps) {
                 key={opt.key}
                 option={opt}
                 value={module.options[opt.key] ?? opt.defaultValue}
-                onChange={(val) => setModuleOption(module.id, opt.key, val)}
+                onChange={(val) => {
+                  setModuleOption(module.id, opt.key, val);
+                  // Mutual exclusion: skylight and PV panels can't coexist on the same roof
+                  if (opt.key === 'dachfenster' && val === true) {
+                    setModuleOption(module.id, 'pv_panels', false);
+                  }
+                  if (opt.key === 'pv_panels' && val === true) {
+                    setModuleOption(module.id, 'dachfenster', false);
+                  }
+                }}
                 compact
               />
             ))
           )}
+
+          {/* Skylight Configuration (shown when dachfenster is enabled) */}
+          {module.options.dachfenster === true && module.type !== 'pergola' && (() => {
+            const widthM = module.width * GRID_CELL_SIZE;
+            const depthM = module.height * GRID_CELL_SIZE;
+            const maxW = Math.min(SKYLIGHT_MAX_W, widthM - 0.3);
+            const maxD = Math.min(SKYLIGHT_MAX_D, depthM - 0.3);
+
+            const rawW = module.options.dachfenster_w;
+            const slW = typeof rawW === 'number'
+              ? Math.min(Math.max(SKYLIGHT_MIN, rawW), maxW)
+              : Math.min(SKYLIGHT_DEFAULT_W, maxW);
+            const rawD = module.options.dachfenster_d;
+            const slD = typeof rawD === 'number'
+              ? Math.min(Math.max(SKYLIGHT_MIN, rawD), maxD)
+              : Math.min(SKYLIGHT_DEFAULT_D, maxD);
+
+            return (
+              <div className="rounded-lg border border-sky-200 bg-sky-50/50 px-3 py-2.5 space-y-2">
+                <span className="text-xs font-medium text-gray-700">Dachfenster-Größe</span>
+                <div className="space-y-1.5">
+                  <div>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-[11px] text-gray-500">Breite</span>
+                      <span className="text-[11px] text-gray-500">{slW.toFixed(1)} m</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={SKYLIGHT_MIN}
+                      max={maxW}
+                      step={0.1}
+                      value={slW}
+                      onChange={(e) => setModuleOption(module.id, 'dachfenster_w', Number(e.target.value))}
+                      className="w-full h-1.5 accent-sky-500 cursor-pointer"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-[11px] text-gray-500">Tiefe</span>
+                      <span className="text-[11px] text-gray-500">{slD.toFixed(1)} m</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={SKYLIGHT_MIN}
+                      max={maxD}
+                      step={0.1}
+                      value={slD}
+                      onChange={(e) => setModuleOption(module.id, 'dachfenster_d', Number(e.target.value))}
+                      className="w-full h-1.5 accent-sky-500 cursor-pointer"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-between text-[10px] text-gray-400">
+                  <span>Min: {SKYLIGHT_MIN} m</span>
+                  <span>Max: {maxW.toFixed(1)} × {maxD.toFixed(1)} m</span>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* PV Panel Configuration (shown when pv_panels is enabled) */}
           {module.options.pv_panels === true && module.type !== 'pergola' && (() => {

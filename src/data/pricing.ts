@@ -1,7 +1,7 @@
 import type { PlacedModule } from '../types/grid';
 import { GRID_CELL_SIZE } from '../types/grid';
 import { MODULE_DEFINITIONS } from './module-types';
-import { MODULE_OPTIONS, FENSTER_PRICE, ISOLIERUNG_PRICE } from './options';
+import { MODULE_OPTIONS, FENSTER_PRICE, ISOLIERUNG_PRICE, DACHFENSTER_PRICE } from './options';
 import { calculatePVPrice, calculateMaxPanels } from '../utils/pvCalculation';
 
 export function calculateModulePrice(module: PlacedModule): number {
@@ -25,6 +25,9 @@ export function calculateModulePrice(module: PlacedModule): number {
     }
     if (opt.key === 'isolierung' && value === true) {
       price += ISOLIERUNG_PRICE;
+    }
+    if (opt.key === 'dachfenster' && value === true) {
+      price += DACHFENSTER_PRICE;
     }
     if (opt.key === 'pv_panels' && value === true) {
       const panelCount = module.options.pv_panel_count;

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { PlacedModule } from '../types/grid';
+import type { ModuleType } from '../types/modules';
 import type { WallConfig } from '../types/walls';
 import { TEMPLATES } from '../data/templates';
 
@@ -14,6 +15,7 @@ interface ConfigState {
   rotateModule: (id: string) => void;
   moveModule: (id: string, newX: number, newY: number) => void;
   resizeModule: (id: string, newWidth: number, newHeight: number) => void;
+  setModuleType: (moduleId: string, newType: ModuleType) => void;
   setModuleOption: (moduleId: string, key: string, value: string | boolean | number) => void;
   setModuleWalls: (moduleId: string, walls: WallConfig) => void;
   reset: () => void;
@@ -81,6 +83,17 @@ export const useConfigStore = create<ConfigState>()(
             if (m.id !== id) return m;
             // Reset walls on resize (dimensions changed, like rotateModule)
             return { ...m, width: newWidth, height: newHeight, walls: undefined };
+          }),
+        }));
+      },
+
+      setModuleType: (moduleId: string, newType: ModuleType) => {
+        set((state) => ({
+          modules: state.modules.map((m) => {
+            if (m.id !== moduleId) return m;
+            if (m.type === newType) return m;
+            // Reset type-specific options and walls when changing type
+            return { ...m, type: newType, options: {}, walls: undefined };
           }),
         }));
       },

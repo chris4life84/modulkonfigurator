@@ -52,6 +52,14 @@ export const MODULE_OPTIONS: OptionDefinition[] = [
     appliesTo: ['pergola'],
   },
   {
+    key: 'dachfenster',
+    label: 'Dachfenster (Skylight)',
+    type: 'checkbox',
+    defaultValue: false,
+    appliesTo: ['sauna', 'ruhe', 'living', 'umkleide'],
+    description: 'Integriertes Dachfenster für Blick in den Himmel',
+  },
+  {
     key: 'pv_panels',
     label: 'Photovoltaik',
     type: 'checkbox',
@@ -62,3 +70,4 @@ export const MODULE_OPTIONS: OptionDefinition[] = [
 
 export const FENSTER_PRICE = 650;
 export const ISOLIERUNG_PRICE = 1200;
+export const DACHFENSTER_PRICE = 1800;

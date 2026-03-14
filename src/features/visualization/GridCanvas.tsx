@@ -227,12 +227,12 @@ function DirectionLabels2D({ modules }: { modules: PlacedModule[] }) {
       {/* Vorne = maxY (bottom in SVG, +Z in 3D) */}
       <text
         x={cx}
-        y={bbox.maxY + 3.2}
+        y={bbox.maxY + 2.4}
         textAnchor="middle"
-        fill="#9ca3af"
-        fontSize={0.55}
-        fontWeight={400}
-        letterSpacing="0.06em"
+        fill="#b0b8c4"
+        fontSize={0.35}
+        fontWeight={300}
+        letterSpacing="0.1em"
         style={{ pointerEvents: 'none' }}
       >
         VORNE
@@ -240,40 +240,40 @@ function DirectionLabels2D({ modules }: { modules: PlacedModule[] }) {
       {/* Hinten = minY (top in SVG, -Z in 3D) */}
       <text
         x={cx}
-        y={bbox.minY - 2.6}
+        y={bbox.minY - 1.8}
         textAnchor="middle"
-        fill="#9ca3af"
-        fontSize={0.55}
-        fontWeight={400}
-        letterSpacing="0.06em"
+        fill="#b0b8c4"
+        fontSize={0.35}
+        fontWeight={300}
+        letterSpacing="0.1em"
         style={{ pointerEvents: 'none' }}
       >
         HINTEN
       </text>
       {/* Links = minX (left in SVG, -X in 3D) */}
       <text
-        x={bbox.minX - 3.2}
+        x={bbox.minX - 2.4}
         y={cy}
         textAnchor="middle"
-        fill="#9ca3af"
-        fontSize={0.55}
-        fontWeight={400}
-        letterSpacing="0.06em"
-        transform={`rotate(-90, ${bbox.minX - 3.2}, ${cy})`}
+        fill="#b0b8c4"
+        fontSize={0.35}
+        fontWeight={300}
+        letterSpacing="0.1em"
+        transform={`rotate(-90, ${bbox.minX - 2.4}, ${cy})`}
         style={{ pointerEvents: 'none' }}
       >
         LINKS
       </text>
       {/* Rechts = maxX (right in SVG, +X in 3D) */}
       <text
-        x={bbox.maxX + 3.2}
+        x={bbox.maxX + 2.4}
         y={cy}
         textAnchor="middle"
-        fill="#9ca3af"
-        fontSize={0.55}
-        fontWeight={400}
-        letterSpacing="0.06em"
-        transform={`rotate(90, ${bbox.maxX + 3.2}, ${cy})`}
+        fill="#b0b8c4"
+        fontSize={0.35}
+        fontWeight={300}
+        letterSpacing="0.1em"
+        transform={`rotate(90, ${bbox.maxX + 2.4}, ${cy})`}
         style={{ pointerEvents: 'none' }}
       >
         RECHTS

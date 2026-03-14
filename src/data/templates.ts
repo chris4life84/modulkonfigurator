@@ -9,6 +9,9 @@ const SIDE_WINDOW = { type: 'window' as const, position: 0.5, width: 1.5, height
 const SMALL_WINDOW = { type: 'window' as const, position: 0.5, width: 1.0, height: 1.5, offsetY: 0.3 };
 const SAUNA_WINDOW = { type: 'window' as const, position: 0.5, width: 0.8, height: 0.6, offsetY: 0.8 };
 const SAUNA_WINDOW_LARGE = { type: 'window' as const, position: 0.5, width: 1.0, height: 1.0, offsetY: 0.8 };
+// Elegantes Sauna-Streifenfenster – breit & schmal, Augenhöhe, maximaler Ausblick bei Privatsphäre
+const SAUNA_PANORAMA = { type: 'window' as const, position: 0.5, width: 2.0, height: 0.5, offsetY: 1.2 };
+const SAUNA_PANORAMA_SMALL = { type: 'window' as const, position: 0.5, width: 1.2, height: 0.4, offsetY: 1.2 };
 const PRIVACY_WINDOW = { type: 'window' as const, position: 0.5, width: 0.5, height: 0.4, offsetY: 1.6 };
 
 export const TEMPLATES: Template[] = [
@@ -182,11 +185,11 @@ export const TEMPLATES: Template[] = [
     persons: '3 Personen',
     basePrice: 11700,
     modules: [
-      // Sauna – KEIN Außeneingang, kleines Saunafenster
+      // Sauna – KEIN Außeneingang, elegantes Panorama-Streifenfenster
       {
         type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 3, options: {},
         walls: {
-          front: [SAUNA_WINDOW],
+          front: [SAUNA_PANORAMA],
           back: [],
           left: [],
           right: [],
@@ -217,13 +220,13 @@ export const TEMPLATES: Template[] = [
     persons: '6 Personen',
     basePrice: 17650,
     modules: [
-      // Sauna – KEIN Außeneingang, Saunafenster links + rechts
+      // Sauna – KEIN Außeneingang, elegante Panorama-Streifenfenster
       {
-        type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 6, options: {},
+        type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 6, options: { dachfenster: true },
         walls: {
-          front: [SAUNA_WINDOW_LARGE],
+          front: [SAUNA_PANORAMA],
           back: [],
-          left: [SAUNA_WINDOW_LARGE],
+          left: [SAUNA_PANORAMA],
           right: [],
         },
       },
@@ -252,13 +255,13 @@ export const TEMPLATES: Template[] = [
     persons: '4–6 Personen',
     basePrice: 23100,
     modules: [
-      // Sauna – kein Außeneingang, Saunafenster
+      // Sauna – kein Außeneingang, Panorama-Streifenfenster
       {
         type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 6, options: {},
         walls: {
-          front: [SAUNA_WINDOW_LARGE],
+          front: [SAUNA_PANORAMA],
           back: [],
-          left: [SAUNA_WINDOW_LARGE],
+          left: [SAUNA_PANORAMA],
           right: [],
         },
       },
@@ -280,6 +283,68 @@ export const TEMPLATES: Template[] = [
     ],
   },
 
+  // ★★★★ Wellness-Suite: Sauna + Umkleide + Eingangsbereich + Chillout
+  {
+    id: 'wellness-suite',
+    name: 'Wellness-Suite',
+    description:
+      'Komplettes Wellness-Erlebnis: Saunakern, Umkleide, Eingangsbereich und Chillout-Lounge – alles intern verbunden. 9,0 × 3,0 m Gesamtlänge.',
+    persons: '4–6 Personen',
+    basePrice: 25800,
+    modules: [
+      // Sauna – KEIN Außeneingang, Panorama-Streifenfenster + großes Dachfenster (Sternenhimmel)
+      {
+        type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 6,
+        options: { dachfenster: true, dachfenster_w: 2.0, dachfenster_d: 1.5 },
+        walls: {
+          front: [{ type: 'window' as const, position: 0.5, width: 2.0, height: 0.5, offsetY: 1.6 }],
+          back: [],
+          left: [{ type: 'window' as const, position: 0.5, width: 2.0, height: 0.5, offsetY: 1.6 }],
+          right: [],
+        },
+      },
+      // Umkleide – kein Außeneingang, Interior-Tür links zur Sauna
+      {
+        type: 'umkleide', gridX: 6, gridY: 0, width: 3, height: 6, options: {},
+        walls: {
+          front: [],
+          back: [],
+          left: [],
+          right: [],
+          interiorWalls: {
+            left: [INTERIOR_DOOR],
+          },
+        },
+      },
+      // Eingangsbereich (Living) – Haupteingangstür vorne, Interior-Tür links zur Umkleide
+      {
+        type: 'living', gridX: 9, gridY: 0, width: 3, height: 6, options: {},
+        walls: {
+          front: [STANDARD_DOOR],
+          back: [],
+          left: [],
+          right: [],
+          interiorWalls: {
+            left: [INTERIOR_DOOR],
+          },
+        },
+      },
+      // Chillout-Lounge – Panoramafenster vorne + Seite (Gartenblick)
+      {
+        type: 'ruhe', gridX: 12, gridY: 0, width: 6, height: 6, options: {},
+        walls: {
+          front: [PANORAMA_WINDOW],
+          back: [],
+          left: [],
+          right: [SIDE_WINDOW],
+          interiorWalls: {
+            left: [INTERIOR_DOOR],
+          },
+        },
+      },
+    ],
+  },
+
   // ★★★★ Wellness komplett: Sauna + Sanitär + Ruhe (intern verbunden)
   {
     id: 'wellness-retreat',
@@ -289,13 +354,13 @@ export const TEMPLATES: Template[] = [
     persons: '4 Personen',
     basePrice: 24200,
     modules: [
-      // Sauna – KEIN Außeneingang, Saunafenster, Interior-Tür rechts zum Sanitär
+      // Sauna – KEIN Außeneingang, Panorama-Streifenfenster, Interior-Tür rechts zum Sanitär
       {
         type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 6, options: {},
         walls: {
           front: [],
-          back: [SAUNA_WINDOW_LARGE],
-          left: [SAUNA_WINDOW_LARGE],
+          back: [SAUNA_PANORAMA],
+          left: [SAUNA_PANORAMA],
           right: [],
           interiorWalls: {
             right: [INTERIOR_DOOR],
@@ -350,11 +415,11 @@ export const TEMPLATES: Template[] = [
           },
         },
       },
-      // Sauna – KEIN Außeneingang, kl. Saunafenster, Interior-Tür rechts → Sanitär
+      // Sauna – KEIN Außeneingang, Panorama-Streifenfenster, Interior-Tür rechts → Sanitär
       {
         type: 'sauna', gridX: 6, gridY: 0, width: 6, height: 3, options: {},
         walls: {
-          front: [SAUNA_WINDOW],
+          front: [SAUNA_PANORAMA_SMALL],
           back: [],
           left: [],
           right: [],
@@ -398,12 +463,12 @@ export const TEMPLATES: Template[] = [
           },
         },
       },
-      // Sauna groß – KEIN Außeneingang, Panorama hinten (Garten), Interior rechts → Sanitär, Interior vorne → Ruhe
+      // Sauna groß – KEIN Außeneingang, Panorama-Streifenfenster hinten, Interior rechts → Sanitär, Interior vorne → Ruhe
       {
-        type: 'sauna', gridX: 3, gridY: 0, width: 6, height: 6, options: {},
+        type: 'sauna', gridX: 3, gridY: 0, width: 6, height: 6, options: { dachfenster: true },
         walls: {
           front: [],
-          back: [SAUNA_WINDOW_LARGE],
+          back: [SAUNA_PANORAMA],
           left: [],
           right: [],
           interiorWalls: {
@@ -549,12 +614,12 @@ export const TEMPLATES: Template[] = [
     persons: '4–6 Personen',
     basePrice: 26500,
     modules: [
-      // Sauna – kein Außeneingang, Panoramafenster
+      // Sauna – kein Außeneingang, Panorama-Streifenfenster vorne + hinten
       {
         type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 6, options: {},
         walls: {
-          front: [SAUNA_WINDOW_LARGE],
-          back: [SAUNA_WINDOW_LARGE],
+          front: [SAUNA_PANORAMA],
+          back: [SAUNA_PANORAMA],
           left: [],
           right: [],
         },
