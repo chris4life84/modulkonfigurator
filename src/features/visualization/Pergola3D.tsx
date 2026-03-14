@@ -58,6 +58,16 @@ const epdmMaterial = new THREE.MeshStandardMaterial({
   side: THREE.DoubleSide,
 });
 
+// Markise (roll-down screen) fabric material
+const markiseMaterial = new THREE.MeshStandardMaterial({
+  color: '#8A8A8A',
+  roughness: 0.85,
+  metalness: 0,
+  transparent: true,
+  opacity: 0.7,
+  side: THREE.DoubleSide,
+});
+
 // ── Shared geometries ────────────────────────────────────────────────
 
 const anchorGeometry = new THREE.BoxGeometry(ANCHOR_SIZE, 0.005, ANCHOR_SIZE);
@@ -367,6 +377,108 @@ export function Pergola3D({ module: m, allModules, color, label, selected, onCli
             </mesh>
           </group>
         )}
+
+        {/* ── Sichtschutz / Markise per side ── */}
+        {(() => {
+          const sides: { key: string; side: 'front' | 'back' | 'left' | 'right' }[] = [
+            { key: 'sichtschutz_front', side: 'front' },
+            { key: 'sichtschutz_back', side: 'back' },
+            { key: 'sichtschutz_left', side: 'left' },
+            { key: 'sichtschutz_right', side: 'right' },
+          ];
+
+          // Lamellen slat dimensions
+          const SCREEN_SLAT_H = 0.03;   // 3cm height per slat
+          const SCREEN_SLAT_D = 0.015;   // 1.5cm depth
+          const SCREEN_GAP = 0.015;      // 1.5cm gap between slats
+          const SCREEN_STEP = SCREEN_SLAT_H + SCREEN_GAP; // 4.5cm per row
+
+          // Markise dimensions
+          const HOUSING_H = 0.08;       // Roll housing height
+          const HOUSING_D = 0.10;       // Roll housing depth
+          const RAIL_W = 0.025;         // Guide rail width
+          const FABRIC_THICKNESS = 0.003;
+
+          return sides.map(({ key, side }) => {
+            const val = m.options[key] as string | undefined;
+            if (!val || val === 'none') return null;
+
+            // Skip on house-adjacent sides (wall is there already)
+            const isAdj = adjacentSides[side];
+            if (isAdj && useHouseInset) return null;
+
+            const isFB = side === 'front' || side === 'back';
+            const spanW = isFB ? (beamXEnd - beamXStart) : (beamZEnd - beamZStart);
+            const screenH = postHeight - 0.05; // Leave small gap at bottom
+
+            // Position and rotation for each side
+            let cx: number, cz: number, rotY: number;
+            if (side === 'front') {
+              cx = beamXCenter; cz = halfD - insetFront; rotY = 0;
+            } else if (side === 'back') {
+              cx = beamXCenter; cz = -halfD + insetBack; rotY = Math.PI;
+            } else if (side === 'left') {
+              cx = -halfW + insetLeft; cz = (beamZStart + beamZEnd) / 2; rotY = Math.PI / 2;
+            } else {
+              cx = halfW - insetRight; cz = (beamZStart + beamZEnd) / 2; rotY = -Math.PI / 2;
+            }
+
+            if (val === 'lamellen') {
+              // Horizontal aluminum slat screen
+              const slatCount = Math.floor(screenH / SCREEN_STEP);
+              const slats: JSX.Element[] = [];
+              for (let i = 0; i < slatCount; i++) {
+                const y = 0.05 + i * SCREEN_STEP + SCREEN_SLAT_H / 2;
+                slats.push(
+                  <mesh key={`screen-slat-${i}`} position={[0, y, 0]} castShadow>
+                    <boxGeometry args={[spanW, SCREEN_SLAT_H, SCREEN_SLAT_D]} />
+                    <meshStandardMaterial color="#404040" roughness={0.3} metalness={0.8} />
+                  </mesh>
+                );
+              }
+              return (
+                <group key={key} position={[cx, 0, cz]} rotation={[0, rotY, 0]}>
+                  {slats}
+                </group>
+              );
+            }
+
+            if (val === 'markise') {
+              // Roll-down screen (Senkrechtmarkise)
+              const fabricH = screenH - HOUSING_H;
+              return (
+                <group key={key} position={[cx, 0, cz]} rotation={[0, rotY, 0]}>
+                  {/* Roll housing (top box) */}
+                  <mesh position={[0, postHeight - HOUSING_H / 2, 0]} castShadow>
+                    <boxGeometry args={[spanW + RAIL_W * 2, HOUSING_H, HOUSING_D]} />
+                    <meshStandardMaterial color="#404040" roughness={0.3} metalness={0.8} />
+                  </mesh>
+                  {/* Left guide rail */}
+                  <mesh position={[-spanW / 2 - RAIL_W / 2, (postHeight - HOUSING_H) / 2, 0]} castShadow>
+                    <boxGeometry args={[RAIL_W, postHeight - HOUSING_H, RAIL_W]} />
+                    <meshStandardMaterial color="#404040" roughness={0.3} metalness={0.8} />
+                  </mesh>
+                  {/* Right guide rail */}
+                  <mesh position={[spanW / 2 + RAIL_W / 2, (postHeight - HOUSING_H) / 2, 0]} castShadow>
+                    <boxGeometry args={[RAIL_W, postHeight - HOUSING_H, RAIL_W]} />
+                    <meshStandardMaterial color="#404040" roughness={0.3} metalness={0.8} />
+                  </mesh>
+                  {/* Fabric screen */}
+                  <mesh position={[0, 0.05 + fabricH / 2, 0]} material={markiseMaterial}>
+                    <boxGeometry args={[spanW, fabricH, FABRIC_THICKNESS]} />
+                  </mesh>
+                  {/* Bottom bar (Fallstange) */}
+                  <mesh position={[0, 0.05, 0]} castShadow>
+                    <boxGeometry args={[spanW + RAIL_W * 2, 0.025, 0.025]} />
+                    <meshStandardMaterial color="#404040" roughness={0.3} metalness={0.8} />
+                  </mesh>
+                </group>
+              );
+            }
+
+            return null;
+          });
+        })()}
 
       </group>{/* Close elevated group */}
 

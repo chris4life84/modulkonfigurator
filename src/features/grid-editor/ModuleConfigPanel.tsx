@@ -271,6 +271,32 @@ export function ModuleConfigPanel({ moduleId }: ModuleConfigPanelProps) {
             </div>
           )}
 
+          {/* Pergola: Sichtschutz per side */}
+          {module.type === 'pergola' && (
+            <div className="space-y-2 pt-1">
+              <p className="text-xs font-medium text-gray-600">Seitenschutz</p>
+              {(['front', 'back', 'left', 'right'] as const).map((side) => {
+                const key = `sichtschutz_${side}`;
+                const labelMap = { front: 'Vorne', back: 'Hinten', left: 'Links', right: 'Rechts' };
+                const val = (module.options[key] as string) ?? 'none';
+                return (
+                  <div key={side} className="flex items-center gap-2">
+                    <label className="text-[11px] text-gray-500 shrink-0 w-12">{labelMap[side]}</label>
+                    <select
+                      value={val}
+                      onChange={(e) => setModuleOption(module.id, key, e.target.value)}
+                      className="flex-1 rounded border border-gray-200 px-2 py-1 text-xs bg-white"
+                    >
+                      <option value="none">Keine</option>
+                      <option value="lamellen">Lamellen-Sichtschutz</option>
+                      <option value="markise">Senkrechtmarkise</option>
+                    </select>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {module.type !== 'pergola' && (
             <WallConfigurator module={module} allModules={modules} />
           )}
