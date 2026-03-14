@@ -58,8 +58,12 @@ export function loadWoodPBR(): WoodPBRMaps | null {
       loader.load('/textures/pbr/wood/wall_normal_2k.png'),
       false,
     );
+    const bump = configureTex(
+      loader.load('/textures/pbr/wood/wall_disp_2k.png'),
+      false,
+    );
 
-    _cached = { diffuse, roughness, normal };
+    _cached = { diffuse, roughness, normal, bump };
 
     return _cached;
   } catch {

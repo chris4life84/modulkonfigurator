@@ -12,6 +12,11 @@ const wallEdgeMaterial = new THREE.MeshStandardMaterial({
   color: '#C4B48A',
   roughness: 0.8,
   metalness: 0,
+  // Push edge faces slightly behind in depth buffer to prevent Z-fighting
+  // at wall corners where two wall boxes overlap in the same 3D space.
+  polygonOffset: true,
+  polygonOffsetFactor: 2,
+  polygonOffsetUnits: 2,
 });
 
 interface WoodWallProps {
