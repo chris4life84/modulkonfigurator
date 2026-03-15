@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, Suspense } from 'react';
+import { useMemo, useState, useRef, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, ContactShadows, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -35,20 +35,7 @@ function computeCamera(modules: PlacedModule[]) {
 export function Scene3D({ modules, selectedModuleId, onModuleClick, onBackgroundClick }: Scene3DProps) {
   const [showLabels, setShowLabels] = useState(true);
   const camera = useMemo(() => computeCamera(modules), [modules]);
-
-  // Log camera position/target on OrbitControls change (for preview image coordinates)
-  const handleCameraChange = useCallback(() => {
-    const canvas = document.querySelector('canvas');
-    if (!canvas) return;
-    const fiber = (canvas as any).__r$;
-    if (!fiber) return;
-    const cam = fiber.getState().camera;
-    if (cam) {
-      console.log(
-        `Camera: position=[${cam.position.x.toFixed(2)}, ${cam.position.y.toFixed(2)}, ${cam.position.z.toFixed(2)}] target=[${fiber.getState().controls?.target?.x?.toFixed(2) ?? '?'}, ${fiber.getState().controls?.target?.y?.toFixed(2) ?? '?'}, ${fiber.getState().controls?.target?.z?.toFixed(2) ?? '?'}]`
-      );
-    }
-  }, []);
+  const controlsRef = useRef<any>(null);
   const shadowCenter = useMemo(() => {
     if (modules.length === 0) return [0, 0, 0] as [number, number, number];
     const bbox = getBoundingBox(modules);
@@ -133,13 +120,25 @@ export function Scene3D({ modules, selectedModuleId, onModuleClick, onBackground
 
           {/* Controls */}
           <OrbitControls
+            ref={controlsRef}
             target={camera.target}
             maxPolarAngle={Math.PI / 2.1}
             minDistance={3}
             maxDistance={40}
             enableDamping
             dampingFactor={0.08}
-            onEnd={handleCameraChange}
+            onEnd={() => {
+              const ctrl = controlsRef.current;
+              if (!ctrl) return;
+              const cam = ctrl.object;
+              const tgt = ctrl.target;
+              const data = {
+                position: [+cam.position.x.toFixed(3), +cam.position.y.toFixed(3), +cam.position.z.toFixed(3)],
+                target: [+tgt.x.toFixed(3), +tgt.y.toFixed(3), +tgt.z.toFixed(3)],
+              };
+              (window as any).__cameraData = data;
+              console.log(`Camera: position=[${data.position}] target=[${data.target}]`);
+            }}
           />
         </Suspense>
       </Canvas>

@@ -78,13 +78,13 @@ export const TEMPLATES: Template[] = [
     id: 'studio-terrasse',
     name: 'Studio mit Terrasse',
     description:
-      'Zwei Living-Module mit vorgelagerter Lamellen-Pergola: Arbeiten, Empfangen und Entspannen unter einem Dach.',
+      'Zwei Living-Module mit vorgelagerter Glasdach-Pergola: Arbeiten, Empfangen und Entspannen unter einem Dach.',
     persons: '2–4 Personen',
     basePrice: 23800,
     modules: [
       { type: 'living', gridX: 0, gridY: 0, width: 6, height: 6, options: {} },
       { type: 'living', gridX: 0, gridY: 6, width: 6, height: 3, options: {} },
-      { type: 'pergola', gridX: 0, gridY: 9, width: 6, height: 6, options: { dachtyp: 'lamellen' } },
+      { type: 'pergola', gridX: 0, gridY: 9, width: 6, height: 6, options: { dachtyp: 'glas' } },
     ],
   },
 
@@ -121,7 +121,7 @@ export const TEMPLATES: Template[] = [
         },
       },
       // Überdachte Terrasse vor dem Wohnraum
-      { type: 'pergola', gridX: 3, gridY: 6, width: 6, height: 6, options: { dachtyp: 'lamellen' } },
+      { type: 'pergola', gridX: 3, gridY: 6, width: 6, height: 6, options: { dachtyp: 'glas' } },
     ],
   },
 
@@ -449,6 +449,7 @@ export const TEMPLATES: Template[] = [
       'Luxuriöses Wellness-Resort: Umkleiden → Sauna → Duschen → Ruhen → Terrasse. Alle Räume intern verbunden, Sauna mit Panoramafenster.',
     persons: '6–8 Personen',
     basePrice: 36500,
+    image: '/templates/spa-resort.jpg',
     modules: [
       // Umkleide links – Außentür vorne (Haupteinstieg), Interior-Tür rechts → Sauna
       {
@@ -514,6 +515,7 @@ export const TEMPLATES: Template[] = [
       'Eigenständiges Gästehaus: Wohnraum mit Panoramafenster, eigenes Bad intern erreichbar und überdachter Eingangsbereich.',
     persons: '2 Personen',
     basePrice: 20000,
+    image: '/templates/gaestehouse.jpg',
     modules: [
       // Wohnraum – Terrassentür vorne, Interior-Tür links zum Bad
       {
@@ -539,7 +541,7 @@ export const TEMPLATES: Template[] = [
         },
       },
       // Eingangs-Pergola (gleiche Breite wie Wohn + Bad)
-      { type: 'pergola', gridX: 0, gridY: 6, width: 9, height: 4, options: { dachtyp: 'lamellen' } },
+      { type: 'pergola', gridX: 0, gridY: 6, width: 9, height: 4, options: { dachtyp: 'glas' } },
     ],
   },
 
@@ -551,6 +553,7 @@ export const TEMPLATES: Template[] = [
       'Große Glasdach-Pergola als Pool-Überdachung oder Outdoor-Lounge mit separater Umkleide und Sanitärmodul.',
     persons: '4 Personen',
     basePrice: 14400,
+    image: '/templates/pool-lounge.jpg',
     modules: [
       // Große Pergola (Hauptfläche)
       { type: 'pergola', gridX: 0, gridY: 0, width: 10, height: 6, options: { dachtyp: 'glas' } },
@@ -566,9 +569,10 @@ export const TEMPLATES: Template[] = [
     id: 'l-form-villa',
     name: 'L-Form Villa',
     description:
-      'Drei offene Wohnräume in L-Form mit geschützter Lamellen-Pergola im Innenhof – ein architektonisches Statement.',
+      'Drei offene Wohnräume in L-Form mit geschützter Glasdach-Pergola im Innenhof – ein architektonisches Statement.',
     persons: '2–4 Personen',
     basePrice: 30000,
+    image: '/templates/l-form-villa.jpg',
     modules: [
       // Hauptraum (hinten, Panorama links + hinten)
       {
@@ -601,7 +605,7 @@ export const TEMPLATES: Template[] = [
         },
       },
       // Innenhof-Pergola (im L-Winkel)
-      { type: 'pergola', gridX: 6, gridY: 6, width: 3, height: 3, options: { dachtyp: 'lamellen' } },
+      { type: 'pergola', gridX: 6, gridY: 6, width: 3, height: 3, options: { dachtyp: 'glas' } },
     ],
   },
 
@@ -671,9 +675,10 @@ export const TEMPLATES: Template[] = [
     id: 'saunagarten',
     name: 'Saunagarten',
     description:
-      'Sauna-Ensemble mit Außendusche, Technikraum und großer Lamellen-Pergola. Saunaeinstieg über den Technikraum, danach ab auf die Terrasse.',
+      'Sauna-Ensemble mit Außendusche, Technikraum und großer Glasdach-Pergola. Saunaeinstieg über den Technikraum, danach ab auf die Terrasse.',
     persons: '4–6 Personen',
     basePrice: 26500,
+    image: '/templates/saunagarten.jpg',
     modules: [
       // Sauna – kein Außeneingang, Panorama-Streifenfenster vorne + hinten
       {
@@ -709,7 +714,7 @@ export const TEMPLATES: Template[] = [
         },
       },
       // Große Pergola (Außenbereich zum Abkühlen)
-      { type: 'pergola', gridX: 0, gridY: 6, width: 12, height: 6, options: { dachtyp: 'lamellen' } },
+      { type: 'pergola', gridX: 0, gridY: 6, width: 12, height: 6, options: { dachtyp: 'glas' } },
     ],
   },
 ];
