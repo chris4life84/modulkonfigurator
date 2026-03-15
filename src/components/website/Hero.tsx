@@ -13,29 +13,45 @@ export function Hero() {
         />
       </div>
 
-      <div className="relative mx-auto max-w-7xl px-4 py-16 md:py-24">
-        <div className="max-w-2xl">
-          <h1 className="text-3xl font-bold leading-tight md:text-5xl">
-            Ihr modularer Raum
-            <br />
-            <span className="text-wood-200">in 3 Schritten</span>
-          </h1>
-          <p className="mt-4 text-lg text-wood-100/80 md:text-xl">
-            Premium-Sauna, Home Office, Wohnraum oder Pergola-Lounge -- konfigurieren Sie Ihr individuelles Modulhaus in Echtzeit und erleben Sie es in 3D.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              to="/konfigurator"
-              className="rounded-lg bg-white px-6 py-3 text-sm font-semibold text-wood-800 shadow-lg transition-all hover:bg-wood-50 hover:shadow-xl"
-            >
-              Jetzt konfigurieren
-            </Link>
-            <Link
-              to="/ueber-uns"
-              className="rounded-lg border border-white/30 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-white/10"
-            >
-              Mehr erfahren
-            </Link>
+      <div className="relative mx-auto max-w-7xl px-4 py-12 md:py-16">
+        <div className="flex flex-col items-center gap-8 md:flex-row md:gap-12">
+          {/* Text */}
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold leading-tight md:text-5xl">
+              Ihr modularer Raum
+              <br />
+              <span className="text-wood-200">in 3 Schritten</span>
+            </h1>
+            <p className="mt-4 text-lg text-wood-100/80 md:text-xl">
+              Premium-Sauna, Home Office, Wohnraum oder Pergola-Lounge -- konfigurieren Sie Ihr individuelles Modulhaus in Echtzeit und erleben Sie es in 3D.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                to="/#konfigurator"
+                className="rounded-lg bg-white px-6 py-3 text-sm font-semibold text-wood-800 shadow-lg transition-all hover:bg-wood-50 hover:shadow-xl"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('konfigurator')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Jetzt konfigurieren
+              </Link>
+              <Link
+                to="/ueber-uns"
+                className="rounded-lg border border-white/30 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-white/10"
+              >
+                Mehr erfahren
+              </Link>
+            </div>
+          </div>
+
+          {/* Hero image */}
+          <div className="w-full max-w-md md:max-w-lg lg:max-w-xl flex-shrink-0">
+            <img
+              src="/hero-collage.png"
+              alt="Modulhaus-Varianten: Home Office, Wohnraum mit Pergola, Sauna am See"
+              className="w-full rounded-xl shadow-2xl"
+            />
           </div>
         </div>
       </div>

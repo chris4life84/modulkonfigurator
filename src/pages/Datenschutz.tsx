@@ -7,9 +7,9 @@ export function Datenschutz() {
         <section>
           <h2 className="text-base font-semibold text-gray-900">1. Verantwortlicher</h2>
           <p className="mt-2">
-            Smart Modular Space<br />
+            Modul-Garten<br />
             Musterstrasse 1, 12345 Musterstadt<br />
-            E-Mail: datenschutz@smartmodularspace.de
+            E-Mail: datenschutz@modul-garten.de
           </p>
         </section>
 
@@ -53,6 +53,11 @@ export function Datenschutz() {
         <p className="text-xs text-gray-400 pt-4">
           Platzhalter -- bitte mit Ihren echten Datenschutzangaben ersetzen.
         </p>
+      </div>
+
+      {/* Logo */}
+      <div className="mt-12 flex justify-center">
+        <img src="/logo.png" alt="Modul-Garten" className="h-16 w-auto opacity-60" />
       </div>
     </div>
   );

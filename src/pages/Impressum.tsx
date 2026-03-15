@@ -7,7 +7,7 @@ export function Impressum() {
         <section>
           <h2 className="text-base font-semibold text-gray-900">Angaben gemaess &sect; 5 TMG</h2>
           <p className="mt-2">
-            Smart Modular Space<br />
+            Modul-Garten<br />
             Musterstrasse 1<br />
             12345 Musterstadt
           </p>
@@ -17,7 +17,7 @@ export function Impressum() {
           <h2 className="text-base font-semibold text-gray-900">Kontakt</h2>
           <p className="mt-2">
             Telefon: +49 (0) 123 456 789<br />
-            E-Mail: info@smartmodularspace.de
+            E-Mail: info@modul-garten.de
           </p>
         </section>
 
@@ -49,6 +49,11 @@ export function Impressum() {
         <p className="text-xs text-gray-400 pt-4">
           Platzhalter -- bitte mit Ihren echten Firmendaten ersetzen.
         </p>
+      </div>
+
+      {/* Logo */}
+      <div className="mt-12 flex justify-center">
+        <img src="/logo.png" alt="Modul-Garten" className="h-16 w-auto opacity-60" />
       </div>
     </div>
   );

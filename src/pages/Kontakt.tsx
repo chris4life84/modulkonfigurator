@@ -20,7 +20,7 @@ export function Kontakt() {
         {/* Kontaktdaten */}
         <div className="space-y-4">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">Smart Modular Space</h2>
+            <h2 className="text-base font-semibold text-gray-900">Modul-Garten</h2>
             <p className="mt-1 text-sm text-gray-500">
               Musterstrasse 1<br />
               12345 Musterstadt
@@ -34,8 +34,8 @@ export function Kontakt() {
             </p>
             <p className="text-sm text-gray-500">
               <span className="font-medium text-gray-700">E-Mail:</span>{' '}
-              <a href="mailto:info@smartmodularspace.de" className="text-wood-600 hover:text-wood-700">
-                info@smartmodularspace.de
+              <a href="mailto:info@modul-garten.de" className="text-wood-600 hover:text-wood-700">
+                info@modul-garten.de
               </a>
             </p>
           </div>
@@ -94,6 +94,11 @@ export function Kontakt() {
             </form>
           )}
         </div>
+      </div>
+
+      {/* Logo */}
+      <div className="mt-12 flex justify-center">
+        <img src="/logo.png" alt="Modul-Garten" className="h-16 w-auto opacity-60" />
       </div>
     </div>
   );

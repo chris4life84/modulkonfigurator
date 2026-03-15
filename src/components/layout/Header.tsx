@@ -12,8 +12,8 @@ export function Header() {
     <header className="border-b border-gray-200 bg-white px-4 py-4 shadow-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link to="/" className="flex h-8 w-8 items-center justify-center rounded-lg bg-wood-600 text-white text-xs font-bold hover:bg-wood-700 transition-colors" title="Zur Startseite">
-            SM
+          <Link to="/" className="flex items-center hover:opacity-80 transition-opacity" title="Zur Startseite">
+            <img src="/logo.png" alt="Modul-Garten" className="h-8 w-auto" />
           </Link>
           <div>
             <h1 className="text-xl font-bold text-wood-800">{t('app.title')}</h1>

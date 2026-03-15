@@ -5,7 +5,7 @@ export function UeberUns() {
     <div className="mx-auto max-w-3xl px-4 py-12">
       <h1 className="text-2xl font-bold text-gray-900">Unser Konzept</h1>
       <p className="mt-2 text-sm text-gray-500">
-        Smart Modular Space -- modulare Raumsysteme, die sich Ihrem Leben anpassen.
+        Modul-Garten -- modulare Raumsysteme, die sich Ihrem Leben anpassen.
       </p>
 
       <div className="mt-10 space-y-10">
@@ -114,6 +114,11 @@ export function UeberUns() {
             Zum Konfigurator
           </Link>
         </section>
+      </div>
+
+      {/* Logo */}
+      <div className="mt-12 flex justify-center">
+        <img src="/logo.png" alt="Modul-Garten" className="h-16 w-auto opacity-60" />
       </div>
     </div>
   );

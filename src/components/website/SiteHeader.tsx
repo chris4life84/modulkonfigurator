@@ -16,10 +16,8 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-wood-600 text-white text-sm font-bold">
-            SM
-          </div>
-          <span className="text-lg font-bold text-wood-800">Smart Modular Space</span>
+          <img src="/logo.png" alt="Modul-Garten" className="h-8 w-auto" />
+          <span className="text-lg font-bold text-wood-800">Modul-Garten</span>
         </Link>
 
         {/* Desktop Nav */}

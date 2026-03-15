@@ -7,7 +7,7 @@ export function SiteFooter() {
         <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
           {/* Logo / Brand */}
           <div className="text-center md:text-left">
-            <p className="text-sm font-semibold text-wood-700">Smart Modular Space</p>
+            <p className="text-sm font-semibold text-wood-700">Modul-Garten</p>
             <p className="text-xs text-gray-400">Modulare Raumsysteme in Holzbauweise</p>
           </div>
 
@@ -21,7 +21,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-6 border-t border-gray-100 pt-4 text-center text-xs text-gray-400">
-          &copy; {new Date().getFullYear()} Smart Modular Space. Alle Rechte vorbehalten.
+          &copy; {new Date().getFullYear()} Modul-Garten. Alle Rechte vorbehalten.
         </div>
       </div>
     </footer>
