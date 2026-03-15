@@ -25,6 +25,7 @@ export const TEMPLATES: Template[] = [
     name: 'Starter-Modul',
     description:
       'Ein einzelnes 3,0 × 1,5 m Modul – der kompakteste Einstieg. Perfekt als Gartenhaus, Mini-Office oder Ausgangspunkt für spätere Erweiterungen.',
+    image: '/templates/starter.jpg',
     persons: 'Flexibel',
     basePrice: 6800,
     modules: [
@@ -38,6 +39,7 @@ export const TEMPLATES: Template[] = [
     name: 'Kompakt-Kubus',
     description:
       'Quadratisches 3,0 × 3,0 m Raumwunder mit Panoramafenster. Ideal als vollwertiges Home Office oder gemütliches Gästezimmer.',
+    image: '/templates/kompakt-kubus.jpg',
     persons: '1–2 Personen',
     basePrice: 11500,
     modules: [
@@ -51,6 +53,7 @@ export const TEMPLATES: Template[] = [
     name: 'Kubus mit Terrasse',
     description:
       'Großzügiger Kubus mit überdachter Glasdach-Terrasse – perfekt als Home Office mit Pausenbereich oder als Gartenlounge mit Rückzugsraum.',
+    image: '/templates/kubus-terrasse.jpg',
     persons: '1–2 Personen',
     basePrice: 17000,
     modules: [
@@ -65,6 +68,7 @@ export const TEMPLATES: Template[] = [
     name: 'Garten-Studio',
     description:
       'Zwei verbundene Living-Module: großer Hauptraum mit Panoramafenster und separater Eingangsbereich. Ideal als Atelier, Praxis oder Gästewohnung.',
+    image: '/templates/garten-studio.jpg',
     persons: '1–3 Personen',
     basePrice: 18400,
     modules: [
@@ -79,6 +83,7 @@ export const TEMPLATES: Template[] = [
     name: 'Studio mit Terrasse',
     description:
       'Zwei Living-Module mit vorgelagerter Glasdach-Pergola: Arbeiten, Empfangen und Entspannen unter einem Dach.',
+    image: '/templates/studio-terrasse.jpg',
     persons: '2–4 Personen',
     basePrice: 23800,
     modules: [
@@ -88,49 +93,13 @@ export const TEMPLATES: Template[] = [
     ],
   },
 
-  // ★★★★★ Komplett: Tiny House mit Bad (intern erreichbar)
-  {
-    id: 'tiny-house',
-    name: 'Tiny House',
-    description:
-      'Kompaktes Mini-Haus: Wohnbereich mit Terrassentür zur Pergola und eigenem Bad – alles intern verbunden auf minimaler Fläche.',
-    persons: '1–2 Personen',
-    basePrice: 22200,
-    modules: [
-      // Wohnraum – Haupteingang über Terrassentür, Interior-Tür links zum Bad
-      {
-        type: 'living', gridX: 3, gridY: 0, width: 6, height: 6, options: {},
-        walls: {
-          front: [TERRACE_DOOR],
-          back: [PANORAMA_WINDOW],
-          left: [],
-          right: [SIDE_WINDOW],
-          interiorWalls: {
-            left: [INTERIOR_DOOR],
-          },
-        },
-      },
-      // Bad – kein Außeneingang, nur über Wohnraum erreichbar
-      {
-        type: 'sanitaer', gridX: 0, gridY: 0, width: 3, height: 6, options: {},
-        walls: {
-          front: [PRIVACY_WINDOW],
-          back: [],
-          left: [PRIVACY_WINDOW],
-          right: [],
-        },
-      },
-      // Überdachte Terrasse vor dem Wohnraum
-      { type: 'pergola', gridX: 3, gridY: 6, width: 6, height: 6, options: { dachtyp: 'glas' } },
-    ],
-  },
-
   // ★★★★★★ Premium: Garden Office Deluxe
   {
     id: 'garden-office-deluxe',
     name: 'Garden Office Deluxe',
     description:
       'Premium Home Office: Empfangs-/Meetingraum, großes Büro, eigenes WC und Glasdach-Pergola. WC intern über das Büro erreichbar.',
+    image: '/templates/garden-office-deluxe.jpg',
     persons: '2–6 Personen',
     basePrice: 29000,
     modules: [
@@ -182,6 +151,7 @@ export const TEMPLATES: Template[] = [
     name: 'Sauna Kompakt',
     description:
       'Einstieg in die eigene Sauna: kompakter Saunakern mit Technikraum als Vorraum. Saunaeingang nur über den Technikraum – wie es sein soll.',
+    image: '/templates/sauna-kompakt.jpg',
     persons: '3 Personen',
     basePrice: 11700,
     modules: [
@@ -217,6 +187,7 @@ export const TEMPLATES: Template[] = [
     name: 'Sauna Deluxe',
     description:
       'Großzügige 3 × 3 m Sauna mit Panorama-Saunafenster und separatem Technikraum. Saunaeingang nur über den Technikraum.',
+    image: '/templates/sauna-deluxe.jpg',
     persons: '6 Personen',
     basePrice: 17650,
     modules: [
@@ -252,6 +223,7 @@ export const TEMPLATES: Template[] = [
     name: 'Sauna mit Terrasse',
     description:
       'Saunakern mit Technikraum und Glasdach-Pergola zum Entspannen nach dem Saunieren. Saunaeinstieg über den Technikraum.',
+    image: '/templates/sauna-terrasse.jpg',
     persons: '4–6 Personen',
     basePrice: 23100,
     modules: [
@@ -289,6 +261,7 @@ export const TEMPLATES: Template[] = [
     name: 'Wellness-Suite',
     description:
       'Komplettes Wellness-Erlebnis: Saunakern, Umkleide, Eingangsbereich und Chillout-Lounge – alles intern verbunden. 9,0 × 3,0 m Gesamtlänge.',
+    image: '/templates/wellness-suite.jpg',
     persons: '4–6 Personen',
     basePrice: 25800,
     modules: [
@@ -351,6 +324,7 @@ export const TEMPLATES: Template[] = [
     name: 'Wellness-Retreat',
     description:
       'Sauna, Dusche und Ruhebereich – Ihr privates Spa. Einstieg über den Ruheraum, intern zur Sauna und Dusche verbunden.',
+    image: '/templates/wellness-retreat.jpg',
     persons: '4 Personen',
     basePrice: 24200,
     modules: [
@@ -388,54 +362,6 @@ export const TEMPLATES: Template[] = [
           interiorWalls: {
             back: [INTERIOR_DOOR],
           },
-        },
-      },
-    ],
-  },
-
-  // ★★★★★ Wellness-Oase: Umkleide → Sauna → Sanitär (Reihe, intern verbunden)
-  {
-    id: 'wellness-oase',
-    name: 'Wellness-Oase',
-    description:
-      'Umkleiden, Saunieren, Duschen – alles in einer Reihe und intern verbunden. Einstieg über die Umkleide, Sauna und Dusche nur von innen erreichbar.',
-    persons: '3–4 Personen',
-    basePrice: 22700,
-    modules: [
-      // Umkleide – Außentür vorne (Einstieg), Interior-Tür rechts → Sauna
-      {
-        type: 'umkleide', gridX: 0, gridY: 0, width: 6, height: 3, options: {},
-        walls: {
-          front: [STANDARD_DOOR],
-          back: [],
-          left: [],
-          right: [],
-          interiorWalls: {
-            right: [INTERIOR_DOOR],
-          },
-        },
-      },
-      // Sauna – KEIN Außeneingang, Panorama-Streifenfenster, Interior-Tür rechts → Sanitär
-      {
-        type: 'sauna', gridX: 6, gridY: 0, width: 6, height: 3, options: {},
-        walls: {
-          front: [SAUNA_PANORAMA_SMALL],
-          back: [],
-          left: [],
-          right: [],
-          interiorWalls: {
-            right: [INTERIOR_DOOR],
-          },
-        },
-      },
-      // Sanitär – KEIN Außeneingang, nur über Sauna erreichbar
-      {
-        type: 'sanitaer', gridX: 12, gridY: 0, width: 6, height: 3, options: {},
-        walls: {
-          front: [PRIVACY_WINDOW],
-          back: [],
-          left: [],
-          right: [],
         },
       },
     ],

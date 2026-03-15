@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom';
 import { Hero } from '../components/website/Hero';
 import { ConceptStrip } from '../components/website/ConceptStrip';
 import { QualityFeatures } from '../components/website/QualityFeatures';
-import { Header } from '../components/layout/Header';
 import { Stepper } from '../components/ui/Stepper';
 import { STEPS, useWizardStore } from '../store/useWizardStore';
 import { TemplateSelectionStep } from '../features/template-selection/TemplateSelectionStep';
@@ -25,8 +24,7 @@ export function Home() {
 
       {/* Vorlagen-Auswahl */}
       <section id="konfigurator" className="scroll-mt-16">
-        <Header />
-        <div className="border-b border-gray-100 bg-white px-4 py-3">
+        <div className="border-b border-gray-100 bg-white px-4 py-2">
           <Stepper steps={[...STEPS]} currentStep={0} onStepClick={() => {}} />
         </div>
         <div className="mx-auto max-w-5xl px-4 py-6">

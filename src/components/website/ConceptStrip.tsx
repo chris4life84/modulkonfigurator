@@ -30,15 +30,19 @@ const concepts = [
 
 export function ConceptStrip() {
   return (
-    <section className="border-b border-gray-100 bg-white py-12">
-      <div className="mx-auto grid max-w-5xl gap-8 px-4 md:grid-cols-3">
+    <section className="border-b border-gray-100 bg-white py-4">
+      <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 md:flex-row md:gap-6">
         {concepts.map((c) => (
-          <div key={c.title} className="flex flex-col items-center text-center md:items-start md:text-left">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-wood-50 text-wood-600">
-              {c.icon}
+          <div key={c.title} className="flex flex-1 items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-wood-50 text-wood-600">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {c.icon.props.children}
+              </svg>
             </div>
-            <h3 className="mt-3 text-base font-semibold text-gray-900">{c.title}</h3>
-            <p className="mt-1 text-sm leading-relaxed text-gray-500">{c.text}</p>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">{c.title}</h3>
+              <p className="text-xs leading-snug text-gray-500">{c.text}</p>
+            </div>
           </div>
         ))}
       </div>

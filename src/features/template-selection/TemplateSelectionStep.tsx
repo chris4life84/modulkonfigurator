@@ -32,13 +32,12 @@ export function TemplateSelectionStep() {
           <p className="text-sm text-gray-600">
             Starten Sie mit einer leeren Fläche und platzieren Sie Module komplett nach Ihren Vorstellungen – volle Freiheit im 3D-Konfigurator.
           </p>
-          <div className="mt-3 flex items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 h-[104px]">
-            <div className="text-center text-gray-400">
-              <svg className="mx-auto h-10 w-10 mb-1" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              <span className="text-xs">Eigene Konfiguration</span>
-            </div>
+          <div className="mt-3 overflow-hidden rounded-lg bg-gradient-to-br from-gray-50 to-gray-100">
+            <img
+              src="/templates/leere-szene.jpg"
+              alt="Leere Szene"
+              className="h-40 w-full object-cover"
+            />
           </div>
         </Card>
 

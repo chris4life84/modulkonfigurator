@@ -21,7 +21,7 @@ export function Hero() {
             <span className="text-wood-200">in 3 Schritten</span>
           </h1>
           <p className="mt-4 text-lg text-wood-100/80 md:text-xl">
-            Premium-Sauna, Home Office oder Wohnraum -- konfigurieren Sie Ihr individuelles Modulhaus in Echtzeit und erleben Sie es in 3D.
+            Premium-Sauna, Home Office, Wohnraum oder Pergola-Lounge -- konfigurieren Sie Ihr individuelles Modulhaus in Echtzeit und erleben Sie es in 3D.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
