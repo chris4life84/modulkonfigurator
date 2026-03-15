@@ -25,6 +25,12 @@ const HAUS_BLOCKS: { w: number; h: number }[] = [
   { w: 6, h: 6 },
 ];
 
+const HAUS_BLOCKS_LARGE: { w: number; h: number }[] = [
+  { w: 12, h: 6 },
+  { w: 6, h: 12 },
+  { w: 12, h: 12 },
+];
+
 // Generate all pergola blocks from 2.0m to 6.0m (0.5m steps), width >= height
 const PERGOLA_BLOCKS: { w: number; h: number }[] = (() => {
   const blocks: { w: number; h: number }[] = [];
@@ -50,12 +56,14 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
   const customH = Math.round(customHm / GRID_CELL_SIZE);
 
   const blocks = category === 'haus' ? HAUS_BLOCKS : PERGOLA_BLOCKS;
+  const blocksLarge = category === 'haus' ? HAUS_BLOCKS_LARGE : [];
+  const allBlocks = category === 'haus' ? [...HAUS_BLOCKS, ...HAUS_BLOCKS_LARGE] : PERGOLA_BLOCKS;
   const blockColor = category === 'haus' ? HAUS_COLOR : PERGOLA_COLOR;
   const blockType: ModuleType = category === 'haus' ? 'living' : 'pergola';
 
   const isCustomSelected =
     selection != null &&
-    !blocks.some((b) => b.w === selection.width && b.h === selection.height) &&
+    !allBlocks.some((b) => b.w === selection.width && b.h === selection.height) &&
     selection.width === customW &&
     selection.height === customH;
 
@@ -114,9 +122,20 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
       <h3 className="text-base font-semibold text-gray-900">
         {category === 'haus' ? 'Modulblöcke' : 'Pergola-Blöcke'}
       </h3>
-      <p className="mt-1 text-xs text-gray-400">
-        Klicken = platzieren · Ziehen = gezielt platzieren
-      </p>
+      <div className="mt-1.5 rounded-md bg-gray-50 border border-gray-100 px-2.5 py-2 space-y-1">
+        <div className="flex items-start gap-1.5">
+          <span className="text-[11px] text-gray-400 shrink-0 mt-px">☝️</span>
+          <span className="text-[11px] text-gray-500"><strong className="text-gray-600">Klicken</strong> – Block wählen, dann auf grüne Fläche klicken</span>
+        </div>
+        <div className="flex items-start gap-1.5">
+          <span className="text-[11px] text-gray-400 shrink-0 mt-px">✋</span>
+          <span className="text-[11px] text-gray-500"><strong className="text-gray-600">Ziehen</strong> – Block direkt auf die gewünschte Position ziehen</span>
+        </div>
+        <div className="flex items-start gap-1.5">
+          <span className="text-[11px] text-gray-400 shrink-0 mt-px">🔄</span>
+          <span className="text-[11px] text-gray-500"><strong className="text-gray-600">Nach Platzierung</strong> – Modul anklicken zum Verschieben, Drehen & Konfigurieren</span>
+        </div>
+      </div>
 
       {category === 'pergola' ? (
         /* Compact grid for 28 pergola templates */
@@ -188,6 +207,50 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
             );
           })}
         </div>
+      )}
+
+      {/* Large house blocks (double size) */}
+      {category === 'haus' && blocksLarge.length > 0 && (
+        <>
+          <p className="mt-3 mb-1.5 text-[11px] font-medium text-gray-400 uppercase tracking-wider">Große Module</p>
+          <div className="flex gap-2">
+            {blocksLarge.map(({ w, h }) => {
+              const isSelected =
+                selection?.width === w && selection?.height === h && selection?.type === blockType;
+              const sizeLabel = `${(w * GRID_CELL_SIZE).toFixed(1)}×${(h * GRID_CELL_SIZE).toFixed(1)}m`;
+              const isVertical = w < h;
+              const isLarge = w >= 6 && h >= 6;
+
+              return (
+                <DraggableCatalogItem
+                  key={`${w}x${h}`}
+                  type={blockType}
+                  width={w}
+                  height={h}
+                  isSelected={isSelected}
+                  color={blockColor}
+                  onClick={() =>
+                    onSelect(
+                      isSelected ? null : { type: blockType, width: w, height: h },
+                    )
+                  }
+                >
+                  <div className="flex items-center justify-center mb-1">
+                    <div
+                      className="rounded-[2px] transition-colors"
+                      style={{
+                        width: isLarge ? 28 : isVertical ? 14 : 28,
+                        height: isLarge ? 28 : isVertical ? 28 : 14,
+                        backgroundColor: isSelected ? blockColor : `${blockColor}40`,
+                      }}
+                    />
+                  </div>
+                  <span className="block text-[11px] font-medium leading-tight">{sizeLabel}</span>
+                </DraggableCatalogItem>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* Custom size block */}

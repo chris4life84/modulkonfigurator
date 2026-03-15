@@ -95,6 +95,13 @@ export function GridEditorStep() {
       height: activeItem.height,
       options: {},
     });
+    // Exit placement mode → green grid disappears
+    setCatalogSelection(null);
+    setDragItem(null);
+    // Auto-select the newly placed module so user can move/rotate/configure it
+    const latest = useConfigStore.getState().modules;
+    const newMod = latest[latest.length - 1];
+    if (newMod) setSelectedModuleId(newMod.id);
   };
 
   const handleModuleClick = useCallback(
@@ -195,8 +202,8 @@ export function GridEditorStep() {
         if (!mod) return;
 
         // Snap so cursor is near module center
-        const snapX = pos.x - Math.floor(mod.width / 2);
-        const snapY = pos.y - Math.floor(mod.height / 2);
+        const snapX = pos.x - Math.round(mod.width / 2);
+        const snapY = pos.y - Math.round(mod.height / 2);
         const isValid = gridDrag.validSet.has(`${snapX},${snapY}`);
 
         setGridDrag((prev) =>
@@ -332,8 +339,8 @@ export function GridEditorStep() {
 
         const svgPos = screenToSvgGrid(svgRef.current, finalX, finalY);
         // Offset so the module center aligns with cursor
-        const targetX = svgPos.x - Math.floor(dragItem.width / 2);
-        const targetY = svgPos.y - Math.floor(dragItem.height / 2);
+        const targetX = svgPos.x - Math.round(dragItem.width / 2);
+        const targetY = svgPos.y - Math.round(dragItem.height / 2);
 
         // Find nearest valid placement within 3 grid cells
         const nearest = findNearestValidPlacement(validPlacements, targetX, targetY, 3);

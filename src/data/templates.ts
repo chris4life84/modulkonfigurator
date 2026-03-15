@@ -605,6 +605,66 @@ export const TEMPLATES: Template[] = [
     ],
   },
 
+  // Grand Residence: große Villa mit Sanitär, 3 Living-Modulen + Pergola
+  {
+    id: 'grand-residence',
+    name: 'Grand Residence',
+    description:
+      'Stilvolle Modulvilla auf 10,5 × 6,0 m: drei großzügige Wohnbereiche, eigenes Bad und überdachte Glasdach-Terrasse. Der große 3 × 6 m Flügel bietet Raum für Masterbereich oder offenes Wohnzimmer – modern, weitläufig, beeindruckend.',
+    persons: '4–6 Personen',
+    basePrice: 52000,
+    modules: [
+      // Sanitär links – kein Außeneingang, nur intern über Living 1 erreichbar
+      {
+        type: 'sanitaer', gridX: 0, gridY: 0, width: 3, height: 6, options: {},
+        walls: {
+          front: [],
+          back: [],
+          left: [PRIVACY_WINDOW],
+          right: [],
+        },
+      },
+      // Living 1 (Zentrum) – Terrassentür vorne zur Pergola, Interior links zum Bad
+      {
+        type: 'living', gridX: 3, gridY: 0, width: 6, height: 6, options: {},
+        walls: {
+          front: [TERRACE_DOOR],
+          back: [PANORAMA_WINDOW],
+          left: [],
+          right: [],
+          interiorWalls: {
+            left: [INTERIOR_DOOR],
+          },
+        },
+      },
+      // Living 2 (Mitte) – offener Übergang zu Living 1, Panorama hinten
+      {
+        type: 'living', gridX: 9, gridY: 0, width: 6, height: 6, options: {},
+        walls: {
+          front: [],
+          back: [PANORAMA_WINDOW],
+          left: [],
+          right: [],
+        },
+      },
+      // Living 3 (großer Flügel rechts, 3×6m) – Masterbereich, Terrassentür + Panorama
+      {
+        type: 'living', gridX: 15, gridY: 0, width: 6, height: 12, options: {},
+        walls: {
+          front: [TERRACE_DOOR],
+          back: [SIDE_WINDOW],
+          left: [],
+          right: [PANORAMA_WINDOW],
+          interiorWalls: {
+            left: [INTERIOR_DOOR],
+          },
+        },
+      },
+      // Pergola vorne (Glasdach-Terrasse unter Sanitär + Living 1)
+      { type: 'pergola', gridX: 0, gridY: 6, width: 12, height: 6, options: { dachtyp: 'glas' } },
+    ],
+  },
+
   // Saunagarten: Sauna mit großem Außenbereich
   {
     id: 'saunagarten',
