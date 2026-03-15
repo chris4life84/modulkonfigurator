@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../src";
 
 @theme {
   --color-wood-50: #fdf8f0;
