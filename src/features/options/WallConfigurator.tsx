@@ -187,7 +187,7 @@ export function WallConfigurator({ module, allModules }: WallConfiguratorProps) 
     setModuleWalls(module.id, newConfig);
   };
 
-  const handleDimensionChange = (side: WallSide, dim: 'width' | 'height' | 'offsetY', value: number, isInterior = false) => {
+  const handleDimensionChange = (side: WallSide, dim: 'width' | 'height' | 'offsetY' | 'position', value: number, isInterior = false) => {
     const wallWidthM = getWallWidthM(side);
     const maxW = wallWidthM - 0.30; // 15cm margin per side
     const maxH = OUTER_HEIGHT;
@@ -206,6 +206,13 @@ export function WallConfigurator({ module, allModules }: WallConfiguratorProps) 
       // Height must not exceed wall height minus current offsetY
       const effectiveMaxH = Math.max(0.3, maxH - (currentOpening.offsetY ?? 0));
       clampedValue = Math.min(Math.max(0.3, value), effectiveMaxH);
+    } else if (dim === 'position') {
+      // Position must keep the opening within the wall edges (15cm margin)
+      const margin = 0.15;
+      const halfW = (currentOpening.width ?? 0.5) / 2;
+      const minPos = (halfW + margin) / wallWidthM;
+      const maxPos = 1 - minPos;
+      clampedValue = Math.min(Math.max(minPos, value), maxPos);
     } else {
       // offsetY must not push window above wall top (offsetY + height <= OUTER_HEIGHT)
       const effectiveMaxOffsetY = Math.max(0, maxH - (currentOpening.height ?? 0.5));
@@ -331,7 +338,7 @@ function ExteriorWallControls({
   maxW: number;
   wallWidthM: number;
   onStateChange: (state: WallState) => void;
-  onDimensionChange: (dim: 'width' | 'height' | 'offsetY', val: number) => void;
+  onDimensionChange: (dim: 'width' | 'height' | 'offsetY' | 'position', val: number) => void;
   onOpeningPropertyChange: (changes: Partial<Pick<WallOpening, 'hingeSide' | 'opensOutward'>>) => void;
 }) {
   const state = getWallState(wallConfig[side]);
@@ -367,6 +374,7 @@ function ExteriorWallControls({
           onWidthChange={(v) => onDimensionChange('width', v)}
           onHeightChange={(v) => onDimensionChange('height', v)}
           onOffsetYChange={(v) => onDimensionChange('offsetY', v)}
+          onPositionChange={(v) => onDimensionChange('position', v)}
         />
       )}
 
@@ -400,7 +408,7 @@ function InteriorWallControls({
   maxW: number;
   wallWidthM: number;
   onStateChange: (state: InteriorState) => void;
-  onDimensionChange: (dim: 'width' | 'height', val: number) => void;
+  onDimensionChange: (dim: 'width' | 'height' | 'position', val: number) => void;
   onOpeningPropertyChange: (changes: Partial<Pick<WallOpening, 'hingeSide' | 'opensOutward'>>) => void;
 }) {
   const intState = getInteriorState(wallConfig, side);
@@ -434,6 +442,7 @@ function InteriorWallControls({
           wallWidthM={wallWidthM}
           onWidthChange={(v) => onDimensionChange('width', v)}
           onHeightChange={(v) => onDimensionChange('height', v)}
+          onPositionChange={(v) => onDimensionChange('position', v)}
         />
       )}
 
@@ -456,6 +465,7 @@ function DimensionInputs({
   onWidthChange,
   onHeightChange,
   onOffsetYChange,
+  onPositionChange,
 }: {
   opening: WallOpening;
   maxW: number;
@@ -464,6 +474,7 @@ function DimensionInputs({
   onWidthChange: (v: number) => void;
   onHeightChange: (v: number) => void;
   onOffsetYChange?: (v: number) => void;
+  onPositionChange?: (v: number) => void;
 }) {
   const atMax = opening.width >= maxW - 0.01;
 
@@ -511,6 +522,29 @@ function DimensionInputs({
             className="w-16 rounded border border-gray-200 px-2 py-1 text-sm text-center focus:border-wood-400 focus:ring-1 focus:ring-wood-200 focus:outline-none"
           />
           <span className="text-xs text-gray-400">m</span>
+        </div>
+      )}
+      {onPositionChange && (
+        <div className="mt-2">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-gray-500">Position</span>
+            <span className="text-xs text-gray-400">
+              {opening.position === 0.5 ? 'Mitte' : `${Math.round(opening.position * 100)}%`}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-gray-400">Links</span>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={opening.position}
+              onChange={(e) => onPositionChange(parseFloat(e.target.value))}
+              className="flex-1 h-1.5 accent-amber-600"
+            />
+            <span className="text-[10px] text-gray-400">Rechts</span>
+          </div>
         </div>
       )}
       {atMax && (
