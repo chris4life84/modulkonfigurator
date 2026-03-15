@@ -306,6 +306,24 @@ export function Module3D({ module: m, allModules, color, label, selected, onClic
         const ws = side as WallSide;
         const isFB = ws === 'front' || ws === 'back';
         const ww = isFB ? widthM : depthM;
+        const segments = sharedSegments[ws];
+        const sharedRange = getSharedRange(segments);
+        // For left and back walls, the WoodWall's local X axis runs opposite to the
+        // grid cell index direction. Left (rotation π/2): position 0 = front (high gridY),
+        // but cell 0 = back (low gridY). Back (rotation π): position 0 = right (high gridX),
+        // but cell 0 = left (low gridX). So we must invert the normalized position
+        // to place the cutout in the correct (shared) area of the wall.
+        const needsInvert = ws === 'left' || ws === 'back';
+        // Clamp openings to shared segment for correct cutout positioning
+        const clampedOpenings = sharedRange
+          ? openings.map(o => {
+              const c = clampInteriorOpening(o, ww, sharedRange).clamped;
+              return needsInvert ? { ...c, position: 1 - c.position } : c;
+            })
+          : openings.map(o => needsInvert
+              ? { ...o, position: 1 - o.position }
+              : o
+            );
         const pos: [number, number, number] =
           ws === 'front' ? [0, 0, halfD - WALL_THICKNESS / 2] :
           ws === 'back' ? [0, 0, -halfD + WALL_THICKNESS / 2] :
@@ -323,7 +341,7 @@ export function Module3D({ module: m, allModules, color, label, selected, onClic
             wallHeight={OUTER_HEIGHT}
             position={pos}
             rotationY={rot}
-            openings={openings}
+            openings={clampedOpenings}
             woodColor={woodColor}
             isInterior
           />
@@ -336,6 +354,8 @@ export function Module3D({ module: m, allModules, color, label, selected, onClic
         const ws = side as WallSide;
         const isFB = ws === 'front' || ws === 'back';
         const wallW = isFB ? widthM : depthM;
+        const segments = sharedSegments[ws];
+        const sharedRange = getSharedRange(segments);
         const basePos: [number, number, number] =
           ws === 'front' ? [0, 0, halfD - WALL_THICKNESS / 2] :
           ws === 'back' ? [0, 0, -halfD + WALL_THICKNESS / 2] :
@@ -347,12 +367,31 @@ export function Module3D({ module: m, allModules, color, label, selected, onClic
           ws === 'left' ? Math.PI / 2 :
           -Math.PI / 2;
 
+        // For left/back walls, invert the position to match the WoodWall's
+        // local X axis direction (see comment above in WoodWall rendering).
+        const needsInvert = ws === 'left' || ws === 'back';
+
         return openings.map((o, i) => {
-          const clamped = clampOpeningToWall(o, wallW);
-          // Position along wall – flip sign for back/right (same as OpeningsGroup)
-          const signFlip = (ws === 'back' || ws === 'right') ? -1 : 1;
-          const offset = signFlip * (clamped.position - 0.5) * wallW;
-          // Apply offset along the wall's local X axis
+          // Use shared range to clamp interior openings within the shared wall segment
+          let clamped: WallOpening = sharedRange
+            ? clampInteriorOpening(o, wallW, sharedRange).clamped
+            : clampOpeningToWall(o, wallW);
+          // Invert position for left/back walls so door frame matches WoodWall cutout
+          if (needsInvert) {
+            clamped = { ...clamped, position: 1 - clamped.position };
+          }
+          // Position opening along the wall:
+          // After inversion, use consistent sign convention:
+          //   back: negative X offset, front: positive X offset
+          //   left: negative Z offset, right: positive Z offset
+          let offset: number;
+          if (isFB) {
+            const signFlip = ws === 'back' ? -1 : 1;
+            offset = signFlip * (clamped.position - 0.5) * wallW;
+          } else {
+            const signFlip = ws === 'left' ? -1 : 1;
+            offset = signFlip * (clamped.position - 0.5) * wallW;
+          }
           const pos: [number, number, number] = isFB
             ? [basePos[0] + offset, clamped.offsetY, basePos[2]]
             : [basePos[0], clamped.offsetY, basePos[2] + offset];
@@ -551,6 +590,56 @@ function clampOpeningToWall(o: WallOpening, wallW: number): WallOpening {
   const maxPos = 1 - minPos;
   const pos = Math.max(minPos, Math.min(maxPos, o.position));
   return { ...o, width: w, height: h, position: pos };
+}
+
+/**
+ * Compute the shared wall segment range in meters from a boolean[] of per-cell sharing.
+ * Returns { startM, endM } – the first and last shared cell boundaries in meters.
+ * If no shared cells, returns null.
+ */
+function getSharedRange(segments: boolean[]): { startM: number; endM: number } | null {
+  let first = -1;
+  let last = -1;
+  for (let i = 0; i < segments.length; i++) {
+    if (segments[i]) {
+      if (first === -1) first = i;
+      last = i;
+    }
+  }
+  if (first === -1) return null;
+  return { startM: first * GRID_CELL_SIZE, endM: (last + 1) * GRID_CELL_SIZE };
+}
+
+/**
+ * Clamp an interior opening to fit within the shared wall segment only.
+ * The position is mapped from normalized (0-1 on full wall) to the shared range center.
+ * Returns { clamped opening, absolute offset in meters from wall center }.
+ */
+function clampInteriorOpening(
+  o: WallOpening,
+  wallW: number,
+  sharedRange: { startM: number; endM: number },
+): { clamped: WallOpening; offsetM: number } {
+  const margin = 0.15;
+  const segW = sharedRange.endM - sharedRange.startM;
+  const w = Math.min(o.width, Math.max(0.3, segW - margin * 2));
+  const h = Math.min(o.height, OUTER_HEIGHT);
+  // Position within the shared segment (0-1 normalized within segment)
+  const segCenter = (sharedRange.startM + sharedRange.endM) / 2;
+  const halfW = w / 2;
+  const minAbs = sharedRange.startM + halfW + margin;
+  const maxAbs = sharedRange.endM - halfW - margin;
+  // Default: center of shared segment. Use o.position to offset within segment.
+  const targetAbs = sharedRange.startM + o.position * segW;
+  const clampedAbs = Math.max(minAbs, Math.min(maxAbs, targetAbs));
+  // Convert to offset from wall center (wallW/2)
+  const offsetM = clampedAbs - wallW / 2;
+  // Keep normalized position for WoodWall rendering (relative to full wall)
+  const normalizedPos = clampedAbs / wallW;
+  return {
+    clamped: { ...o, width: w, height: h, position: normalizedPos },
+    offsetM,
+  };
 }
 
 /** Render door/window openings – only on fully non-shared wall sides */

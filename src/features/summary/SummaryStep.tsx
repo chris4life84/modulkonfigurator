@@ -3,7 +3,9 @@ import type { PlacedModule } from '../../types/grid';
 import { useConfigStore } from '../../store/useConfigStore';
 import { MODULE_DEFINITIONS } from '../../data/module-types';
 import { MODULE_OPTIONS } from '../../data/options';
+import { GRID_CELL_SIZE } from '../../types/grid';
 import { calculateModulePrice, formatPrice } from '../../data/pricing';
+import { calculateMaxPanels, calculateKWp } from '../../utils/pvCalculation';
 import { selectTotalPrice, selectTotalDimensions } from '../../store/selectors';
 import { VisualizationContainer } from '../visualization/VisualizationContainer';
 import { GridCanvas } from '../visualization/GridCanvas';
@@ -160,7 +162,21 @@ function ModuleOptionsSummary({ module }: { module: PlacedModule }) {
       }
     }
     if (opt.type === 'checkbox' && value === true) {
-      details.push(opt.label);
+      if (opt.key === 'pv_panels') {
+        const widthM = module.width * GRID_CELL_SIZE;
+        const depthM = module.height * GRID_CELL_SIZE;
+        const { maxPanels, rotated } = calculateMaxPanels(widthM, depthM);
+        const panelCount = (module.options.pv_panel_count as number) ?? maxPanels;
+        const orientation = (module.options.pv_orientation as string) ?? 'S';
+        const kWp = calculateKWp(panelCount);
+        const orientLabels: Record<string, string> = { S: 'Süd', N: 'Nord', E: 'Ost', W: 'West' };
+        const formatLabel = rotated ? 'Querformat' : 'Hochformat';
+        details.push(
+          `PV: ${panelCount} Panels (${formatLabel}, ${orientLabels[orientation] ?? orientation}), ${kWp.toFixed(1)} kWp`,
+        );
+      } else {
+        details.push(opt.label);
+      }
     }
   }
 

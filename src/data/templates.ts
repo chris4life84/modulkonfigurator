@@ -613,6 +613,7 @@ export const TEMPLATES: Template[] = [
       'Stilvolle Modulvilla auf 10,5 × 6,0 m: drei großzügige Wohnbereiche, eigenes Bad und überdachte Glasdach-Terrasse. Der große 3 × 6 m Flügel bietet Raum für Masterbereich oder offenes Wohnzimmer – modern, weitläufig, beeindruckend.',
     persons: '4–6 Personen',
     basePrice: 52000,
+    image: '/templates/grand-residence.jpg',
     modules: [
       // Sanitär links – kein Außeneingang, nur intern über Living 1 erreichbar
       {
@@ -660,8 +661,8 @@ export const TEMPLATES: Template[] = [
           },
         },
       },
-      // Pergola vorne (Glasdach-Terrasse unter Sanitär + Living 1)
-      { type: 'pergola', gridX: 0, gridY: 6, width: 12, height: 6, options: { dachtyp: 'glas' } },
+      // Pergola vorne (Glasdach-Terrasse unter Living 1 + Living 2)
+      { type: 'pergola', gridX: 3, gridY: 6, width: 12, height: 6, options: { dachtyp: 'glas' } },
     ],
   },
 

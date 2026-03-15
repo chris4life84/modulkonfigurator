@@ -8,6 +8,7 @@ import { MODULE_OPTIONS } from '../../data/options';
 import { calculateModulePrice, formatPrice } from '../../data/pricing';
 import { getSharedWalls } from '../../utils/walls';
 import { svgToDataUrl } from '../../utils/svg-to-image';
+import { calculateMaxPanels, calculateKWp } from '../../utils/pvCalculation';
 import { Button } from '../../components/ui/Button';
 import { t } from '../../utils/i18n';
 
@@ -93,6 +94,61 @@ const OPENING_NAMES: Record<string, string> = {
   'terrace-door': 'Terrassentür',
 };
 
+const OPPOSITE_SIDE: Record<WallSide, WallSide> = {
+  front: 'back',
+  back: 'front',
+  left: 'right',
+  right: 'left',
+};
+
+/**
+ * Find interior openings on a shared wall – checks both
+ * this module's interiorWalls and the neighbor's interiorWalls.
+ */
+function getInteriorOpenings(
+  module: PlacedModule,
+  side: WallSide,
+  allModules: PlacedModule[],
+): typeof module.walls extends undefined ? never : NonNullable<NonNullable<PlacedModule['walls']>[WallSide]> {
+  const openings: { type: string; width: number; height: number; position: number; offsetY: number }[] = [];
+
+  // Check this module's interiorWalls
+  const walls = module.walls ?? getDefaultWallConfig(module.type, module.width, module.height);
+  const own = walls.interiorWalls?.[side];
+  if (own) openings.push(...own);
+
+  // Check neighbor's interiorWalls on the opposite side
+  const oppSide = OPPOSITE_SIDE[side];
+  for (const other of allModules) {
+    if (other.id === module.id) continue;
+    if (other.type === 'pergola') continue;
+
+    // Check if other is actually adjacent on this side
+    let adjacent = false;
+    if (side === 'right' && other.gridX === module.gridX + module.width) adjacent = true;
+    if (side === 'left' && module.gridX === other.gridX + other.width) adjacent = true;
+    if (side === 'front' && other.gridY === module.gridY + module.height) adjacent = true;
+    if (side === 'back' && module.gridY === other.gridY + other.height) adjacent = true;
+
+    if (adjacent) {
+      const otherWalls = other.walls ?? getDefaultWallConfig(other.type, other.width, other.height);
+      const neighborOpenings = otherWalls.interiorWalls?.[oppSide];
+      if (neighborOpenings) openings.push(...neighborOpenings);
+    }
+  }
+
+  return openings as never;
+}
+
+function formatOpening(o: { type: string; width: number; height: number; offsetY?: number }): string {
+  const name = OPENING_NAMES[o.type] ?? o.type;
+  let text = `${name} ${o.width.toFixed(1)} × ${o.height.toFixed(1)} m`;
+  if (o.type === 'window' && o.offsetY && o.offsetY > 0) {
+    text += `, Brüstung ${o.offsetY.toFixed(1)} m`;
+  }
+  return text;
+}
+
 function getWallDetails(
   module: PlacedModule,
   allModules: PlacedModule[],
@@ -104,21 +160,34 @@ function getWallDetails(
 
   return sides.map((side) => {
     if (shared.has(side)) {
+      // Check for interior openings (doors/windows) on this shared wall
+      const interiorOpenings = getInteriorOpenings(module, side, allModules);
+      if (interiorOpenings.length > 0) {
+        const parts = interiorOpenings.map(
+          (o: { type: string; width: number; height: number; offsetY?: number }) =>
+            formatOpening(o),
+        );
+        return { side: SIDE_NAMES[side], detail: `Verbundwand (${parts.join(', ')})` };
+      }
       return { side: SIDE_NAMES[side], detail: 'Verbundwand' };
     }
     const openings = walls[side];
     if (!openings || openings.length === 0) {
       return { side: SIDE_NAMES[side], detail: 'Geschlossen' };
     }
-    const parts = openings.map(
-      (o) =>
-        `${OPENING_NAMES[o.type] ?? o.type} ${o.width.toFixed(1)} × ${o.height.toFixed(1)} m`,
-    );
+    const parts = openings.map((o) => formatOpening(o));
     return { side: SIDE_NAMES[side], detail: parts.join(', ') };
   });
 }
 
 // ─── Helper: Module options ──────────────────────────────────────────
+
+const PV_ORIENTATION_LABELS: Record<string, string> = {
+  S: 'Süd',
+  N: 'Nord',
+  E: 'Ost',
+  W: 'West',
+};
 
 function getModuleOptions(module: PlacedModule): string[] {
   const details: string[] = [];
@@ -130,7 +199,22 @@ function getModuleOptions(module: PlacedModule): string[] {
       if (selected) details.push(`${opt.label}: ${selected.label}`);
     }
     if (opt.type === 'checkbox' && value === true) {
-      details.push(opt.label);
+      // PV panels: show count, orientation, kWp
+      if (opt.key === 'pv_panels') {
+        const widthM = module.width * GRID_CELL_SIZE;
+        const depthM = module.height * GRID_CELL_SIZE;
+        const { maxPanels, rotated } = calculateMaxPanels(widthM, depthM);
+        const panelCount = (module.options.pv_panel_count as number) ?? maxPanels;
+        const orientation = (module.options.pv_orientation as string) ?? 'S';
+        const kWp = calculateKWp(panelCount);
+        const orientLabel = PV_ORIENTATION_LABELS[orientation] ?? orientation;
+        const formatLabel = rotated ? 'Querformat' : 'Hochformat';
+        details.push(
+          `Photovoltaik: ${panelCount} Panels (${formatLabel}, ${orientLabel}), ${kWp.toFixed(1)} kWp`,
+        );
+      } else {
+        details.push(opt.label);
+      }
     }
   }
   return details;
