@@ -62,6 +62,7 @@ export const GridCanvas = forwardRef<SVGSVGElement, GridCanvasProps>(
         viewBox={viewBox}
         className="h-full w-full"
         preserveAspectRatio="xMidYMid meet"
+        style={{ touchAction: 'none' }}
       >
         {/* Invisible background rect – catches clicks to cancel placement */}
         {onBackgroundClick && (
@@ -216,69 +217,33 @@ export const GridCanvas = forwardRef<SVGSVGElement, GridCanvasProps>(
   },
 );
 
-/** Subtle direction labels around the building (Vorne/Hinten/Links/Rechts) */
+/** Subtle direction labels around the building (Vorne/Hinten/Links/Rechts) – hidden on very small screens */
 function DirectionLabels2D({ modules }: { modules: PlacedModule[] }) {
   const bbox = getBoundingBox(modules);
   const cx = (bbox.minX + bbox.maxX) / 2;
   const cy = (bbox.minY + bbox.maxY) / 2;
+  const fs = 0.28;
+  const off = 1.6;
 
   return (
-    <>
+    <g className="hidden sm:block" style={{ pointerEvents: 'none' }}>
       {/* Vorne = maxY (bottom in SVG, +Z in 3D) */}
-      <text
-        x={cx}
-        y={bbox.maxY + 2.4}
-        textAnchor="middle"
-        fill="#b0b8c4"
-        fontSize={0.35}
-        fontWeight={300}
-        letterSpacing="0.1em"
-        style={{ pointerEvents: 'none' }}
-      >
+      <text x={cx} y={bbox.maxY + off + 0.6} textAnchor="middle" fill="#b0b8c4" fontSize={fs} fontWeight={300} letterSpacing="0.1em">
         VORNE
       </text>
       {/* Hinten = minY (top in SVG, -Z in 3D) */}
-      <text
-        x={cx}
-        y={bbox.minY - 1.8}
-        textAnchor="middle"
-        fill="#b0b8c4"
-        fontSize={0.35}
-        fontWeight={300}
-        letterSpacing="0.1em"
-        style={{ pointerEvents: 'none' }}
-      >
+      <text x={cx} y={bbox.minY - off} textAnchor="middle" fill="#b0b8c4" fontSize={fs} fontWeight={300} letterSpacing="0.1em">
         HINTEN
       </text>
       {/* Links = minX (left in SVG, -X in 3D) */}
-      <text
-        x={bbox.minX - 2.4}
-        y={cy}
-        textAnchor="middle"
-        fill="#b0b8c4"
-        fontSize={0.35}
-        fontWeight={300}
-        letterSpacing="0.1em"
-        transform={`rotate(-90, ${bbox.minX - 2.4}, ${cy})`}
-        style={{ pointerEvents: 'none' }}
-      >
+      <text x={bbox.minX - off} y={cy} textAnchor="middle" fill="#b0b8c4" fontSize={fs} fontWeight={300} letterSpacing="0.1em" transform={`rotate(-90, ${bbox.minX - off}, ${cy})`}>
         LINKS
       </text>
       {/* Rechts = maxX (right in SVG, +X in 3D) */}
-      <text
-        x={bbox.maxX + 2.4}
-        y={cy}
-        textAnchor="middle"
-        fill="#b0b8c4"
-        fontSize={0.35}
-        fontWeight={300}
-        letterSpacing="0.1em"
-        transform={`rotate(90, ${bbox.maxX + 2.4}, ${cy})`}
-        style={{ pointerEvents: 'none' }}
-      >
+      <text x={bbox.maxX + off} y={cy} textAnchor="middle" fill="#b0b8c4" fontSize={fs} fontWeight={300} letterSpacing="0.1em" transform={`rotate(90, ${bbox.maxX + off}, ${cy})`}>
         RECHTS
       </text>
-    </>
+    </g>
   );
 }
 
@@ -291,20 +256,22 @@ function DimensionsLabel({ modules }: { modules: PlacedModule[] }) {
     <>
       <text
         x={(bbox.minX + bbox.maxX) / 2}
-        y={bbox.maxY + 1.8}
+        y={bbox.maxY + 1.2}
         textAnchor="middle"
         fill="#6b7280"
-        fontSize={0.9}
+        fontSize={0.65}
+        style={{ pointerEvents: 'none' }}
       >
         {wM.toFixed(1)} m
       </text>
       <text
-        x={bbox.maxX + 1.8}
+        x={bbox.maxX + 1.2}
         y={(bbox.minY + bbox.maxY) / 2}
         textAnchor="middle"
         fill="#6b7280"
-        fontSize={0.9}
-        transform={`rotate(90, ${bbox.maxX + 1.8}, ${(bbox.minY + bbox.maxY) / 2})`}
+        fontSize={0.65}
+        transform={`rotate(90, ${bbox.maxX + 1.2}, ${(bbox.minY + bbox.maxY) / 2})`}
+        style={{ pointerEvents: 'none' }}
       >
         {hM.toFixed(1)} m
       </text>

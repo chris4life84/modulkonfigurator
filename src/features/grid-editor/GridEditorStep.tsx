@@ -387,13 +387,13 @@ export function GridEditorStep() {
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="flex h-full flex-col gap-4 lg:flex-row lg:gap-4 overflow-hidden">
+      <div className="flex h-full flex-col gap-2 lg:gap-4 lg:flex-row overflow-hidden">
         {/* Left: 3D View + Price/Hints */}
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex flex-col min-h-0 h-[40vh] lg:h-auto lg:flex-1">
           {/* 3D View - takes all available space */}
           <div
-            className="rounded-xl border border-gray-200 bg-gray-50 p-2 flex-1 min-h-0"
-            style={{ minHeight: '200px' }}
+            className="rounded-xl border border-gray-200 bg-gray-50 p-1 lg:p-2 flex-1 min-h-0"
+            style={{ touchAction: 'none' }}
           >
             <VisualizationContainer
               modules={modules}
@@ -454,16 +454,27 @@ export function GridEditorStep() {
         </div>
 
         {/* Right: Catalog + Config */}
-        <div className="w-full lg:w-[360px] flex flex-col min-h-0">
-          {/* Modulblöcke – compact, always visible */}
-          <div className="flex-shrink-0 px-2">
+        <div className="w-full lg:w-[360px] flex flex-col min-h-0 flex-1 lg:flex-initial overflow-y-auto lg:overflow-visible">
+          {/* Mobile: show config OR catalog, not both. Desktop: always show both. */}
+          {/* Modulblöcke – hidden on mobile when a module is selected */}
+          <div className={`flex-shrink-0 px-2 ${selectedModuleId ? 'hidden lg:block' : ''}`}>
             <ModuleCatalog selection={catalogSelection} onSelect={handleCatalogSelect} />
           </div>
 
           {/* Config area – scrollable */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 mt-3 px-2">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 mt-2 lg:mt-3 px-2">
             {selectedModuleId && (
               <>
+                {/* Mobile: back-to-catalog button */}
+                <button
+                  onClick={() => setSelectedModuleId(null)}
+                  className="mb-2 flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 lg:hidden"
+                >
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10 12L6 8l4-4" />
+                  </svg>
+                  Zurück zum Katalog
+                </button>
                 <ModuleActions
                   moduleId={selectedModuleId}
                   modules={modules}

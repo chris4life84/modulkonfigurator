@@ -33,7 +33,8 @@ function computeCamera(modules: PlacedModule[]) {
 }
 
 export function Scene3D({ modules, selectedModuleId, onModuleClick, onBackgroundClick }: Scene3DProps) {
-  const [showLabels, setShowLabels] = useState(true);
+  // Hide labels by default on mobile (< 768px)
+  const [showLabels, setShowLabels] = useState(() => window.innerWidth >= 768);
   const camera = useMemo(() => computeCamera(modules), [modules]);
   const controlsRef = useRef<any>(null);
   const shadowCenter = useMemo(() => {
@@ -45,7 +46,7 @@ export function Scene3D({ modules, selectedModuleId, onModuleClick, onBackground
   }, [modules]);
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full" style={{ touchAction: 'none' }}>
       {/* Toggle direction labels button – top left */}
       <button
         onClick={() => setShowLabels((v) => !v)}
@@ -166,9 +167,12 @@ function DirectionLabels({ modules }: { modules: PlacedModule[] }) {
     };
   }, [modules]);
 
+  const isMobile = window.innerWidth < 768;
+  const dFactor = isMobile ? 18 : 55;
+
   const labelStyle: React.CSSProperties = {
     color: '#8a9099',
-    fontSize: '4px',
+    fontSize: isMobile ? '2px' : '4px',
     fontWeight: 400,
     letterSpacing: '0.12em',
     textTransform: 'uppercase' as const,
@@ -182,16 +186,16 @@ function DirectionLabels({ modules }: { modules: PlacedModule[] }) {
 
   return (
     <>
-      <Html position={positions.front} center distanceFactor={55} style={{ pointerEvents: 'none' }}>
+      <Html position={positions.front} center distanceFactor={dFactor} style={{ pointerEvents: 'none' }}>
         <div style={labelStyle}>Vorne</div>
       </Html>
-      <Html position={positions.back} center distanceFactor={55} style={{ pointerEvents: 'none' }}>
+      <Html position={positions.back} center distanceFactor={dFactor} style={{ pointerEvents: 'none' }}>
         <div style={labelStyle}>Hinten</div>
       </Html>
-      <Html position={positions.left} center distanceFactor={55} style={{ pointerEvents: 'none' }}>
+      <Html position={positions.left} center distanceFactor={dFactor} style={{ pointerEvents: 'none' }}>
         <div style={labelStyle}>Links</div>
       </Html>
-      <Html position={positions.right} center distanceFactor={55} style={{ pointerEvents: 'none' }}>
+      <Html position={positions.right} center distanceFactor={dFactor} style={{ pointerEvents: 'none' }}>
         <div style={labelStyle}>Rechts</div>
       </Html>
     </>
