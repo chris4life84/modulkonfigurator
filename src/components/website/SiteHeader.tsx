@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
+import { assetPath } from '../../utils/asset-path';
 
 export function SiteHeader() {
   const { pathname } = useLocation();
@@ -16,7 +17,7 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <img src="/logo.png" alt="Modul-Garten" className="h-8 w-auto" />
+          <img src={assetPath('/logo.png')} alt="Modul-Garten" className="h-8 w-auto" />
           <span className="text-lg font-bold text-wood-800">Modul-Garten</span>
         </Link>
 

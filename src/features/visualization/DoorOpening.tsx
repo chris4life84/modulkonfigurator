@@ -6,7 +6,6 @@ const GLASS_THICKNESS = 0.012;
 
 // Door handle constants
 const HANDLE_HEIGHT = 1.05; // Height above floor
-const HANDLE_INSET = 0.08; // Distance from frame edge
 
 const handleMaterial = new THREE.MeshStandardMaterial({
   color: '#C0C0C0',
@@ -31,7 +30,7 @@ interface DoorOpeningProps {
 
 export function DoorOpening({
   width, height, position, double = false,
-  hingeSide = 'left', opensOutward = true,
+  hingeSide = 'left',
 }: DoorOpeningProps) {
   const halfW = width / 2;
   const halfH = height / 2;

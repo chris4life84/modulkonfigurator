@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { assetPath } from '../../../utils/asset-path';
 
 /**
  * PBR texture set for wood lamellen walls.
@@ -47,19 +48,19 @@ export function loadWoodPBR(): WoodPBRMaps | null {
     const loader = new THREE.TextureLoader();
 
     const diffuse = configureTex(
-      loader.load('/textures/pbr/wood/wall_color_2k.png'),
+      loader.load(assetPath('/textures/pbr/wood/wall_color_2k.png')),
       true,
     );
     const roughness = configureTex(
-      loader.load('/textures/pbr/wood/wall_rough_2k.png'),
+      loader.load(assetPath('/textures/pbr/wood/wall_rough_2k.png')),
       false,
     );
     const normal = configureTex(
-      loader.load('/textures/pbr/wood/wall_normal_2k.png'),
+      loader.load(assetPath('/textures/pbr/wood/wall_normal_2k.png')),
       false,
     );
     const bump = configureTex(
-      loader.load('/textures/pbr/wood/wall_disp_2k.png'),
+      loader.load(assetPath('/textures/pbr/wood/wall_disp_2k.png')),
       false,
     );
 
@@ -127,11 +128,11 @@ export function loadWallPBR(): WoodPBRMaps | null {
     const loader = new THREE.TextureLoader();
 
     const diffuse = configureTex(
-      loader.load('/textures/pbr/wall/diff_2k.jpg'),
+      loader.load(assetPath('/textures/pbr/wall/diff_2k.jpg')),
       true,
     );
     const roughness = configureTex(
-      loader.load('/textures/pbr/wall/rough_2k.jpg'),
+      loader.load(assetPath('/textures/pbr/wall/rough_2k.jpg')),
       false,
     );
 

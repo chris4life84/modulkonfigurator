@@ -624,8 +624,6 @@ function clampInteriorOpening(
   const segW = sharedRange.endM - sharedRange.startM;
   const w = Math.min(o.width, Math.max(0.3, segW - margin * 2));
   const h = Math.min(o.height, OUTER_HEIGHT);
-  // Position within the shared segment (0-1 normalized within segment)
-  const segCenter = (sharedRange.startM + sharedRange.endM) / 2;
   const halfW = w / 2;
   const minAbs = sharedRange.startM + halfW + margin;
   const maxAbs = sharedRange.endM - halfW - margin;

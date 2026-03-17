@@ -92,7 +92,7 @@ export function ModuleConfigPanel({ moduleId }: ModuleConfigPanelProps) {
               <OptionField
                 key={opt.key}
                 option={opt}
-                value={module.options[opt.key] ?? opt.defaultValue}
+                value={(module.options[opt.key] ?? opt.defaultValue) as string | boolean}
                 onChange={(val) => {
                   setModuleOption(module.id, opt.key, val);
                   // Mutual exclusion: skylight and PV panels can't coexist on the same roof
@@ -305,14 +305,6 @@ export function ModuleConfigPanel({ moduleId }: ModuleConfigPanelProps) {
     </div>
   );
 }
-
-// --- Compass direction picker for PV orientation (cardinal only) ---
-const CARDINAL_DIRECTIONS = [
-  { key: 'N', label: 'N' },
-  { key: 'E', label: 'O' },
-  { key: 'S', label: 'S' },
-  { key: 'W', label: 'W' },
-] as const;
 
 const DIRECTION_NAMES: Record<string, string> = {
   N: 'Nord', E: 'Ost', S: 'Süd', W: 'West',

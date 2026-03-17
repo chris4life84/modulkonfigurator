@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment files with secrets
+.env
+.env.local
+.env.production
+
+# PHP config with SMTP credentials
+public/api/config.php
+public/api/vendor/

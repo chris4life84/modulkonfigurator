@@ -1,4 +1,5 @@
 import type { Template } from '../types/configuration';
+import { assetPath } from '../utils/asset-path';
 
 // Reusable opening definitions
 const STANDARD_DOOR = { type: 'door' as const, position: 0.5, width: 0.9, height: 2.0, offsetY: 0 };
@@ -7,11 +8,8 @@ const TERRACE_DOOR = { type: 'terrace-door' as const, position: 0.5, width: 2.0,
 const PANORAMA_WINDOW = { type: 'window' as const, position: 0.5, width: 2.0, height: 2.0, offsetY: 0 };
 const SIDE_WINDOW = { type: 'window' as const, position: 0.5, width: 1.5, height: 1.5, offsetY: 0.3 };
 const SMALL_WINDOW = { type: 'window' as const, position: 0.5, width: 1.0, height: 1.5, offsetY: 0.3 };
-const SAUNA_WINDOW = { type: 'window' as const, position: 0.5, width: 0.8, height: 0.6, offsetY: 0.8 };
-const SAUNA_WINDOW_LARGE = { type: 'window' as const, position: 0.5, width: 1.0, height: 1.0, offsetY: 0.8 };
 // Elegantes Sauna-Streifenfenster – breit & schmal, Augenhöhe, maximaler Ausblick bei Privatsphäre
 const SAUNA_PANORAMA = { type: 'window' as const, position: 0.5, width: 2.0, height: 0.5, offsetY: 1.2 };
-const SAUNA_PANORAMA_SMALL = { type: 'window' as const, position: 0.5, width: 1.2, height: 0.4, offsetY: 1.2 };
 const PRIVACY_WINDOW = { type: 'window' as const, position: 0.5, width: 0.5, height: 0.4, offsetY: 1.6 };
 
 export const TEMPLATES: Template[] = [
@@ -25,7 +23,7 @@ export const TEMPLATES: Template[] = [
     name: 'Starter-Modul',
     description:
       'Ein einzelnes 3,0 × 1,5 m Modul – der kompakteste Einstieg. Perfekt als Gartenhaus, Mini-Office oder Ausgangspunkt für spätere Erweiterungen.',
-    image: '/templates/starter.jpg',
+    image: assetPath('/templates/starter.jpg'),
     persons: 'Flexibel',
     basePrice: 6800,
     modules: [
@@ -39,7 +37,7 @@ export const TEMPLATES: Template[] = [
     name: 'Kompakt-Kubus',
     description:
       'Quadratisches 3,0 × 3,0 m Raumwunder mit Panoramafenster. Ideal als vollwertiges Home Office oder gemütliches Gästezimmer.',
-    image: '/templates/kompakt-kubus.jpg',
+    image: assetPath('/templates/kompakt-kubus.jpg'),
     persons: '1–2 Personen',
     basePrice: 11500,
     modules: [
@@ -53,7 +51,7 @@ export const TEMPLATES: Template[] = [
     name: 'Kubus mit Terrasse',
     description:
       'Großzügiger Kubus mit überdachter Glasdach-Terrasse – perfekt als Home Office mit Pausenbereich oder als Gartenlounge mit Rückzugsraum.',
-    image: '/templates/kubus-terrasse.jpg',
+    image: assetPath('/templates/kubus-terrasse.jpg'),
     persons: '1–2 Personen',
     basePrice: 17000,
     modules: [
@@ -68,7 +66,7 @@ export const TEMPLATES: Template[] = [
     name: 'Garten-Studio',
     description:
       'Zwei verbundene Living-Module: großer Hauptraum mit Panoramafenster und separater Eingangsbereich. Ideal als Atelier, Praxis oder Gästewohnung.',
-    image: '/templates/garten-studio.jpg',
+    image: assetPath('/templates/garten-studio.jpg'),
     persons: '1–3 Personen',
     basePrice: 18400,
     modules: [
@@ -83,7 +81,7 @@ export const TEMPLATES: Template[] = [
     name: 'Studio mit Terrasse',
     description:
       'Zwei Living-Module mit vorgelagerter Glasdach-Pergola: Arbeiten, Empfangen und Entspannen unter einem Dach.',
-    image: '/templates/studio-terrasse.jpg',
+    image: assetPath('/templates/studio-terrasse.jpg'),
     persons: '2–4 Personen',
     basePrice: 23800,
     modules: [
@@ -99,7 +97,7 @@ export const TEMPLATES: Template[] = [
     name: 'Garden Office Deluxe',
     description:
       'Premium Home Office: Empfangs-/Meetingraum, großes Büro, eigenes WC und Glasdach-Pergola. WC intern über das Büro erreichbar.',
-    image: '/templates/garden-office-deluxe.jpg',
+    image: assetPath('/templates/garden-office-deluxe.jpg'),
     persons: '2–6 Personen',
     basePrice: 29000,
     modules: [
@@ -151,7 +149,7 @@ export const TEMPLATES: Template[] = [
     name: 'Sauna Kompakt',
     description:
       'Einstieg in die eigene Sauna: kompakter Saunakern mit Technikraum als Vorraum. Saunaeingang nur über den Technikraum – wie es sein soll.',
-    image: '/templates/sauna-kompakt.jpg',
+    image: assetPath('/templates/sauna-kompakt.jpg'),
     persons: '3 Personen',
     basePrice: 11700,
     modules: [
@@ -187,7 +185,7 @@ export const TEMPLATES: Template[] = [
     name: 'Sauna Deluxe',
     description:
       'Großzügige 3 × 3 m Sauna mit Panorama-Saunafenster und separatem Technikraum. Saunaeingang nur über den Technikraum.',
-    image: '/templates/sauna-deluxe.jpg',
+    image: assetPath('/templates/sauna-deluxe.jpg'),
     persons: '6 Personen',
     basePrice: 17650,
     modules: [
@@ -223,7 +221,7 @@ export const TEMPLATES: Template[] = [
     name: 'Sauna mit Terrasse',
     description:
       'Saunakern mit Technikraum und Glasdach-Pergola zum Entspannen nach dem Saunieren. Saunaeinstieg über den Technikraum.',
-    image: '/templates/sauna-terrasse.jpg',
+    image: assetPath('/templates/sauna-terrasse.jpg'),
     persons: '4–6 Personen',
     basePrice: 23100,
     modules: [
@@ -261,7 +259,7 @@ export const TEMPLATES: Template[] = [
     name: 'Wellness-Suite',
     description:
       'Komplettes Wellness-Erlebnis: Saunakern, Umkleide, Eingangsbereich und Chillout-Lounge – alles intern verbunden. 9,0 × 3,0 m Gesamtlänge.',
-    image: '/templates/wellness-suite.jpg',
+    image: assetPath('/templates/wellness-suite.jpg'),
     persons: '4–6 Personen',
     basePrice: 25800,
     modules: [
@@ -324,7 +322,7 @@ export const TEMPLATES: Template[] = [
     name: 'Wellness-Retreat',
     description:
       'Sauna, Dusche und Ruhebereich – Ihr privates Spa. Einstieg über den Ruheraum, intern zur Sauna und Dusche verbunden.',
-    image: '/templates/wellness-retreat.jpg',
+    image: assetPath('/templates/wellness-retreat.jpg'),
     persons: '4 Personen',
     basePrice: 24200,
     modules: [
@@ -375,7 +373,7 @@ export const TEMPLATES: Template[] = [
       'Luxuriöses Wellness-Resort: Umkleiden → Sauna → Duschen → Ruhen → Terrasse. Alle Räume intern verbunden, Sauna mit Panoramafenster.',
     persons: '6–8 Personen',
     basePrice: 36500,
-    image: '/templates/spa-resort.jpg',
+    image: assetPath('/templates/spa-resort.jpg'),
     modules: [
       // Umkleide links – Außentür vorne (Haupteinstieg), Interior-Tür rechts → Sauna
       {
@@ -441,7 +439,7 @@ export const TEMPLATES: Template[] = [
       'Eigenständiges Gästehaus: Wohnraum mit Panoramafenster, eigenes Bad intern erreichbar und überdachter Eingangsbereich.',
     persons: '2 Personen',
     basePrice: 20000,
-    image: '/templates/gaestehouse.jpg',
+    image: assetPath('/templates/gaestehouse.jpg'),
     modules: [
       // Wohnraum – Terrassentür vorne, Interior-Tür links zum Bad
       {
@@ -479,7 +477,7 @@ export const TEMPLATES: Template[] = [
       'Große Glasdach-Pergola als Pool-Überdachung oder Outdoor-Lounge mit separater Umkleide und Sanitärmodul.',
     persons: '4 Personen',
     basePrice: 14400,
-    image: '/templates/pool-lounge.jpg',
+    image: assetPath('/templates/pool-lounge.jpg'),
     modules: [
       // Große Pergola (Hauptfläche)
       { type: 'pergola', gridX: 0, gridY: 0, width: 10, height: 6, options: { dachtyp: 'glas' } },
@@ -498,7 +496,7 @@ export const TEMPLATES: Template[] = [
       'Drei offene Wohnräume in L-Form mit geschützter Glasdach-Pergola im Innenhof – ein architektonisches Statement.',
     persons: '2–4 Personen',
     basePrice: 30000,
-    image: '/templates/l-form-villa.jpg',
+    image: assetPath('/templates/l-form-villa.jpg'),
     modules: [
       // Hauptraum (hinten, Panorama links + hinten)
       {
@@ -543,7 +541,7 @@ export const TEMPLATES: Template[] = [
       'Stilvolle Modulvilla auf 10,5 × 6,0 m: drei großzügige Wohnbereiche, eigenes Bad und überdachte Glasdach-Terrasse. Der große 3 × 6 m Flügel bietet Raum für Masterbereich oder offenes Wohnzimmer – modern, weitläufig, beeindruckend.',
     persons: '4–6 Personen',
     basePrice: 52000,
-    image: '/templates/grand-residence.jpg',
+    image: assetPath('/templates/grand-residence.jpg'),
     modules: [
       // Sanitär links – kein Außeneingang, nur intern über Living 1 erreichbar
       {
@@ -604,7 +602,7 @@ export const TEMPLATES: Template[] = [
       'Sauna-Ensemble mit Außendusche, Technikraum und großer Glasdach-Pergola. Saunaeinstieg über den Technikraum, danach ab auf die Terrasse.',
     persons: '4–6 Personen',
     basePrice: 26500,
-    image: '/templates/saunagarten.jpg',
+    image: assetPath('/templates/saunagarten.jpg'),
     modules: [
       // Sauna – kein Außeneingang, Panorama-Streifenfenster vorne + hinten
       {

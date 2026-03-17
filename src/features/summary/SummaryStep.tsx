@@ -9,10 +9,12 @@ import { calculateMaxPanels, calculateKWp } from '../../utils/pvCalculation';
 import { selectTotalPrice, selectTotalDimensions } from '../../store/selectors';
 import { VisualizationContainer } from '../visualization/VisualizationContainer';
 import { GridCanvas } from '../visualization/GridCanvas';
-import { PdfExport } from './PdfExport';
+import { PdfExport, generatePdfBlob } from './PdfExport';
 import { Button } from '../../components/ui/Button';
 import { TEMPLATES } from '../../data/templates';
 import { t } from '../../utils/i18n';
+import { encodeConfig } from '../../utils/config-url';
+import { API_BASE_URL } from '../../config/api';
 
 export function SummaryStep() {
   const { modules, templateId } = useConfigStore();
@@ -20,8 +22,71 @@ export function SummaryStep() {
   const totalDims = selectTotalDimensions(modules);
   const template = TEMPLATES.find((tp) => tp.id === templateId);
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [message, setMessage] = useState('');
+  const [privacy, setPrivacy] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
   const svgRef = useRef<SVGSVGElement>(null);
   const vizContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      // 1. Generate PDF blob
+      const pdfBlob = await generatePdfBlob({
+        modules,
+        templateName: template?.name,
+        totalPrice,
+        totalDimensions: totalDims,
+        svgRef,
+        vizContainerRef,
+      });
+
+      // 2. Encode config for shareable link
+      const configParam = encodeConfig({ templateId, modules });
+      const base = import.meta.env.BASE_URL || '/';
+      const shareUrl = `${window.location.origin}${base}view?config=${configParam}`;
+
+      // 3. Build FormData
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('email', email);
+      formData.append('phone', phone);
+      formData.append('message', message);
+      formData.append('configUrl', shareUrl);
+      formData.append('pdf', pdfBlob, 'modulhaus-konfiguration.pdf');
+      formData.append('_hp', honeypot); // honeypot for spam protection
+
+      // 4. Submit to backend
+      const response = await fetch(`${import.meta.env.BASE_URL}api/contact.php`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        setSent(true);
+      } else {
+        setError(result.message || 'Senden fehlgeschlagen. Bitte versuchen Sie es erneut.');
+      }
+    } catch (err) {
+      console.error('Form submission failed:', err);
+      setError('Senden fehlgeschlagen. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div>
@@ -107,40 +172,107 @@ export function SummaryStep() {
         <p className="mt-1 text-sm text-gray-500">{t('summary.contact.description')}</p>
 
         {sent ? (
-          <div className="mt-4 rounded-xl bg-nature-50 border border-nature-500 p-4 text-nature-700">
-            {t('summary.contact.sent')}
+          <div className="mt-4 rounded-xl bg-nature-50 border border-nature-500 p-4">
+            <div className="flex items-start gap-3">
+              <svg className="mt-0.5 h-5 w-5 shrink-0 text-nature-600" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <p className="font-medium text-nature-800">Anfrage erfolgreich gesendet!</p>
+                <p className="mt-1 text-sm text-nature-700">
+                  Vielen Dank für Ihre Anfrage. Sie erhalten in Kürze eine Bestätigung per E-Mail mit Ihrer Konfiguration als PDF.
+                  Wir melden uns schnellstmöglich bei Ihnen.
+                </p>
+              </div>
+            </div>
           </div>
         ) : (
-          <form
-            className="mt-4 space-y-3"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setSent(true);
-            }}
-          >
+          <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
+            {/* Honeypot — hidden from users, filled by bots */}
+            <input
+              type="text"
+              name="_hp"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              className="sr-only"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+            />
+
             <input
               type="text"
               placeholder={t('summary.contact.name')}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-wood-500 focus:ring-1 focus:ring-wood-500"
+              disabled={submitting}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-wood-500 focus:ring-1 focus:ring-wood-500 disabled:opacity-50"
             />
             <input
               type="email"
               placeholder={t('summary.contact.email')}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-wood-500 focus:ring-1 focus:ring-wood-500"
+              disabled={submitting}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-wood-500 focus:ring-1 focus:ring-wood-500 disabled:opacity-50"
             />
             <input
               type="tel"
               placeholder={t('summary.contact.phone')}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-wood-500 focus:ring-1 focus:ring-wood-500"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={submitting}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-wood-500 focus:ring-1 focus:ring-wood-500 disabled:opacity-50"
             />
             <textarea
               placeholder={t('summary.contact.message')}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-wood-500 focus:ring-1 focus:ring-wood-500"
+              disabled={submitting}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-wood-500 focus:ring-1 focus:ring-wood-500 disabled:opacity-50"
             />
-            <Button type="submit">{t('summary.contact.send')}</Button>
+
+            {/* DSGVO Checkbox */}
+            <label className="flex items-start gap-2 text-xs text-gray-600">
+              <input
+                type="checkbox"
+                checked={privacy}
+                onChange={(e) => setPrivacy(e.target.checked)}
+                required
+                disabled={submitting}
+                className="mt-0.5 rounded border-gray-300 text-wood-600 focus:ring-wood-500"
+              />
+              <span>
+                Ich stimme der Verarbeitung meiner Daten gemäß der{' '}
+                <a href={`${import.meta.env.BASE_URL}datenschutz`} target="_blank" className="text-wood-600 underline hover:text-wood-800">
+                  Datenschutzerklärung
+                </a>{' '}
+                zu.
+              </span>
+            </label>
+
+            {error && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            <Button type="submit" disabled={submitting || !privacy}>
+              {submitting ? (
+                <span className="flex items-center gap-2">
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Wird gesendet...
+                </span>
+              ) : (
+                t('summary.contact.send')
+              )}
+            </Button>
           </form>
         )}
       </div>

@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import type { PlacedModule } from '../../types/grid';
 import { GRID_CELL_SIZE } from '../../types/grid';
 import { getBoundingBox } from '../../utils/grid';
+import { assetPath } from '../../utils/asset-path';
 
 interface GroundPlaneProps {
   size?: number;
@@ -31,19 +32,19 @@ export function GroundPlane({ size = 100, modules = [] }: GroundPlaneProps) {
     const repeat = 25;
 
     const color = configureTex(
-      loader.load('/textures/pbr/grass/grass005_color_2k.png'),
+      loader.load(assetPath('/textures/pbr/grass/grass005_color_2k.png')),
       true,
     );
     color.repeat.set(repeat, repeat);
 
     const normal = configureTex(
-      loader.load('/textures/pbr/grass/grass005_normal_2k.png'),
+      loader.load(assetPath('/textures/pbr/grass/grass005_normal_2k.png')),
       false,
     );
     normal.repeat.set(repeat, repeat);
 
     const roughness = configureTex(
-      loader.load('/textures/pbr/grass/grass005_rough_2k.png'),
+      loader.load(assetPath('/textures/pbr/grass/grass005_rough_2k.png')),
       false,
     );
     roughness.repeat.set(repeat, repeat);
@@ -86,13 +87,13 @@ function FoundationPad({ modules }: { modules: PlacedModule[] }) {
     const loader = new THREE.TextureLoader();
 
     const diffuse = configureTex(
-      loader.load('/textures/pbr/granite/granite_tile_diff_2k.jpg'),
+      loader.load(assetPath('/textures/pbr/granite/granite_tile_diff_2k.jpg')),
       true,
     );
     diffuse.repeat.set(width / 1.0, depth / 1.0);
 
     const bump = configureTex(
-      loader.load('/textures/pbr/granite/granite_tile_disp_2k.png'),
+      loader.load(assetPath('/textures/pbr/granite/granite_tile_disp_2k.png')),
       false,
     );
     bump.repeat.set(width / 1.0, depth / 1.0);

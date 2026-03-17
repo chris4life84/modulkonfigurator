@@ -49,7 +49,7 @@ export function OptionsStep() {
                     <OptionField
                       key={opt.key}
                       option={opt}
-                      value={module.options[opt.key] ?? opt.defaultValue}
+                      value={(module.options[opt.key] ?? opt.defaultValue) as string | boolean}
                       onChange={(val) => setModuleOption(module.id, opt.key, val)}
                     />
                   ))}

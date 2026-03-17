@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { assetPath } from '../utils/asset-path';
 
 export function Kontakt() {
   const [submitted, setSubmitted] = useState(false);
@@ -98,7 +99,7 @@ export function Kontakt() {
 
       {/* Logo */}
       <div className="mt-12 flex justify-center">
-        <img src="/logo.png" alt="Modul-Garten" className="h-16 w-auto opacity-60" />
+        <img src={assetPath('/logo.png')} alt="Modul-Garten" className="h-16 w-auto opacity-60" />
       </div>
     </div>
   );

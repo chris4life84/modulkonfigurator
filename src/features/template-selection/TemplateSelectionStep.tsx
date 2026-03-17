@@ -3,6 +3,7 @@ import { useConfigStore } from '../../store/useConfigStore';
 import { TEMPLATES } from '../../data/templates';
 import { formatPrice } from '../../data/pricing';
 import { t } from '../../utils/i18n';
+import { assetPath } from '../../utils/asset-path';
 import { TemplateMiniPreview } from './TemplateMiniPreview';
 
 export function TemplateSelectionStep() {
@@ -34,7 +35,7 @@ export function TemplateSelectionStep() {
           </p>
           <div className="mt-3 overflow-hidden rounded-lg bg-gradient-to-br from-gray-50 to-gray-100">
             <img
-              src="/templates/leere-szene.jpg"
+              src={assetPath('/templates/leere-szene.jpg')}
               alt="Leere Szene"
               className="h-40 w-full object-cover"
             />

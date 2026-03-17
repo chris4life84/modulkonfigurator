@@ -1,3 +1,5 @@
+import { assetPath } from '../utils/asset-path';
+
 export function Datenschutz() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
@@ -57,7 +59,7 @@ export function Datenschutz() {
 
       {/* Logo */}
       <div className="mt-12 flex justify-center">
-        <img src="/logo.png" alt="Modul-Garten" className="h-16 w-auto opacity-60" />
+        <img src={assetPath('/logo.png')} alt="Modul-Garten" className="h-16 w-auto opacity-60" />
       </div>
     </div>
   );

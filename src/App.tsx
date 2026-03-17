@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import { Layout } from './components/website/Layout';
 import { Home } from './pages/Home';
 import { Konfigurator } from './pages/Konfigurator';
+import { SharedConfigView } from './pages/SharedConfigView';
 import { Impressum } from './pages/Impressum';
 import { Datenschutz } from './pages/Datenschutz';
 import { Kontakt } from './pages/Kontakt';
@@ -12,6 +13,9 @@ export default function App() {
     <Routes>
       {/* Konfigurator: eigene Seite ohne Website-Layout */}
       <Route path="/konfigurator" element={<Konfigurator />} />
+
+      {/* Geteilte Konfigurationsansicht (read-only) */}
+      <Route path="/view" element={<SharedConfigView />} />
 
       {/* Website-Seiten mit Header + Footer */}
       <Route element={<Layout />}>

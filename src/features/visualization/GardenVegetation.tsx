@@ -4,6 +4,7 @@ import { useGLTF } from '@react-three/drei';
 import type { PlacedModule } from '../../types/grid';
 import { GRID_CELL_SIZE } from '../../types/grid';
 import { getBoundingBox } from '../../utils/grid';
+import { assetPath } from '../../utils/asset-path';
 
 interface GardenVegetationProps {
   modules: PlacedModule[];
@@ -26,8 +27,8 @@ interface TreeData {
   model: 'deciduous' | 'fir';
 }
 
-const DECIDUOUS_MODEL = '/models/trees/tree_small_02_opt.glb';
-const FIR_MODEL = '/models/trees/fir_sapling_medium.glb';
+const DECIDUOUS_MODEL = assetPath('/models/trees/tree_small_02_opt.glb');
+const FIR_MODEL = assetPath('/models/trees/fir_sapling_medium.glb');
 
 /**
  * Mixed realistic trees (Polyhaven) placed around the building.

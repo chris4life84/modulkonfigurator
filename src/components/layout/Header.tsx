@@ -3,6 +3,7 @@ import { t } from '../../utils/i18n';
 import { useConfigStore } from '../../store/useConfigStore';
 import { selectTotalPrice } from '../../store/selectors';
 import { formatPrice } from '../../data/pricing';
+import { assetPath } from '../../utils/asset-path';
 
 export function Header() {
   const modules = useConfigStore((s) => s.modules);
@@ -13,7 +14,7 @@ export function Header() {
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center hover:opacity-80 transition-opacity" title="Zur Startseite">
-            <img src="/logo.png" alt="Modul-Garten" className="h-8 w-auto" />
+            <img src={assetPath('/logo.png')} alt="Modul-Garten" className="h-8 w-auto" />
           </Link>
           <div>
             <h1 className="text-xl font-bold text-wood-800">{t('app.title')}</h1>

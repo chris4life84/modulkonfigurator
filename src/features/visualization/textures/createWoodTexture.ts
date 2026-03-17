@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { assetPath } from '../../../utils/asset-path';
 
 /**
  * Wood lamellen texture system.
@@ -27,7 +28,7 @@ export function loadWoodImageTexture(): THREE.Texture | null {
   try {
     const loader = new THREE.TextureLoader();
     const texture = loader.load(
-      '/textures/wood-lamellen.jpg',
+      assetPath('/textures/wood-lamellen.jpg'),
       // onLoad
       (tex) => {
         tex.needsUpdate = true;

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { assetPath } from '../../../utils/asset-path';
 
 /**
  * Grass texture system.
@@ -38,13 +39,13 @@ export function loadGrassImageTexture(): THREE.Texture | null {
 
     // Try seamless Polyhaven grass (aerial_grass_rock)
     const texture = loader.load(
-      '/textures/pbr/grass/diff_1k.jpg',
+      assetPath('/textures/pbr/grass/diff_1k.jpg'),
       (tex) => { tex.needsUpdate = true; },
       undefined,
       // On error: try old piece-turf.jpg as fallback
       () => {
         const fallback = loader.load(
-          '/textures/piece-turf.jpg',
+          assetPath('/textures/piece-turf.jpg'),
           (ft) => {
             ft.needsUpdate = true;
             configureGrassTex(ft);

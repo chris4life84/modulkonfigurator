@@ -101,30 +101,10 @@ export function getValidPlacements(
   return positions;
 }
 
-/** Helper: check if a module is a freistehend pergola (independent from connected group) */
-function isFreistehendPergola(m: PlacedModule): boolean {
-  return m.type === 'pergola' && m.options.freistehend === true;
-}
-
 /** Check if all modules form a connected group using BFS */
-export function isConnected(_modules: PlacedModule[]): boolean {
+export function isConnected(): boolean {
   // Free placement: modules don't need to form a connected group
   return true;
-}
-
-function modulesShareEdge(cellsA: GridPosition[], cellsB: GridPosition[]): boolean {
-  const setB = new Set(cellsB.map((c) => `${c.x},${c.y}`));
-  for (const a of cellsA) {
-    if (
-      setB.has(`${a.x - 1},${a.y}`) ||
-      setB.has(`${a.x + 1},${a.y}`) ||
-      setB.has(`${a.x},${a.y - 1}`) ||
-      setB.has(`${a.x},${a.y + 1}`)
-    ) {
-      return true;
-    }
-  }
-  return false;
 }
 
 /** Get valid positions for moving an existing module (excludes self from collision) */
@@ -133,7 +113,6 @@ export function getValidMovePlacements(
   moduleId: string,
   width: number,
   height: number,
-  skipSharesEdge = false,
 ): GridPosition[] {
   const others = modules.filter((m) => m.id !== moduleId);
   if (others.length === 0) {

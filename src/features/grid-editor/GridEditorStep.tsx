@@ -178,7 +178,6 @@ export function GridEditorStep() {
             pending.moduleId,
             mod.width,
             mod.height,
-            true,
           );
           const validSet = new Set(validPositions.map((p) => `${p.x},${p.y}`));
 

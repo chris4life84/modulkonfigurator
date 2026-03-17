@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { assetPath } from '../../utils/asset-path';
 
 export function Hero() {
   return (
@@ -48,7 +49,7 @@ export function Hero() {
           {/* Hero image */}
           <div className="w-full max-w-md md:max-w-lg lg:max-w-xl flex-shrink-0">
             <img
-              src="/hero-collage.png"
+              src={assetPath('/hero-collage.png')}
               alt="Modulhaus-Varianten: Home Office, Wohnraum mit Pergola, Sauna am See"
               className="w-full rounded-xl shadow-2xl"
             />

@@ -42,7 +42,10 @@ const strings: Record<string, string> = {
   'summary.contact.phone': 'Telefon',
   'summary.contact.message': 'Nachricht',
   'summary.contact.send': 'Anfrage senden',
-  'summary.contact.sent': 'Vielen Dank! Wir melden uns bei Ihnen.',
+  'summary.contact.sent': 'Vielen Dank! Sie erhalten in Kürze eine Bestätigung per E-Mail. Wir melden uns schnellstmöglich bei Ihnen.',
+  'summary.contact.sending': 'Wird gesendet...',
+  'summary.contact.error': 'Senden fehlgeschlagen. Bitte versuchen Sie es erneut.',
+  'summary.contact.privacy': 'Ich stimme der Verarbeitung meiner Daten gemäß der Datenschutzerklärung zu.',
 
   'price.from': 'ab',
   'price.total': 'Gesamt',
