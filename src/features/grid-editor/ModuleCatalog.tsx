@@ -253,69 +253,79 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
         </>
       )}
 
-      {/* Custom size block */}
-      <div className="mt-3 rounded-lg border border-dashed border-gray-300 p-2.5">
-        <p className="text-xs font-medium text-gray-600 mb-2">Eigene Größe</p>
-        <div className="flex items-center gap-1.5">
-          <label className="text-[11px] text-gray-500 shrink-0">B:</label>
-          <input
-            type="number"
-            min={category === 'pergola' ? 2.0 : GRID_CELL_SIZE}
-            max={category === 'pergola' ? 6.0 : 9}
-            step={GRID_CELL_SIZE}
-            value={customWm}
-            onChange={(e) => handleMeterInput(e.target.value, setCustomWm)}
-            className="w-14 rounded border border-gray-200 px-1.5 py-0.5 text-xs text-center focus:border-amber-400 focus:outline-none"
-          />
-          <span className="text-[10px] text-gray-400">m</span>
-          <label className="text-[11px] text-gray-500 shrink-0 ml-2">T:</label>
-          <input
-            type="number"
-            min={category === 'pergola' ? 2.0 : GRID_CELL_SIZE}
-            max={category === 'pergola' ? 6.0 : 9}
-            step={GRID_CELL_SIZE}
-            value={customHm}
-            onChange={(e) => handleMeterInput(e.target.value, setCustomHm)}
-            className="w-14 rounded border border-gray-200 px-1.5 py-0.5 text-xs text-center focus:border-amber-400 focus:outline-none"
-          />
-          <span className="text-[10px] text-gray-400">m</span>
-        </div>
-        <button
-          onClick={() => {
-            onSelect(
+      {/* Custom size block — only for Modulhaus */}
+      {category === 'haus' && (
+        <div className="mt-3 rounded-lg border border-dashed border-gray-300 p-2.5">
+          <p className="text-xs font-medium text-gray-600 mb-2">Eigene Größe</p>
+          <div className="flex items-center gap-1.5">
+            <label className="text-[11px] text-gray-500 shrink-0">B:</label>
+            <input
+              type="number"
+              min={GRID_CELL_SIZE}
+              max={9}
+              step={GRID_CELL_SIZE}
+              value={customWm}
+              onChange={(e) => handleMeterInput(e.target.value, setCustomWm)}
+              className="w-14 rounded border border-gray-200 px-1.5 py-0.5 text-xs text-center focus:border-amber-400 focus:outline-none"
+            />
+            <span className="text-[10px] text-gray-400">m</span>
+            <label className="text-[11px] text-gray-500 shrink-0 ml-2">T:</label>
+            <input
+              type="number"
+              min={GRID_CELL_SIZE}
+              max={9}
+              step={GRID_CELL_SIZE}
+              value={customHm}
+              onChange={(e) => handleMeterInput(e.target.value, setCustomHm)}
+              className="w-14 rounded border border-gray-200 px-1.5 py-0.5 text-xs text-center focus:border-amber-400 focus:outline-none"
+            />
+            <span className="text-[10px] text-gray-400">m</span>
+          </div>
+          <button
+            onClick={() => {
+              onSelect(
+                isCustomSelected
+                  ? null
+                  : { type: blockType, width: customW, height: customH },
+              );
+            }}
+            className={`mt-2 w-full rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
               isCustomSelected
-                ? null
-                : { type: blockType, width: customW, height: customH },
-            );
-          }}
-          className={`mt-2 w-full rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
-            isCustomSelected
-              ? category === 'haus'
                 ? 'bg-amber-600 text-white'
-                : 'bg-gray-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          {customWm.toFixed(1)} × {customHm.toFixed(1)}m platzieren
-        </button>
-        {category === 'pergola' && (
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {customWm.toFixed(1)} × {customHm.toFixed(1)}m platzieren
+          </button>
+        </div>
+      )}
+
+      {/* Pergolakonfigurator CTA */}
+      {category === 'pergola' && (
+        <div className="mt-4 rounded-xl border-2 border-wood-300 bg-gradient-to-b from-wood-50 to-white p-4 text-center">
+          <p className="text-xs text-gray-500 leading-snug mb-3">
+            Keine passende Größe? Gestalten Sie Ihre Pergola individuell mit Lamellen-, Glas- oder EPDM-Dach.
+          </p>
           <a
             href="https://www.modul-garten.de/pergolakonfigurator/index.html"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 block text-[10px] text-blue-500 hover:text-blue-700 hover:underline"
+            className="inline-flex items-center justify-center gap-2 w-full rounded-lg bg-wood-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-wood-700"
           >
-            Modul-Garten.de – Neues Layout Demo ↗
+            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.25 5.5a.75.75 0 00-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 00.75-.75v-4a.75.75 0 011.5 0v4A2.25 2.25 0 0112.75 17h-8.5A2.25 2.25 0 012 14.75v-8.5A2.25 2.25 0 014.25 4h5a.75.75 0 010 1.5h-5z" clipRule="evenodd" />
+              <path fillRule="evenodd" d="M6.194 12.753a.75.75 0 001.06.053L16.5 4.44v2.81a.75.75 0 001.5 0v-4.5a.75.75 0 00-.75-.75h-4.5a.75.75 0 000 1.5h2.553l-9.056 8.194a.75.75 0 00-.053 1.06z" clipRule="evenodd" />
+            </svg>
+            Pergolakonfigurator öffnen
           </a>
-        )}
-      </div>
+        </div>
+      )}
 
-      <p className="mt-2 text-[10px] text-gray-400 leading-snug">
-        {category === 'haus'
-          ? 'Nutzbar als: Saunakern, Technikraum, Ruheeinheit, Umkleide, Sanitär, Living/Office'
-          : 'Aluminium-Pergola mit Lamellen-, Glas- oder EPDM-Dach. Direkt an Modulhäuser anschließbar.'
-        }
-      </p>
+      {category === 'haus' && (
+        <p className="mt-2 text-[10px] text-gray-400 leading-snug">
+          Nutzbar als: Saunakern, Technikraum, Ruheeinheit, Umkleide, Sanitär, Living/Office
+        </p>
+      )}
     </div>
   );
 }

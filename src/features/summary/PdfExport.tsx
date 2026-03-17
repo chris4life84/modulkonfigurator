@@ -140,12 +140,40 @@ function getInteriorOpenings(
   return openings as never;
 }
 
-function formatOpening(o: { type: string; width: number; height: number; offsetY?: number }): string {
+function formatPosition(position: number): string {
+  if (Math.abs(position - 0.5) < 0.03) return 'Mitte';
+  return `${Math.round(position * 100)}%`;
+}
+
+function formatOpening(o: {
+  type: string;
+  width: number;
+  height: number;
+  offsetY?: number;
+  position?: number;
+  hingeSide?: 'left' | 'right';
+  opensOutward?: boolean;
+}): string {
   const name = OPENING_NAMES[o.type] ?? o.type;
   let text = `${name} ${o.width.toFixed(1)} × ${o.height.toFixed(1)} m`;
+
+  // Position (skip if centered — it's the default)
+  if (o.position !== undefined && Math.abs(o.position - 0.5) >= 0.03) {
+    text += `, Pos. ${formatPosition(o.position)}`;
+  }
+
+  // Window sill height
   if (o.type === 'window' && o.offsetY && o.offsetY > 0) {
     text += `, Brüstung ${o.offsetY.toFixed(1)} m`;
   }
+
+  // Door hinge & opening direction
+  if (o.type === 'door' || o.type === 'terrace-door') {
+    const hinge = o.hingeSide === 'right' ? 'rechts' : 'links';
+    const direction = o.opensOutward === false ? 'innen' : 'außen';
+    text += `, Scharnier ${hinge} ${direction}`;
+  }
+
   return text;
 }
 
@@ -163,11 +191,8 @@ function getWallDetails(
       // Check for interior openings (doors/windows) on this shared wall
       const interiorOpenings = getInteriorOpenings(module, side, allModules);
       if (interiorOpenings.length > 0) {
-        const parts = interiorOpenings.map(
-          (o: { type: string; width: number; height: number; offsetY?: number }) =>
-            formatOpening(o),
-        );
-        return { side: SIDE_NAMES[side], detail: `Verbundwand (${parts.join(', ')})` };
+        const parts = interiorOpenings.map((o) => formatOpening(o));
+        return { side: SIDE_NAMES[side], detail: `Verbundwand (${parts.join('; ')})` };
       }
       return { side: SIDE_NAMES[side], detail: 'Verbundwand' };
     }
@@ -176,7 +201,7 @@ function getWallDetails(
       return { side: SIDE_NAMES[side], detail: 'Geschlossen' };
     }
     const parts = openings.map((o) => formatOpening(o));
-    return { side: SIDE_NAMES[side], detail: parts.join(', ') };
+    return { side: SIDE_NAMES[side], detail: parts.join('; ') };
   });
 }
 
@@ -414,7 +439,7 @@ async function generatePdf(data: PdfData) {
       doc.text(`${wall.side}:`, x, yPos);
 
       doc.setTextColor(...C.dark);
-      const maxLen = 45;
+      const maxLen = 70;
       const detail =
         wall.detail.length > maxLen ? wall.detail.substring(0, maxLen - 1) + '…' : wall.detail;
       doc.text(detail, x + 17, yPos);
@@ -673,7 +698,7 @@ export async function generatePdfBlob(data: PdfData): Promise<Blob> {
       doc.text(`${wall.side}:`, x, yPos);
 
       doc.setTextColor(...C.dark);
-      const maxLen = 45;
+      const maxLen = 70;
       const detail = wall.detail.length > maxLen ? wall.detail.substring(0, maxLen - 1) + '…' : wall.detail;
       doc.text(detail, x + 17, yPos);
     }

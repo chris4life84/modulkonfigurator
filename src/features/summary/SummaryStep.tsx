@@ -1,11 +1,14 @@
 import { useState, useRef } from 'react';
 import type { PlacedModule } from '../../types/grid';
+import type { WallSide } from '../../types/walls';
+import { getDefaultWallConfig } from '../../types/walls';
 import { useConfigStore } from '../../store/useConfigStore';
 import { MODULE_DEFINITIONS } from '../../data/module-types';
 import { MODULE_OPTIONS } from '../../data/options';
 import { GRID_CELL_SIZE } from '../../types/grid';
 import { calculateModulePrice, formatPrice } from '../../data/pricing';
 import { calculateMaxPanels, calculateKWp } from '../../utils/pvCalculation';
+import { getSharedWalls } from '../../utils/walls';
 import { selectTotalPrice, selectTotalDimensions } from '../../store/selectors';
 import { VisualizationContainer } from '../visualization/VisualizationContainer';
 import { GridCanvas } from '../visualization/GridCanvas';
@@ -64,7 +67,14 @@ export function SummaryStep() {
       formData.append('pdf', pdfBlob, 'modulhaus-konfiguration.pdf');
       formData.append('_hp', honeypot); // honeypot for spam protection
 
-      // 4. Build config summary for email
+      // 4. Build config summary for email (including wall details)
+      const SIDE_NAMES: Record<WallSide, string> = {
+        front: 'Vorne', back: 'Hinten', left: 'Links', right: 'Rechts',
+      };
+      const OPENING_NAMES: Record<string, string> = {
+        window: 'Fenster', door: 'Tür', 'terrace-door': 'Terrassentür',
+      };
+
       const configSummary = {
         templateName: template?.name || null,
         totalPrice: formatPrice(totalPrice),
@@ -75,6 +85,8 @@ export function SummaryStep() {
           const price = calculateModulePrice(mod);
           const widthM = (mod.width * GRID_CELL_SIZE).toFixed(1);
           const depthM = (mod.height * GRID_CELL_SIZE).toFixed(1);
+
+          // Options
           const options: string[] = [];
           for (const opt of MODULE_OPTIONS) {
             if (!opt.appliesTo.includes(mod.type)) continue;
@@ -89,11 +101,44 @@ export function SummaryStep() {
               options.push(opt.label);
             }
           }
+
+          // Wall details per side
+          const walls = mod.walls ?? getDefaultWallConfig(mod.type, mod.width, mod.height);
+          const shared = getSharedWalls(mod, modules);
+          const sides: WallSide[] = ['front', 'back', 'left', 'right'];
+          const wallDetails = sides.map((side) => {
+            if (shared.has(side)) {
+              return { side: SIDE_NAMES[side], detail: 'Verbundwand' };
+            }
+            const openings = walls[side];
+            if (!openings || openings.length === 0) {
+              return { side: SIDE_NAMES[side], detail: 'Geschlossen' };
+            }
+            const parts = openings.map((o) => {
+              const name = OPENING_NAMES[o.type] ?? o.type;
+              let text = `${name} ${o.width.toFixed(1)} × ${o.height.toFixed(1)} m`;
+              if (o.position !== undefined && Math.abs(o.position - 0.5) >= 0.03) {
+                text += `, Pos. ${Math.round(o.position * 100)}%`;
+              }
+              if (o.type === 'window' && o.offsetY && o.offsetY > 0) {
+                text += `, Brüstung ${o.offsetY.toFixed(1)} m`;
+              }
+              if (o.type === 'door' || o.type === 'terrace-door') {
+                const hinge = o.hingeSide === 'right' ? 'rechts' : 'links';
+                const dir = o.opensOutward === false ? 'innen' : 'außen';
+                text += `, Scharnier ${hinge} ${dir}`;
+              }
+              return text;
+            });
+            return { side: SIDE_NAMES[side], detail: parts.join('; ') };
+          });
+
           return {
             name: `${def?.name ?? mod.type} #${idx + 1}`,
             dimensions: `${widthM} × ${depthM} m`,
             price: formatPrice(price),
             options,
+            walls: wallDetails,
           };
         }),
       };
