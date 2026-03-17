@@ -122,8 +122,109 @@ $safePhone = htmlspecialchars($phone, ENT_QUOTES, 'UTF-8');
 $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
 $safeConfigUrl = htmlspecialchars($configUrl, ENT_QUOTES, 'UTF-8');
 
+// ── Parse configuration data ────────────────────────────────────────
+$configData = null;
+if (!empty($_POST['configData'])) {
+    $configData = json_decode($_POST['configData'], true);
+}
+
+// ── Build configuration HTML for emails ─────────────────────────────
+function buildConfigHtml($configData, $includePrice = true) {
+    if (!$configData) return '';
+
+    $html = "
+    <table style='width:100%; border-collapse:collapse; margin:15px 0;'>
+        <tr style='background:#6e4720;'>
+            <th style='padding:10px 12px; text-align:left; color:#fff; font-size:13px;'>Modul</th>
+            <th style='padding:10px 12px; text-align:left; color:#fff; font-size:13px;'>Maße</th>
+            <th style='padding:10px 12px; text-align:left; color:#fff; font-size:13px;'>Ausstattung</th>";
+    if ($includePrice) {
+        $html .= "<th style='padding:10px 12px; text-align:right; color:#fff; font-size:13px;'>Preis</th>";
+    }
+    $html .= "</tr>";
+
+    $rowIdx = 0;
+    foreach ($configData['modules'] as $module) {
+        $bgColor = $rowIdx % 2 === 0 ? '#ffffff' : '#f9f7f4';
+        $moduleName = htmlspecialchars($module['name'], ENT_QUOTES, 'UTF-8');
+        $moduleDims = htmlspecialchars($module['dimensions'], ENT_QUOTES, 'UTF-8');
+        $modulePrice = htmlspecialchars($module['price'], ENT_QUOTES, 'UTF-8');
+        $optionsText = !empty($module['options'])
+            ? htmlspecialchars(implode(', ', $module['options']), ENT_QUOTES, 'UTF-8')
+            : '<span style="color:#999;">Standard</span>';
+
+        $html .= "
+        <tr style='background:{$bgColor};'>
+            <td style='padding:8px 12px; font-size:13px; font-weight:600; color:#333; border-bottom:1px solid #eee;'>{$moduleName}</td>
+            <td style='padding:8px 12px; font-size:13px; color:#666; border-bottom:1px solid #eee;'>{$moduleDims}</td>
+            <td style='padding:8px 12px; font-size:12px; color:#666; border-bottom:1px solid #eee;'>{$optionsText}</td>";
+        if ($includePrice) {
+            $html .= "<td style='padding:8px 12px; font-size:13px; font-weight:600; color:#333; text-align:right; border-bottom:1px solid #eee;'>{$modulePrice}</td>";
+        }
+        $html .= "</tr>";
+        $rowIdx++;
+    }
+
+    // Total row
+    if ($includePrice && !empty($configData['totalPrice'])) {
+        $totalPrice = htmlspecialchars($configData['totalPrice'], ENT_QUOTES, 'UTF-8');
+        $colSpan = 3;
+        $html .= "
+        <tr style='background:#f5f0eb;'>
+            <td colspan='{$colSpan}' style='padding:12px; font-size:14px; font-weight:700; color:#6e4720; text-align:right; border-top:2px solid #6e4720;'>Gesamtpreis:</td>
+            <td style='padding:12px; font-size:16px; font-weight:700; color:#6e4720; text-align:right; border-top:2px solid #6e4720;'>{$totalPrice}</td>
+        </tr>";
+    }
+
+    $html .= "</table>";
+
+    return $html;
+}
+
+function buildConfigSummaryBox($configData) {
+    if (!$configData) return '';
+
+    $dims = htmlspecialchars($configData['totalDimensions'] ?? '', ENT_QUOTES, 'UTF-8');
+    $count = intval($configData['moduleCount'] ?? 0);
+    $template = !empty($configData['templateName']) ? htmlspecialchars($configData['templateName'], ENT_QUOTES, 'UTF-8') : null;
+
+    $html = "
+    <table style='width:100%; border-collapse:collapse; margin:15px 0; background:#f9f7f4; border:1px solid #e8e0d8; border-radius:8px;'>
+        <tr>
+            <td style='padding:12px 16px;'>
+                <table style='width:100%; border-collapse:collapse;'>";
+
+    if ($template) {
+        $html .= "
+                    <tr>
+                        <td style='padding:3px 0; font-size:12px; color:#888; width:120px;'>Vorlage:</td>
+                        <td style='padding:3px 0; font-size:13px; color:#333; font-weight:600;'>{$template}</td>
+                    </tr>";
+    }
+
+    $html .= "
+                    <tr>
+                        <td style='padding:3px 0; font-size:12px; color:#888; width:120px;'>Gesamtmaße:</td>
+                        <td style='padding:3px 0; font-size:13px; color:#333; font-weight:600;'>{$dims}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding:3px 0; font-size:12px; color:#888;'>Anzahl Module:</td>
+                        <td style='padding:3px 0; font-size:13px; color:#333; font-weight:600;'>{$count}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>";
+
+    return $html;
+}
+
 // ── Send emails ──────────────────────────────────────────────────────
 try {
+    $configSummaryBox = buildConfigSummaryBox($configData);
+    $configTable = buildConfigHtml($configData, true);
+    $configTableNoPrice = buildConfigHtml($configData, false);
+
     // ── Email 1: Confirmation to customer ────────────────────────────
     $customerMail = new PHPMailer(true);
     $customerMail->isSMTP();
@@ -141,27 +242,55 @@ try {
     $customerMail->isHTML(true);
 
     $customerBody = "
-    <div style='font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333;'>
-        <div style='background: #6e4720; padding: 20px; text-align: center;'>
-            <h1 style='color: #fff; margin: 0; font-size: 22px;'>Modul-Garten</h1>
+    <div style='font-family: Arial, Helvetica, sans-serif; max-width: 640px; margin: 0 auto; color: #333; background:#fff;'>
+        <div style='background: #6e4720; padding: 24px 20px; text-align: center;'>
+            <h1 style='color: #fff; margin: 0; font-size: 24px; font-weight: 300; letter-spacing: 1px;'>MODUL-GARTEN</h1>
+            <p style='color: #d4b896; margin: 6px 0 0; font-size: 12px; letter-spacing: 2px;'>MODULHAUS-KONFIGURATOR</p>
         </div>
-        <div style='padding: 30px 20px;'>
-            <p>Sehr geehrte(r) <strong>{$safeName}</strong>,</p>
-            <p>vielen Dank für Ihre Anfrage über unseren Modulhaus-Konfigurator!</p>
-            <p>Ihre Konfiguration können Sie jederzeit unter folgendem Link einsehen:</p>
-            <p style='margin: 20px 0;'>
-                <a href='{$safeConfigUrl}' style='display: inline-block; background: #6e4720; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;'>
-                    Konfiguration ansehen
+
+        <div style='padding: 30px 24px;'>
+            <p style='font-size:15px; margin:0 0 20px;'>Sehr geehrte(r) <strong>{$safeName}</strong>,</p>
+
+            <p style='font-size:14px; line-height:1.6; color:#555;'>
+                vielen Dank für Ihre Anfrage über unseren Modulhaus-Konfigurator!
+                Nachfolgend finden Sie eine Übersicht Ihrer individuellen Konfiguration.
+            </p>
+
+            <h2 style='font-size:16px; color:#6e4720; margin:25px 0 5px; padding-bottom:8px; border-bottom:2px solid #e8e0d8;'>
+                Ihre Konfiguration im Überblick
+            </h2>
+
+            {$configSummaryBox}
+            {$configTable}
+
+            <p style='margin: 25px 0 10px; text-align:center;'>
+                <a href='{$safeConfigUrl}' style='display: inline-block; background: #6e4720; color: #fff; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size:14px; letter-spacing:0.5px;'>
+                    &#x1f3e0; Konfiguration online ansehen
                 </a>
             </p>
-            <p>Im Anhang finden Sie Ihre Konfiguration zusätzlich als PDF.</p>
-            <p>Wir werden uns schnellstmöglich bei Ihnen melden, um Ihre Anfrage zu besprechen.</p>
-            <p style='margin-top: 30px;'>Mit freundlichen Grüßen,<br><strong>Ihr Modul-Garten Team</strong></p>
+            <p style='text-align:center; font-size:11px; color:#999; margin:5px 0 25px;'>
+                Über diesen Link können Sie Ihre Konfiguration jederzeit aufrufen.
+            </p>
+
+            <div style='background:#f0f7f0; border-left:4px solid #4caf50; padding:14px 16px; margin:20px 0; border-radius:0 6px 6px 0;'>
+                <p style='margin:0; font-size:13px; color:#333;'>
+                    <strong>Wie geht es weiter?</strong><br>
+                    <span style='color:#555;'>Unser Team wird sich innerhalb von 1–2 Werktagen bei Ihnen melden, um Ihre Anfrage zu besprechen und offene Fragen zu klären.</span>
+                </p>
+            </div>
+
+            <p style='font-size:13px; color:#555; margin:5px 0 0;'>Im Anhang finden Sie Ihre Konfiguration zusätzlich als PDF-Dokument.</p>
+
+            <p style='margin-top: 30px; font-size:14px;'>Mit freundlichen Grüßen,<br><strong style='color:#6e4720;'>Ihr Modul-Garten Team</strong></p>
         </div>
-        <div style='background: #f5f5f5; padding: 15px 20px; font-size: 12px; color: #888; text-align: center;'>
-            Modul-Garten &middot; modul-garten.de
+
+        <div style='background: #f5f5f5; padding: 16px 24px; text-align: center; border-top:1px solid #e5e5e5;'>
+            <p style='margin:0; font-size: 11px; color: #999;'>
+                Modul-Garten &middot; <a href='https://modul-garten.de' style='color:#6e4720; text-decoration:none;'>modul-garten.de</a>
+            </p>
         </div>
     </div>";
+
     $customerMail->Body = $customerBody;
     $customerMail->AltBody = "Sehr geehrte(r) {$name},\n\nvielen Dank für Ihre Anfrage!\n\nIhre Konfiguration: {$configUrl}\n\nWir melden uns schnellstmöglich.\n\nMit freundlichen Grüßen,\nIhr Modul-Garten Team";
 
@@ -188,27 +317,52 @@ try {
     $internalMail->Subject = "Neue Anfrage von {$name} | Modulhaus-Konfigurator";
     $internalMail->isHTML(true);
 
-    $phoneRow = !empty($phone) ? "<tr><td style='padding:6px 12px;font-weight:bold;'>Telefon:</td><td style='padding:6px 12px;'>{$safePhone}</td></tr>" : '';
-    $messageRow = !empty($message) ? "<tr><td style='padding:6px 12px;font-weight:bold;vertical-align:top;'>Nachricht:</td><td style='padding:6px 12px;'>" . nl2br($safeMessage) . "</td></tr>" : '';
+    $phoneRow = !empty($phone)
+        ? "<tr><td style='padding:8px 12px;font-weight:600;color:#555;width:100px;'>Telefon:</td><td style='padding:8px 12px;'>{$safePhone}</td></tr>"
+        : '';
+    $messageBlock = !empty($message)
+        ? "<div style='margin:15px 0; padding:12px 16px; background:#fffef5; border:1px solid #f0e8d0; border-radius:6px;'>
+               <p style='margin:0 0 4px; font-size:11px; color:#999; text-transform:uppercase; letter-spacing:1px;'>Nachricht des Kunden</p>
+               <p style='margin:0; font-size:13px; color:#333; line-height:1.5;'>" . nl2br($safeMessage) . "</p>
+           </div>"
+        : '';
+
+    $totalPriceDisplay = !empty($configData['totalPrice']) ? htmlspecialchars($configData['totalPrice'], ENT_QUOTES, 'UTF-8') : '–';
 
     $internalBody = "
-    <div style='font-family: Arial, Helvetica, sans-serif; max-width: 600px; color: #333;'>
-        <h2 style='color: #6e4720; border-bottom: 2px solid #6e4720; padding-bottom: 10px;'>
-            Neue Konfigurationsanfrage
-        </h2>
-        <table style='width:100%; border-collapse:collapse; margin: 20px 0;'>
-            <tr style='background:#f9f9f9;'><td style='padding:6px 12px;font-weight:bold;'>Name:</td><td style='padding:6px 12px;'>{$safeName}</td></tr>
-            <tr><td style='padding:6px 12px;font-weight:bold;'>E-Mail:</td><td style='padding:6px 12px;'><a href='mailto:{$safeEmail}'>{$safeEmail}</a></td></tr>
-            {$phoneRow}
-            {$messageRow}
-        </table>
-        <p style='margin: 20px 0;'>
-            <a href='{$safeConfigUrl}' style='display: inline-block; background: #6e4720; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 6px;'>
-                Konfiguration ansehen
-            </a>
-        </p>
-        <p style='font-size: 12px; color: #888;'>PDF ist als Anhang beigefügt.</p>
+    <div style='font-family: Arial, Helvetica, sans-serif; max-width: 640px; color: #333;'>
+        <div style='background:#6e4720; padding:16px 20px;'>
+            <h1 style='margin:0; color:#fff; font-size:18px; font-weight:400;'>Neue Konfigurationsanfrage</h1>
+            <p style='margin:4px 0 0; color:#d4b896; font-size:12px;'>" . date('d.m.Y H:i') . " Uhr</p>
+        </div>
+
+        <div style='padding:20px 24px;'>
+            <h2 style='font-size:14px; color:#6e4720; margin:0 0 10px; text-transform:uppercase; letter-spacing:1px;'>Kontaktdaten</h2>
+            <table style='width:100%; border-collapse:collapse; margin-bottom:15px; background:#f9f9f9; border-radius:6px;'>
+                <tr><td style='padding:8px 12px;font-weight:600;color:#555;width:100px;'>Name:</td><td style='padding:8px 12px;font-weight:700;'>{$safeName}</td></tr>
+                <tr style='background:#fff;'><td style='padding:8px 12px;font-weight:600;color:#555;'>E-Mail:</td><td style='padding:8px 12px;'><a href='mailto:{$safeEmail}' style='color:#6e4720;'>{$safeEmail}</a></td></tr>
+                {$phoneRow}
+            </table>
+
+            {$messageBlock}
+
+            <h2 style='font-size:14px; color:#6e4720; margin:25px 0 10px; text-transform:uppercase; letter-spacing:1px;'>Konfiguration</h2>
+
+            {$configSummaryBox}
+            {$configTable}
+
+            <p style='margin: 20px 0; text-align:center;'>
+                <a href='{$safeConfigUrl}' style='display: inline-block; background: #6e4720; color: #fff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size:13px;'>
+                    Konfiguration online ansehen
+                </a>
+            </p>
+        </div>
+
+        <div style='background: #f5f5f5; padding: 12px 24px; font-size: 11px; color: #999; text-align: center; border-top:1px solid #e5e5e5;'>
+            Automatisch generiert vom Modulhaus-Konfigurator &middot; PDF im Anhang
+        </div>
     </div>";
+
     $internalMail->Body = $internalBody;
     $internalMail->AltBody = "Neue Anfrage\n\nName: {$name}\nE-Mail: {$email}\nTelefon: {$phone}\nNachricht: {$message}\n\nKonfiguration: {$configUrl}";
 

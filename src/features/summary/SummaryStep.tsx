@@ -64,7 +64,42 @@ export function SummaryStep() {
       formData.append('pdf', pdfBlob, 'modulhaus-konfiguration.pdf');
       formData.append('_hp', honeypot); // honeypot for spam protection
 
-      // 4. Submit to backend
+      // 4. Build config summary for email
+      const configSummary = {
+        templateName: template?.name || null,
+        totalPrice: formatPrice(totalPrice),
+        totalDimensions: totalDims,
+        moduleCount: modules.length,
+        modules: modules.map((mod, idx) => {
+          const def = MODULE_DEFINITIONS[mod.type];
+          const price = calculateModulePrice(mod);
+          const widthM = (mod.width * GRID_CELL_SIZE).toFixed(1);
+          const depthM = (mod.height * GRID_CELL_SIZE).toFixed(1);
+          const options: string[] = [];
+          for (const opt of MODULE_OPTIONS) {
+            if (!opt.appliesTo.includes(mod.type)) continue;
+            const value = mod.options[opt.key] ?? opt.defaultValue;
+            if (opt.type === 'select' && opt.options) {
+              const selected = opt.options.find((o) => o.value === value);
+              if (selected && selected.value !== opt.options[0]?.value) {
+                options.push(selected.label);
+              }
+            }
+            if (opt.type === 'checkbox' && value === true) {
+              options.push(opt.label);
+            }
+          }
+          return {
+            name: `${def?.name ?? mod.type} #${idx + 1}`,
+            dimensions: `${widthM} × ${depthM} m`,
+            price: formatPrice(price),
+            options,
+          };
+        }),
+      };
+      formData.append('configData', JSON.stringify(configSummary));
+
+      // 5. Submit to backend
       const response = await fetch(`${import.meta.env.BASE_URL}api/contact.php`, {
         method: 'POST',
         body: formData,

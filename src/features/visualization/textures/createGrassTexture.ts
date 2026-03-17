@@ -5,8 +5,7 @@ import { assetPath } from '../../../utils/asset-path';
  * Grass texture system.
  *
  * Primary: Seamless Polyhaven grass texture from /textures/pbr/grass/diff_1k.jpg
- * Fallback 1: Image-based texture from /textures/piece-turf.jpg
- * Fallback 2: Procedural canvas-based grass texture
+ * Fallback: Procedural canvas-based grass texture
  */
 
 let _grassImageTexture: THREE.Texture | null = null;
@@ -26,7 +25,7 @@ function configureGrassTex(tex: THREE.Texture): void {
 
 /**
  * Load the image-based grass texture.
- * Tries seamless Polyhaven grass first, then piece-turf.jpg fallback.
+ * Uses seamless Polyhaven grass, falls back to procedural texture on error.
  */
 export function loadGrassImageTexture(): THREE.Texture | null {
   if (_grassImageTexture) return _grassImageTexture;
@@ -37,26 +36,11 @@ export function loadGrassImageTexture(): THREE.Texture | null {
   try {
     const loader = new THREE.TextureLoader();
 
-    // Try seamless Polyhaven grass (aerial_grass_rock)
     const texture = loader.load(
       assetPath('/textures/pbr/grass/diff_1k.jpg'),
       (tex) => { tex.needsUpdate = true; },
       undefined,
-      // On error: try old piece-turf.jpg as fallback
-      () => {
-        const fallback = loader.load(
-          assetPath('/textures/piece-turf.jpg'),
-          (ft) => {
-            ft.needsUpdate = true;
-            configureGrassTex(ft);
-            _grassImageTexture = ft;
-          },
-          undefined,
-          () => { _grassImageTexture = null; },
-        );
-        configureGrassTex(fallback);
-        _grassImageTexture = fallback;
-      },
+      () => { _grassImageTexture = null; },
     );
 
     configureGrassTex(texture);
