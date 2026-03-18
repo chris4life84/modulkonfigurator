@@ -1,13 +1,12 @@
 import { Link } from 'react-router-dom';
 import { t } from '../../utils/i18n';
-import { useConfigStore } from '../../store/useConfigStore';
-import { selectTotalPrice } from '../../store/selectors';
-import { formatPrice } from '../../data/pricing';
 import { assetPath } from '../../utils/asset-path';
+import { useConfigStore } from '../../store/useConfigStore';
+import { calculateModulePrice, formatPrice } from '../../data/pricing';
 
 export function Header() {
   const modules = useConfigStore((s) => s.modules);
-  const total = selectTotalPrice(modules);
+  const totalPrice = modules.reduce((sum, m) => sum + calculateModulePrice(m), 0);
 
   return (
     <header className="border-b border-gray-200 bg-white px-4 py-4 shadow-sm">
@@ -21,10 +20,10 @@ export function Header() {
             <p className="text-sm text-gray-500">{t('app.subtitle')}</p>
           </div>
         </div>
-        {modules.length > 0 && (
+        {totalPrice > 0 && (
           <div className="text-right">
-            <p className="text-sm text-gray-500">{t('price.total')}</p>
-            <p className="text-lg font-bold text-wood-700">{formatPrice(total)}</p>
+            <p className="text-xs text-gray-400">Gesamt</p>
+            <p className="text-lg font-bold text-wood-600">{formatPrice(totalPrice)}</p>
           </div>
         )}
       </div>

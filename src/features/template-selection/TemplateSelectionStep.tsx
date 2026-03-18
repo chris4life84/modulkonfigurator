@@ -2,6 +2,7 @@ import { Card } from '../../components/ui/Card';
 import { useConfigStore } from '../../store/useConfigStore';
 import { TEMPLATES } from '../../data/templates';
 import { formatPrice } from '../../data/pricing';
+
 import { t } from '../../utils/i18n';
 import { assetPath } from '../../utils/asset-path';
 import { TemplateMiniPreview } from './TemplateMiniPreview';
@@ -56,9 +57,16 @@ export function TemplateSelectionStep() {
                   {tpl.persons}
                 </span>
               </div>
-              <span className="text-lg font-bold text-wood-600">
-                {t('price.from')} {formatPrice(tpl.basePrice)}
-              </span>
+              <div className="text-right">
+                <span className="block text-xs font-medium text-wood-500 bg-wood-50 rounded-full px-2.5 py-0.5">
+                  {tpl.modules.length} {tpl.modules.length === 1 ? 'Modul' : 'Module'}
+                </span>
+                {tpl.basePrice > 0 && (
+                  <span className="mt-1 block text-sm font-semibold text-wood-700">
+                    ab {formatPrice(tpl.basePrice)}
+                  </span>
+                )}
+              </div>
             </div>
             <p className="text-sm text-gray-600">{tpl.description}</p>
             <div className="mt-3 overflow-hidden rounded-lg bg-gradient-to-br from-gray-50 to-gray-100">

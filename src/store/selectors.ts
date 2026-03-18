@@ -1,12 +1,7 @@
 import type { PlacedModule } from '../types/grid';
-import { calculateTotalPrice } from '../data/pricing';
 import { getBoundingBox } from '../utils/grid';
 import { GRID_CELL_SIZE } from '../types/grid';
 import { MODULE_DEFINITIONS } from '../data/module-types';
-
-export function selectTotalPrice(modules: PlacedModule[]): number {
-  return calculateTotalPrice(modules);
-}
 
 export function selectTotalDimensions(modules: PlacedModule[]): string {
   const bbox = getBoundingBox(modules);

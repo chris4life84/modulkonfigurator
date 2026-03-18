@@ -61,11 +61,7 @@ export function OptionField({ option, value, onChange, compact }: OptionFieldPro
               <span className={`flex-1 ${compact ? 'text-xs' : 'text-sm'} text-gray-700`}>
                 {opt.label}
               </span>
-              {opt.priceModifier > 0 && (
-                <span className="text-[10px] text-gray-400">
-                  +{opt.priceModifier.toLocaleString('de-DE')} €
-                </span>
-              )}
+              {/* Prices removed — individual pricing via quote */}
             </label>
           ))}
         </div>

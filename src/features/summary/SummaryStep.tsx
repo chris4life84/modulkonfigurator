@@ -6,10 +6,10 @@ import { useConfigStore } from '../../store/useConfigStore';
 import { MODULE_DEFINITIONS } from '../../data/module-types';
 import { MODULE_OPTIONS } from '../../data/options';
 import { GRID_CELL_SIZE } from '../../types/grid';
-import { calculateModulePrice, formatPrice } from '../../data/pricing';
 import { calculateMaxPanels, calculateKWp } from '../../utils/pvCalculation';
 import { getSharedWalls } from '../../utils/walls';
-import { selectTotalPrice, selectTotalDimensions } from '../../store/selectors';
+import { selectTotalDimensions } from '../../store/selectors';
+import { calculateModulePrice, formatPrice } from '../../data/pricing';
 import { VisualizationContainer } from '../visualization/VisualizationContainer';
 import { GridCanvas } from '../visualization/GridCanvas';
 import { PdfExport, generatePdfBlob } from './PdfExport';
@@ -17,11 +17,9 @@ import { Button } from '../../components/ui/Button';
 import { TEMPLATES } from '../../data/templates';
 import { t } from '../../utils/i18n';
 import { encodeConfig } from '../../utils/config-url';
-import { API_BASE_URL } from '../../config/api';
 
 export function SummaryStep() {
   const { modules, templateId } = useConfigStore();
-  const totalPrice = selectTotalPrice(modules);
   const totalDims = selectTotalDimensions(modules);
   const template = TEMPLATES.find((tp) => tp.id === templateId);
   const [sent, setSent] = useState(false);
@@ -31,6 +29,7 @@ export function SummaryStep() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
+  const [extras, setExtras] = useState('');
   const [privacy, setPrivacy] = useState(false);
   const [honeypot, setHoneypot] = useState('');
   const svgRef = useRef<SVGSVGElement>(null);
@@ -46,7 +45,6 @@ export function SummaryStep() {
       const pdfBlob = await generatePdfBlob({
         modules,
         templateName: template?.name,
-        totalPrice,
         totalDimensions: totalDims,
         svgRef,
         vizContainerRef,
@@ -63,9 +61,10 @@ export function SummaryStep() {
       formData.append('email', email);
       formData.append('phone', phone);
       formData.append('message', message);
+      formData.append('extras', extras);
       formData.append('configUrl', shareUrl);
       formData.append('pdf', pdfBlob, 'modulhaus-konfiguration.pdf');
-      formData.append('_hp', honeypot); // honeypot for spam protection
+      formData.append('_hp', honeypot);
 
       // 4. Build config summary for email (including wall details)
       const SIDE_NAMES: Record<WallSide, string> = {
@@ -77,12 +76,10 @@ export function SummaryStep() {
 
       const configSummary = {
         templateName: template?.name || null,
-        totalPrice: formatPrice(totalPrice),
         totalDimensions: totalDims,
         moduleCount: modules.length,
         modules: modules.map((mod, idx) => {
           const def = MODULE_DEFINITIONS[mod.type];
-          const price = calculateModulePrice(mod);
           const widthM = (mod.width * GRID_CELL_SIZE).toFixed(1);
           const depthM = (mod.height * GRID_CELL_SIZE).toFixed(1);
 
@@ -136,11 +133,11 @@ export function SummaryStep() {
           return {
             name: `${def?.name ?? mod.type} #${idx + 1}`,
             dimensions: `${widthM} × ${depthM} m`,
-            price: formatPrice(price),
             options,
             walls: wallDetails,
           };
         }),
+        extras: extras || null,
       };
       formData.append('configData', JSON.stringify(configSummary));
 
@@ -202,54 +199,115 @@ export function SummaryStep() {
         <div className="space-y-2">
           {modules.map((module, idx) => {
             const def = MODULE_DEFINITIONS[module.type];
-            const price = calculateModulePrice(module);
+            const widthM = (module.width * GRID_CELL_SIZE).toFixed(1);
+            const depthM = (module.height * GRID_CELL_SIZE).toFixed(1);
 
             return (
               <div
                 key={module.id}
-                className="flex items-start justify-between rounded-lg border border-gray-200 bg-white p-3"
+                className="rounded-lg border border-gray-200 bg-white p-3"
               >
                 <div className="flex items-start gap-3">
                   <div
                     className="mt-1 h-3 w-3 rounded-full"
                     style={{ backgroundColor: def?.color }}
                   />
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {def?.name} #{idx + 1}
-                    </p>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-gray-900">
+                        {def?.name} #{idx + 1}
+                      </p>
+                      <div className="text-right">
+                        <span className="text-xs text-gray-400">{widthM} × {depthM} m</span>
+                        <span className="ml-3 text-xs font-semibold text-wood-700">
+                          {formatPrice(calculateModulePrice(module))}
+                        </span>
+                      </div>
+                    </div>
                     <ModuleOptionsSummary module={module} />
                   </div>
                 </div>
-                <span className="font-semibold text-gray-700">{formatPrice(price)}</span>
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Total + PDF */}
+      {/* Total price */}
+      <div className="mt-3 flex items-center justify-between rounded-lg bg-wood-50 border border-wood-200 px-4 py-3">
+        <span className="text-sm font-semibold text-wood-800">Gesamtpreis (Richtwert)</span>
+        <span className="text-lg font-bold text-wood-700">
+          {formatPrice(modules.reduce((sum, m) => sum + calculateModulePrice(m), 0))}
+        </span>
+      </div>
+      <p className="mt-1 text-[10px] text-gray-400 text-right">
+        Alle Preise sind Richtwerte. Der endgültige Preis wird im individuellen Angebot festgelegt.
+      </p>
+
+      {/* PDF Export */}
       <div className="mt-4 flex items-center justify-between rounded-xl bg-wood-50 border border-wood-200 p-4">
         <div>
-          <span className="text-lg font-bold text-wood-800">{t('summary.total')}</span>
+          <span className="text-sm font-medium text-wood-700">Konfiguration als PDF speichern</span>
           <div className="mt-1">
             <PdfExport
               modules={modules}
               templateName={template?.name}
-              totalPrice={totalPrice}
               totalDimensions={totalDims}
               svgRef={svgRef}
               vizContainerRef={vizContainerRef}
             />
           </div>
         </div>
-        <span className="text-2xl font-bold text-wood-700">{formatPrice(totalPrice)}</span>
+        <span className="text-sm text-gray-500">{modules.length} {modules.length === 1 ? 'Modul' : 'Module'}</span>
       </div>
 
       {/* Contact form */}
       <div className="mt-8">
         <h3 className="text-lg font-semibold text-gray-900">{t('summary.contact')}</h3>
         <p className="mt-1 text-sm text-gray-500">{t('summary.contact.description')}</p>
+
+        {/* Grundausstattung info */}
+        <div className="mt-4 rounded-xl border border-wood-200 bg-wood-50/50 p-4">
+          <p className="text-sm font-semibold text-wood-800">Grundausstattung je Modul</p>
+          <ul className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-wood-700">
+            <li className="flex items-center gap-1.5">
+              <span className="h-1 w-1 rounded-full bg-wood-400 shrink-0" />
+              Holzrahmenbau (Robinie-Fassade)
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="h-1 w-1 rounded-full bg-wood-400 shrink-0" />
+              Premium-Isolierung (Wände, Decke, Boden)
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="h-1 w-1 rounded-full bg-wood-400 shrink-0" />
+              2-Fach Isolierverglasung
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="h-1 w-1 rounded-full bg-wood-400 shrink-0" />
+              Komplette Elektroinstallation
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="h-1 w-1 rounded-full bg-wood-400 shrink-0" />
+              EPDM-Dach mit Entwässerung
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="h-1 w-1 rounded-full bg-wood-400 shrink-0" />
+              Aluminium-Stützfüße
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="h-1 w-1 rounded-full bg-wood-400 shrink-0" />
+              Türen & Fenster laut Konfiguration
+            </li>
+          </ul>
+        </div>
+
+        {/* Sonderwünsche info */}
+        <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-4">
+          <p className="text-sm font-semibold text-amber-800">Individuelle Wünsche?</p>
+          <p className="mt-1 text-xs text-amber-700 leading-relaxed">
+            Alles über die Grundausstattung hinaus — z.B. Saunaeinbau, Küchenzeile, Bad-Ausstattung oder spezielle Materialien — wird in Ihrem persönlichen Angebot berücksichtigt. Teilen Sie uns Ihre Wünsche mit, wir machen Ihnen einen Vorschlag oder halten Rücksprache.
+          </p>
+        </div>
 
         {sent ? (
           <div className="mt-4 rounded-xl bg-nature-50 border border-nature-500 p-4">
@@ -261,7 +319,7 @@ export function SummaryStep() {
                 <p className="font-medium text-nature-800">Anfrage erfolgreich gesendet!</p>
                 <p className="mt-1 text-sm text-nature-700">
                   Vielen Dank für Ihre Anfrage. Sie erhalten in Kürze eine Bestätigung per E-Mail mit Ihrer Konfiguration als PDF.
-                  Wir melden uns schnellstmöglich bei Ihnen.
+                  Wir erstellen Ihnen ein individuelles Angebot und melden uns schnellstmöglich bei Ihnen.
                 </p>
               </div>
             </div>
@@ -314,6 +372,21 @@ export function SummaryStep() {
               disabled={submitting}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-wood-500 focus:ring-1 focus:ring-wood-500 disabled:opacity-50"
             />
+
+            {/* Sonderwünsche */}
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Sonderwünsche & Extras (optional)
+              </label>
+              <textarea
+                placeholder="z.B. Saunaeinbau, Innenausstattung, spezielle Materialien, Küche, Bad-Ausstattung..."
+                value={extras}
+                onChange={(e) => setExtras(e.target.value)}
+                rows={2}
+                disabled={submitting}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-wood-500 focus:ring-1 focus:ring-wood-500 disabled:opacity-50"
+              />
+            </div>
 
             {/* DSGVO Checkbox */}
             <label className="flex items-start gap-2 text-xs text-gray-600">
@@ -390,6 +463,23 @@ function ModuleOptionsSummary({ module }: { module: PlacedModule }) {
         details.push(opt.label);
       }
     }
+  }
+
+  // Wall details
+  const walls = module.walls ?? getDefaultWallConfig(module.type, module.width, module.height);
+  const SIDE_LABELS: Record<WallSide, string> = { front: 'V', back: 'H', left: 'L', right: 'R' };
+  const OPENING_LABELS: Record<string, string> = { window: 'F', door: 'T', 'terrace-door': 'TT' };
+  const sides: WallSide[] = ['front', 'back', 'left', 'right'];
+  const wallParts: string[] = [];
+  for (const side of sides) {
+    const openings = walls[side];
+    if (openings && openings.length > 0) {
+      const parts = openings.map((o) => `${OPENING_LABELS[o.type] ?? o.type} ${o.width.toFixed(1)}×${o.height.toFixed(1)}`);
+      wallParts.push(`${SIDE_LABELS[side]}: ${parts.join(', ')}`);
+    }
+  }
+  if (wallParts.length > 0) {
+    details.push(wallParts.join(' · '));
   }
 
   if (details.length === 0) return null;

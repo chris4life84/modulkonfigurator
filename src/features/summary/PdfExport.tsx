@@ -5,17 +5,16 @@ import type { WallSide } from '../../types/walls';
 import { getDefaultWallConfig } from '../../types/walls';
 import { MODULE_DEFINITIONS } from '../../data/module-types';
 import { MODULE_OPTIONS } from '../../data/options';
-import { calculateModulePrice, formatPrice } from '../../data/pricing';
 import { getSharedWalls } from '../../utils/walls';
 import { svgToDataUrl } from '../../utils/svg-to-image';
 import { calculateMaxPanels, calculateKWp } from '../../utils/pvCalculation';
+import { calculateModulePrice, formatPrice } from '../../data/pricing';
 import { Button } from '../../components/ui/Button';
 import { t } from '../../utils/i18n';
 
 interface PdfExportProps {
   modules: PlacedModule[];
   templateName?: string;
-  totalPrice: number;
   totalDimensions: string;
   svgRef: React.RefObject<SVGSVGElement | null>;
   vizContainerRef?: React.RefObject<HTMLDivElement | null>;
@@ -24,7 +23,6 @@ interface PdfExportProps {
 export function PdfExport({
   modules,
   templateName,
-  totalPrice,
   totalDimensions,
   svgRef,
   vizContainerRef,
@@ -37,7 +35,6 @@ export function PdfExport({
       await generatePdf({
         modules,
         templateName,
-        totalPrice,
         totalDimensions,
         svgRef,
         vizContainerRef,
@@ -61,7 +58,6 @@ export function PdfExport({
 export interface PdfData {
   modules: PlacedModule[];
   templateName?: string;
-  totalPrice: number;
   totalDimensions: string;
   svgRef: React.RefObject<SVGSVGElement | null>;
   vizContainerRef?: React.RefObject<HTMLDivElement | null>;
@@ -101,29 +97,22 @@ const OPPOSITE_SIDE: Record<WallSide, WallSide> = {
   right: 'left',
 };
 
-/**
- * Find interior openings on a shared wall – checks both
- * this module's interiorWalls and the neighbor's interiorWalls.
- */
 function getInteriorOpenings(
   module: PlacedModule,
   side: WallSide,
   allModules: PlacedModule[],
-): typeof module.walls extends undefined ? never : NonNullable<NonNullable<PlacedModule['walls']>[WallSide]> {
+): { type: string; width: number; height: number; position: number; offsetY: number }[] {
   const openings: { type: string; width: number; height: number; position: number; offsetY: number }[] = [];
 
-  // Check this module's interiorWalls
   const walls = module.walls ?? getDefaultWallConfig(module.type, module.width, module.height);
   const own = walls.interiorWalls?.[side];
   if (own) openings.push(...own);
 
-  // Check neighbor's interiorWalls on the opposite side
   const oppSide = OPPOSITE_SIDE[side];
   for (const other of allModules) {
     if (other.id === module.id) continue;
     if (other.type === 'pergola') continue;
 
-    // Check if other is actually adjacent on this side
     let adjacent = false;
     if (side === 'right' && other.gridX === module.gridX + module.width) adjacent = true;
     if (side === 'left' && module.gridX === other.gridX + other.width) adjacent = true;
@@ -137,7 +126,7 @@ function getInteriorOpenings(
     }
   }
 
-  return openings as never;
+  return openings;
 }
 
 function formatPosition(position: number): string {
@@ -157,17 +146,14 @@ function formatOpening(o: {
   const name = OPENING_NAMES[o.type] ?? o.type;
   let text = `${name} ${o.width.toFixed(1)} × ${o.height.toFixed(1)} m`;
 
-  // Position (skip if centered — it's the default)
   if (o.position !== undefined && Math.abs(o.position - 0.5) >= 0.03) {
     text += `, Pos. ${formatPosition(o.position)}`;
   }
 
-  // Window sill height
   if (o.type === 'window' && o.offsetY && o.offsetY > 0) {
     text += `, Brüstung ${o.offsetY.toFixed(1)} m`;
   }
 
-  // Door hinge & opening direction
   if (o.type === 'door' || o.type === 'terrace-door') {
     const hinge = o.hingeSide === 'right' ? 'rechts' : 'links';
     const direction = o.opensOutward === false ? 'innen' : 'außen';
@@ -188,7 +174,6 @@ function getWallDetails(
 
   return sides.map((side) => {
     if (shared.has(side)) {
-      // Check for interior openings (doors/windows) on this shared wall
       const interiorOpenings = getInteriorOpenings(module, side, allModules);
       if (interiorOpenings.length > 0) {
         const parts = interiorOpenings.map((o) => formatOpening(o));
@@ -224,7 +209,6 @@ function getModuleOptions(module: PlacedModule): string[] {
       if (selected) details.push(`${opt.label}: ${selected.label}`);
     }
     if (opt.type === 'checkbox' && value === true) {
-      // PV panels: show count, orientation, kWp
       if (opt.key === 'pv_panels') {
         const widthM = module.width * GRID_CELL_SIZE;
         const depthM = module.height * GRID_CELL_SIZE;
@@ -245,295 +229,9 @@ function getModuleOptions(module: PlacedModule): string[] {
   return details;
 }
 
-// ─── Main PDF generation ─────────────────────────────────────────────
+// ─── Shared PDF rendering logic ─────────────────────────────────────
 
-async function generatePdf(data: PdfData) {
-  const { jsPDF } = await import('jspdf');
-  const doc = new jsPDF('landscape', 'mm', 'a4');
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
-  const margin = 15;
-  const contentW = pageW - margin * 2;
-
-  const addFooter = () => {
-    doc.setFontSize(7);
-    doc.setTextColor(...C.light);
-    doc.text(t('pdf.footer'), margin, pageH - 8);
-    doc.text(new Date().toLocaleDateString('de-DE'), pageW - margin, pageH - 8, {
-      align: 'right',
-    });
-  };
-
-  const ensureSpace = (y: number, needed: number): number => {
-    if (y + needed > pageH - 15) {
-      addFooter();
-      doc.addPage();
-      return 20;
-    }
-    return y;
-  };
-
-  // ════════════════════════════════════════════════════════════════
-  // PAGE 1 — Overview
-  // ════════════════════════════════════════════════════════════════
-
-  doc.setFontSize(22);
-  doc.setTextColor(...C.brand);
-  doc.text('Modulhaus-Konfigurator', margin, 20);
-
-  doc.setFontSize(11);
-  doc.setTextColor(...C.gray);
-  doc.text('Ihre individuelle Konfiguration', margin, 28);
-
-  if (data.templateName) {
-    doc.setFontSize(9);
-    doc.setTextColor(...C.light);
-    doc.text(`Vorlage: ${data.templateName}`, margin, 34);
-  }
-
-  // ── Images: 2D floor plan (left) + 3D view (right) ──
-  const imgTop = data.templateName ? 38 : 34;
-  const imgH = 75;
-  const imgGap = 6;
-  const imgW = (contentW - imgGap) / 2;
-
-  // 2D Floor plan
-  if (data.svgRef.current) {
-    try {
-      const svgImage = await svgToDataUrl(data.svgRef.current, 800, 400);
-      doc.addImage(svgImage, 'PNG', margin, imgTop, imgW, imgH);
-    } catch {
-      /* fallback handled by border below */
-    }
-  }
-  doc.setDrawColor(...C.line);
-  doc.setLineWidth(0.3);
-  doc.rect(margin, imgTop, imgW, imgH);
-
-  // 3D Visualization
-  const img3dX = margin + imgW + imgGap;
-  let has3D = false;
-  if (data.vizContainerRef?.current) {
-    try {
-      const canvas = data.vizContainerRef.current.querySelector('canvas');
-      if (canvas) {
-        const dataUrl = canvas.toDataURL('image/png');
-        doc.addImage(dataUrl, 'PNG', img3dX, imgTop, imgW, imgH);
-        has3D = true;
-      }
-    } catch {
-      // fallback below
-    }
-  }
-  doc.setDrawColor(...C.line);
-  doc.setLineWidth(0.3);
-  doc.rect(img3dX, imgTop, imgW, imgH);
-
-  if (!has3D) {
-    doc.setFontSize(9);
-    doc.setTextColor(...C.light);
-    doc.text('[3D-Ansicht nicht verfügbar]', img3dX + imgW / 2, imgTop + imgH / 2, {
-      align: 'center',
-    });
-  }
-
-  // Image labels
-  doc.setFontSize(7);
-  doc.setTextColor(...C.light);
-  doc.text('Grundriss', margin + imgW / 2, imgTop + imgH + 4, { align: 'center' });
-  doc.text('3D-Ansicht', img3dX + imgW / 2, imgTop + imgH + 4, { align: 'center' });
-
-  // ── Overview box ──
-  let yPos = imgTop + imgH + 10;
-
-  doc.setFillColor(...C.bgWarm);
-  doc.setDrawColor(...C.accent);
-  doc.setLineWidth(0.4);
-  doc.roundedRect(margin, yPos, contentW, 20, 2, 2, 'FD');
-
-  const boxY = yPos + 8;
-  doc.setFontSize(9);
-  doc.setTextColor(...C.dark);
-  doc.text(`Gesamtmaße: ${data.totalDimensions}`, margin + 6, boxY);
-  doc.text('Innenhöhe: 2,10 m | Außenhöhe: 2,50 m', margin + 6, boxY + 6);
-  doc.text(`Module: ${data.modules.length}`, margin + contentW * 0.4, boxY);
-
-  doc.setFontSize(12);
-  doc.setTextColor(...C.brand);
-  doc.text('Gesamtpreis:', margin + contentW * 0.65, boxY + 2);
-  doc.setFontSize(14);
-  doc.text(formatPrice(data.totalPrice), pageW - margin - 6, boxY + 2, { align: 'right' });
-
-  addFooter();
-
-  // ════════════════════════════════════════════════════════════════
-  // PAGE 2+ — Module Details
-  // ════════════════════════════════════════════════════════════════
-
-  doc.addPage();
-  yPos = 20;
-
-  doc.setFontSize(16);
-  doc.setTextColor(...C.brand);
-  doc.text('Moduldetails', margin, yPos);
-  yPos += 10;
-
-  for (let idx = 0; idx < data.modules.length; idx++) {
-    const module = data.modules[idx];
-    const def = MODULE_DEFINITIONS[module.type];
-    const price = calculateModulePrice(module);
-    const widthM = (module.width * GRID_CELL_SIZE).toFixed(1);
-    const depthM = (module.height * GRID_CELL_SIZE).toFixed(1);
-    const wallDetails = getWallDetails(module, data.modules);
-    const options = getModuleOptions(module);
-
-    // Estimate needed height for this module block
-    const blockH = 38 + (options.length > 0 ? 7 : 0);
-    yPos = ensureSpace(yPos, blockH);
-
-    // Separator line
-    doc.setDrawColor(...C.line);
-    doc.setLineWidth(0.3);
-    doc.line(margin, yPos, pageW - margin, yPos);
-    yPos += 5;
-
-    // Color dot
-    const dotColor = def?.color ?? '#9ca3af';
-    const cr = parseInt(dotColor.slice(1, 3), 16);
-    const cg = parseInt(dotColor.slice(3, 5), 16);
-    const cb = parseInt(dotColor.slice(5, 7), 16);
-    doc.setFillColor(cr, cg, cb);
-    doc.circle(margin + 2, yPos - 1.2, 1.5, 'F');
-
-    // Module name
-    doc.setFontSize(11);
-    doc.setTextColor(...C.dark);
-    doc.text(`${def?.name ?? module.type} #${idx + 1}`, margin + 7, yPos);
-
-    // Dimensions
-    doc.setFontSize(10);
-    doc.setTextColor(...C.gray);
-    doc.text(`${widthM} × ${depthM} m`, margin + 85, yPos);
-
-    // Price
-    doc.setTextColor(...C.dark);
-    doc.text(formatPrice(price), pageW - margin, yPos, { align: 'right' });
-    yPos += 7;
-
-    // ── Wall configuration (2×2 grid layout) ──
-    doc.setFontSize(8);
-    doc.setTextColor(...C.brand);
-    doc.text('Wände:', margin + 7, yPos);
-    yPos += 4.5;
-
-    const colL = margin + 7;
-    const colR = margin + contentW * 0.5;
-
-    for (let w = 0; w < wallDetails.length; w++) {
-      const wall = wallDetails[w];
-      const x = w % 2 === 0 ? colL : colR;
-      if (w === 2) yPos += 5.5;
-
-      doc.setFontSize(8);
-      doc.setTextColor(...C.gray);
-      doc.text(`${wall.side}:`, x, yPos);
-
-      doc.setTextColor(...C.dark);
-      const maxLen = 70;
-      const detail =
-        wall.detail.length > maxLen ? wall.detail.substring(0, maxLen - 1) + '…' : wall.detail;
-      doc.text(detail, x + 17, yPos);
-    }
-    yPos += 7;
-
-    // ── Options (if any) ──
-    if (options.length > 0) {
-      doc.setFontSize(8);
-      doc.setTextColor(...C.brand);
-      doc.text('Optionen:', margin + 7, yPos);
-
-      doc.setTextColor(...C.dark);
-      doc.text(options.join(' · '), margin + 30, yPos);
-      yPos += 6;
-    }
-
-    yPos += 3;
-  }
-
-  // ════════════════════════════════════════════════════════════════
-  // Price Summary
-  // ════════════════════════════════════════════════════════════════
-
-  yPos = ensureSpace(yPos, 50);
-  yPos += 4;
-
-  doc.setDrawColor(...C.accent);
-  doc.setLineWidth(0.5);
-  doc.line(margin, yPos, pageW - margin, yPos);
-  yPos += 8;
-
-  doc.setFontSize(14);
-  doc.setTextColor(...C.brand);
-  doc.text('Preisübersicht', margin, yPos);
-  yPos += 8;
-
-  // Column headers
-  doc.setFontSize(8);
-  doc.setTextColor(...C.light);
-  doc.text('Modul', margin, yPos);
-  doc.text('Maße', margin + 100, yPos);
-  doc.text('Preis', pageW - margin, yPos, { align: 'right' });
-  yPos += 2;
-  doc.setDrawColor(...C.line);
-  doc.setLineWidth(0.2);
-  doc.line(margin, yPos, pageW - margin, yPos);
-  yPos += 5;
-
-  for (let idx = 0; idx < data.modules.length; idx++) {
-    const module = data.modules[idx];
-    const def = MODULE_DEFINITIONS[module.type];
-    const price = calculateModulePrice(module);
-    const dims = `${(module.width * GRID_CELL_SIZE).toFixed(1)} × ${(module.height * GRID_CELL_SIZE).toFixed(1)} m`;
-
-    yPos = ensureSpace(yPos, 7);
-
-    doc.setFontSize(9);
-    doc.setTextColor(...C.dark);
-    doc.text(`${def?.name ?? module.type} #${idx + 1}`, margin, yPos);
-
-    doc.setTextColor(...C.gray);
-    doc.text(dims, margin + 100, yPos);
-
-    doc.setTextColor(...C.dark);
-    doc.text(formatPrice(price), pageW - margin, yPos, { align: 'right' });
-
-    yPos += 6;
-  }
-
-  // Total
-  yPos += 2;
-  doc.setDrawColor(...C.accent);
-  doc.setLineWidth(0.6);
-  doc.line(margin, yPos, pageW - margin, yPos);
-  yPos += 8;
-
-  doc.setFontSize(14);
-  doc.setTextColor(...C.brand);
-  doc.text('Gesamtpreis:', margin, yPos);
-  doc.text(formatPrice(data.totalPrice), pageW - margin, yPos, { align: 'right' });
-
-  addFooter();
-
-  doc.save('modulhaus-konfiguration.pdf');
-}
-
-/**
- * Generate the PDF and return it as a Blob (for email attachment upload).
- * Uses the same layout as generatePdf() but returns a blob instead of triggering download.
- */
-export async function generatePdfBlob(data: PdfData): Promise<Blob> {
-  const { jsPDF } = await import('jspdf');
-  const doc = new jsPDF('landscape', 'mm', 'a4');
+async function renderPdf(data: PdfData, doc: InstanceType<typeof import('jspdf').jsPDF>) {
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 15;
@@ -614,24 +312,19 @@ export async function generatePdfBlob(data: PdfData): Promise<Blob> {
   doc.text('Grundriss', margin + imgW / 2, imgTop + imgH + 4, { align: 'center' });
   doc.text('3D-Ansicht', img3dX + imgW / 2, imgTop + imgH + 4, { align: 'center' });
 
+  // Overview box
   let yPos = imgTop + imgH + 10;
   doc.setFillColor(...C.bgWarm);
   doc.setDrawColor(...C.accent);
   doc.setLineWidth(0.4);
-  doc.roundedRect(margin, yPos, contentW, 20, 2, 2, 'FD');
+  doc.roundedRect(margin, yPos, contentW, 14, 2, 2, 'FD');
 
-  const boxY = yPos + 8;
-  doc.setFontSize(9);
+  const boxY = yPos + 6;
+  doc.setFontSize(10);
   doc.setTextColor(...C.dark);
   doc.text(`Gesamtmaße: ${data.totalDimensions}`, margin + 6, boxY);
-  doc.text('Innenhöhe: 2,10 m | Außenhöhe: 2,50 m', margin + 6, boxY + 6);
-  doc.text(`Module: ${data.modules.length}`, margin + contentW * 0.4, boxY);
-
-  doc.setFontSize(12);
-  doc.setTextColor(...C.brand);
-  doc.text('Gesamtpreis:', margin + contentW * 0.65, boxY + 2);
-  doc.setFontSize(14);
-  doc.text(formatPrice(data.totalPrice), pageW - margin - 6, boxY + 2, { align: 'right' });
+  doc.text('Innenhöhe: 2,10 m | Außenhöhe: 2,50 m', margin + contentW * 0.35, boxY);
+  doc.text(`Module: ${data.modules.length}`, margin + contentW * 0.75, boxY);
 
   addFooter();
 
@@ -647,7 +340,6 @@ export async function generatePdfBlob(data: PdfData): Promise<Blob> {
   for (let idx = 0; idx < data.modules.length; idx++) {
     const module = data.modules[idx];
     const def = MODULE_DEFINITIONS[module.type];
-    const price = calculateModulePrice(module);
     const widthM = (module.width * GRID_CELL_SIZE).toFixed(1);
     const depthM = (module.height * GRID_CELL_SIZE).toFixed(1);
     const wallDetails = getWallDetails(module, data.modules);
@@ -661,6 +353,7 @@ export async function generatePdfBlob(data: PdfData): Promise<Blob> {
     doc.line(margin, yPos, pageW - margin, yPos);
     yPos += 5;
 
+    // Color dot
     const dotColor = def?.color ?? '#9ca3af';
     const cr = parseInt(dotColor.slice(1, 3), 16);
     const cg = parseInt(dotColor.slice(3, 5), 16);
@@ -668,18 +361,25 @@ export async function generatePdfBlob(data: PdfData): Promise<Blob> {
     doc.setFillColor(cr, cg, cb);
     doc.circle(margin + 2, yPos - 1.2, 1.5, 'F');
 
+    // Module name
     doc.setFontSize(11);
     doc.setTextColor(...C.dark);
     doc.text(`${def?.name ?? module.type} #${idx + 1}`, margin + 7, yPos);
 
+    // Dimensions
     doc.setFontSize(10);
     doc.setTextColor(...C.gray);
     doc.text(`${widthM} × ${depthM} m`, margin + 85, yPos);
 
-    doc.setTextColor(...C.dark);
-    doc.text(formatPrice(price), pageW - margin, yPos, { align: 'right' });
+    // Price
+    const modulePrice = calculateModulePrice(module);
+    doc.setTextColor(...C.brand);
+    doc.setFontSize(10);
+    doc.text(formatPrice(modulePrice), pageW - margin, yPos, { align: 'right' });
+
     yPos += 7;
 
+    // Wall configuration (2×2 grid layout)
     doc.setFontSize(8);
     doc.setTextColor(...C.brand);
     doc.text('Wände:', margin + 7, yPos);
@@ -699,15 +399,18 @@ export async function generatePdfBlob(data: PdfData): Promise<Blob> {
 
       doc.setTextColor(...C.dark);
       const maxLen = 70;
-      const detail = wall.detail.length > maxLen ? wall.detail.substring(0, maxLen - 1) + '…' : wall.detail;
+      const detail =
+        wall.detail.length > maxLen ? wall.detail.substring(0, maxLen - 1) + '…' : wall.detail;
       doc.text(detail, x + 17, yPos);
     }
     yPos += 7;
 
+    // Options (if any)
     if (options.length > 0) {
       doc.setFontSize(8);
       doc.setTextColor(...C.brand);
       doc.text('Optionen:', margin + 7, yPos);
+
       doc.setTextColor(...C.dark);
       doc.text(options.join(' · '), margin + 30, yPos);
       yPos += 6;
@@ -716,8 +419,8 @@ export async function generatePdfBlob(data: PdfData): Promise<Blob> {
     yPos += 3;
   }
 
-  // Price Summary
-  yPos = ensureSpace(yPos, 50);
+  // Note about individual quote
+  yPos = ensureSpace(yPos, 30);
   yPos += 4;
 
   doc.setDrawColor(...C.accent);
@@ -725,52 +428,70 @@ export async function generatePdfBlob(data: PdfData): Promise<Blob> {
   doc.line(margin, yPos, pageW - margin, yPos);
   yPos += 8;
 
-  doc.setFontSize(14);
+  doc.setFontSize(12);
   doc.setTextColor(...C.brand);
   doc.text('Preisübersicht', margin, yPos);
   yPos += 8;
 
-  doc.setFontSize(8);
-  doc.setTextColor(...C.light);
-  doc.text('Modul', margin, yPos);
-  doc.text('Maße', margin + 100, yPos);
-  doc.text('Preis', pageW - margin, yPos, { align: 'right' });
-  yPos += 2;
-  doc.setDrawColor(...C.line);
-  doc.setLineWidth(0.2);
-  doc.line(margin, yPos, pageW - margin, yPos);
-  yPos += 5;
+  // Price table
+  const totalPrice = data.modules.reduce((sum, m) => sum + calculateModulePrice(m), 0);
 
   for (let idx = 0; idx < data.modules.length; idx++) {
-    const module = data.modules[idx];
-    const def = MODULE_DEFINITIONS[module.type];
-    const price = calculateModulePrice(module);
-    const dims = `${(module.width * GRID_CELL_SIZE).toFixed(1)} × ${(module.height * GRID_CELL_SIZE).toFixed(1)} m`;
+    const m = data.modules[idx];
+    const mDef = MODULE_DEFINITIONS[m.type];
+    const mW = (m.width * GRID_CELL_SIZE).toFixed(1);
+    const mD = (m.height * GRID_CELL_SIZE).toFixed(1);
+    const mPrice = calculateModulePrice(m);
 
-    yPos = ensureSpace(yPos, 7);
-
+    yPos = ensureSpace(yPos, 6);
     doc.setFontSize(9);
     doc.setTextColor(...C.dark);
-    doc.text(`${def?.name ?? module.type} #${idx + 1}`, margin, yPos);
-    doc.setTextColor(...C.gray);
-    doc.text(dims, margin + 100, yPos);
-    doc.setTextColor(...C.dark);
-    doc.text(formatPrice(price), pageW - margin, yPos, { align: 'right' });
-    yPos += 6;
+    doc.text(`${mDef?.name ?? m.type} #${idx + 1}  (${mW} × ${mD} m)`, margin + 4, yPos);
+    doc.text(formatPrice(mPrice), pageW - margin, yPos, { align: 'right' });
+    yPos += 5;
   }
 
+  // Total
   yPos += 2;
   doc.setDrawColor(...C.accent);
-  doc.setLineWidth(0.6);
+  doc.setLineWidth(0.4);
   doc.line(margin, yPos, pageW - margin, yPos);
+  yPos += 6;
+
+  doc.setFontSize(11);
+  doc.setTextColor(...C.brand);
+  doc.text('Gesamtpreis (Richtwert)', margin + 4, yPos);
+  doc.setFontSize(12);
+  doc.text(formatPrice(totalPrice), pageW - margin, yPos, { align: 'right' });
   yPos += 8;
 
-  doc.setFontSize(14);
-  doc.setTextColor(...C.brand);
-  doc.text('Gesamtpreis:', margin, yPos);
-  doc.text(formatPrice(data.totalPrice), pageW - margin, yPos, { align: 'right' });
+  doc.setFontSize(8);
+  doc.setTextColor(...C.gray);
+  doc.text(
+    'Alle Preise sind Richtwerte. Der endgültige Preis wird im individuellen Angebot festgelegt.',
+    margin,
+    yPos,
+    { maxWidth: contentW },
+  );
 
   addFooter();
+}
 
+// ─── Main PDF generation ─────────────────────────────────────────────
+
+async function generatePdf(data: PdfData) {
+  const { jsPDF } = await import('jspdf');
+  const doc = new jsPDF('landscape', 'mm', 'a4');
+  await renderPdf(data, doc);
+  doc.save('modulhaus-konfiguration.pdf');
+}
+
+/**
+ * Generate the PDF and return it as a Blob (for email attachment upload).
+ */
+export async function generatePdfBlob(data: PdfData): Promise<Blob> {
+  const { jsPDF } = await import('jspdf');
+  const doc = new jsPDF('landscape', 'mm', 'a4');
+  await renderPdf(data, doc);
   return doc.output('blob');
 }

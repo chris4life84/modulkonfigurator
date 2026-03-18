@@ -9,6 +9,7 @@ export function SiteHeader() {
   const navLinks = [
     { to: '/konfigurator', label: 'Konfigurator' },
     { to: '/ueber-uns', label: 'Konzept' },
+    { to: '/galerie', label: 'Galerie' },
     { to: '/kontakt', label: 'Kontakt' },
   ];
 

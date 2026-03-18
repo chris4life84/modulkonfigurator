@@ -23,8 +23,7 @@ import {
   findNearestValidPlacement,
   canRemove,
 } from '../../utils/grid';
-import { selectTotalPrice } from '../../store/selectors';
-import { formatPrice } from '../../data/pricing';
+
 import { useViewMode } from '../../hooks/useViewMode';
 import type { ModuleType } from '../../types/modules';
 import type { GridPosition } from '../../types/grid';
@@ -62,8 +61,6 @@ export function GridEditorStep() {
   const [catalogSelection, setCatalogSelection] = useState<SelectedCatalogItem | null>(null);
   const [dragItem, setDragItem] = useState<SelectedCatalogItem | null>(null);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
-  const totalPrice = selectTotalPrice(modules);
-
   // SVG ref for coordinate conversion
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -410,13 +407,12 @@ export function GridEditorStep() {
             />
           </div>
 
-          {/* Price + hints - fixed height */}
+          {/* Hints - fixed height */}
           <div className="flex-shrink-0">
-            <div className="mt-2 flex items-center justify-between text-sm text-gray-500">
+            <div className="mt-2 text-sm text-gray-500">
               <span>
                 {t('dimensions.inner_height')} | {t('dimensions.outer_height')}
               </span>
-              <span className="font-semibold text-wood-700">{formatPrice(totalPrice)}</span>
             </div>
 
             {/* Placement mode hint */}

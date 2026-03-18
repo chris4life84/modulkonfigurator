@@ -4,7 +4,7 @@ import { MODULE_OPTIONS } from '../../data/options';
 import { MODULE_DEFINITIONS } from '../../data/module-types';
 import { GRID_CELL_SIZE } from '../../types/grid';
 import { canResize } from '../../utils/grid';
-import { calculateMaxPanels, calculateKWp, calculatePVPrice } from '../../utils/pvCalculation';
+import { calculateMaxPanels, calculateKWp } from '../../utils/pvCalculation';
 import { SKYLIGHT_DEFAULT_W, SKYLIGHT_DEFAULT_D, SKYLIGHT_MIN, SKYLIGHT_MAX_W, SKYLIGHT_MAX_D } from '../../features/visualization/RoofPanel';
 import { OptionField } from '../options/OptionField';
 import { WallConfigurator } from '../options/WallConfigurator';
@@ -179,7 +179,6 @@ export function ModuleConfigPanel({ moduleId }: ModuleConfigPanelProps) {
               ? Math.min(Math.max(1, rawCount), maxPanels)
               : maxPanels;
             const kwp = calculateKWp(panelCount);
-            const pvPrice = calculatePVPrice(panelCount);
             const VALID_ORIENTATIONS = ['N', 'E', 'S', 'W'];
             const rawOrientation = typeof module.options.pv_orientation === 'string'
               ? module.options.pv_orientation : 'S';
@@ -190,7 +189,7 @@ export function ModuleConfigPanel({ moduleId }: ModuleConfigPanelProps) {
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-gray-700">PV-Module</span>
                   <span className="text-[11px] text-gray-500">
-                    {panelCount} Panels · {kwp.toFixed(1)} kWp · {pvPrice.toLocaleString('de-DE')} €
+                    {panelCount} Panels · {kwp.toFixed(1)} kWp
                   </span>
                 </div>
                 <input

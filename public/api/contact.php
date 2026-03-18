@@ -130,6 +130,8 @@ $safeEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
 $safePhone = htmlspecialchars($phone, ENT_QUOTES, 'UTF-8');
 $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
 $safeConfigUrl = htmlspecialchars($configUrl, ENT_QUOTES, 'UTF-8');
+$extras = trim($_POST['extras'] ?? '');
+$safeExtras = htmlspecialchars($extras, ENT_QUOTES, 'UTF-8');
 
 // ── Parse configuration data ────────────────────────────────────────
 $configData = null;
@@ -138,7 +140,7 @@ if (!empty($_POST['configData'])) {
 }
 
 // ── Build configuration HTML for emails ─────────────────────────────
-function buildConfigHtml($configData, $includePrice = true) {
+function buildConfigHtml($configData) {
     if (!$configData) return '';
 
     $html = '';
@@ -146,18 +148,14 @@ function buildConfigHtml($configData, $includePrice = true) {
     foreach ($configData['modules'] as $module) {
         $moduleName = htmlspecialchars($module['name'], ENT_QUOTES, 'UTF-8');
         $moduleDims = htmlspecialchars($module['dimensions'], ENT_QUOTES, 'UTF-8');
-        $modulePrice = htmlspecialchars($module['price'], ENT_QUOTES, 'UTF-8');
 
         // Module header row
         $html .= "
         <table style='width:100%; border-collapse:collapse; margin:12px 0 0;'>
             <tr style='background:#6e4720;'>
                 <td style='padding:10px 14px; color:#fff; font-size:14px; font-weight:600;'>{$moduleName}</td>
-                <td style='padding:10px 14px; color:#d4b896; font-size:13px; text-align:center;'>{$moduleDims}</td>";
-        if ($includePrice) {
-            $html .= "<td style='padding:10px 14px; color:#fff; font-size:14px; font-weight:700; text-align:right;'>{$modulePrice}</td>";
-        }
-        $html .= "</tr>
+                <td style='padding:10px 14px; color:#d4b896; font-size:13px; text-align:right;'>{$moduleDims}</td>
+            </tr>
         </table>";
 
         // Wall details
@@ -202,17 +200,6 @@ function buildConfigHtml($configData, $includePrice = true) {
                 </tr>
             </table>";
         }
-    }
-
-    // Total row
-    if ($includePrice && !empty($configData['totalPrice'])) {
-        $totalPrice = htmlspecialchars($configData['totalPrice'], ENT_QUOTES, 'UTF-8');
-        $html .= "
-        <table style='width:100%; border-collapse:collapse; margin:4px 0 15px;'>
-            <tr style='background:#f5f0eb;'>
-                <td style='padding:14px; font-size:15px; font-weight:700; color:#6e4720; text-align:right; border-top:3px solid #6e4720;'>Gesamtpreis: {$totalPrice}</td>
-            </tr>
-        </table>";
     }
 
     return $html;
@@ -383,7 +370,7 @@ try {
         // ══════════════════════════════════════════════════════════════
 
         $configSummaryBox = buildConfigSummaryBox($configData);
-        $configTable = buildConfigHtml($configData, true);
+        $configTable = buildConfigHtml($configData);
 
         // ── Email 1: Confirmation to customer ────────────────────────
         $customerMail = createMailer($config);
@@ -426,7 +413,7 @@ try {
                 <div style='background:#f0f7f0; border-left:4px solid #4caf50; padding:14px 16px; margin:20px 0; border-radius:0 6px 6px 0;'>
                     <p style='margin:0; font-size:13px; color:#333;'>
                         <strong>Wie geht es weiter?</strong><br>
-                        <span style='color:#555;'>Unser Team wird sich innerhalb von 1–2 Werktagen bei Ihnen melden, um Ihre Anfrage zu besprechen und offene Fragen zu klären.</span>
+                        <span style='color:#555;'>Auf Basis Ihrer Konfiguration erstellen wir Ihnen ein individuelles Angebot — inklusive Innenausstattung, Materialwahl und allen gewünschten Extras. Unser Team meldet sich innerhalb von 1–2 Werktagen bei Ihnen.</span>
                     </p>
                 </div>
 
@@ -471,6 +458,12 @@ try {
                    <p style='margin:0; font-size:13px; color:#333; line-height:1.5;'>" . nl2br($safeMessage) . "</p>
                </div>"
             : '';
+        $extrasBlock = !empty($extras)
+            ? "<div style='margin:15px 0; padding:12px 16px; background:#fff5f0; border:1px solid #f0d8c8; border-radius:6px;'>
+                   <p style='margin:0 0 4px; font-size:11px; color:#999; text-transform:uppercase; letter-spacing:1px;'>Sonderwünsche & Extras</p>
+                   <p style='margin:0; font-size:13px; color:#333; line-height:1.5;'>" . nl2br($safeExtras) . "</p>
+               </div>"
+            : '';
 
         $internalBody = "
         <div style='font-family: Arial, Helvetica, sans-serif; max-width: 640px; color: #333;'>
@@ -488,6 +481,7 @@ try {
                 </table>
 
                 {$messageBlock}
+                {$extrasBlock}
 
                 <h2 style='font-size:14px; color:#6e4720; margin:25px 0 10px; text-transform:uppercase; letter-spacing:1px;'>Konfiguration</h2>
 

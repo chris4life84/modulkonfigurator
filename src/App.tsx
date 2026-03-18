@@ -7,6 +7,7 @@ import { Impressum } from './pages/Impressum';
 import { Datenschutz } from './pages/Datenschutz';
 import { Kontakt } from './pages/Kontakt';
 import { UeberUns } from './pages/UeberUns';
+import { Galerie } from './pages/Galerie';
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/datenschutz" element={<Datenschutz />} />
         <Route path="/kontakt" element={<Kontakt />} />
         <Route path="/ueber-uns" element={<UeberUns />} />
+        <Route path="/galerie" element={<Galerie />} />
       </Route>
     </Routes>
   );

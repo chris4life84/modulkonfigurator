@@ -31,17 +31,18 @@ export const TEMPLATES: Template[] = [
     ],
   },
 
-  // ★★ Mehr Raum: einzelner Kubus
+  // ★★ Mehr Raum: 2 Module gestapelt (ehemals einzelner 3×3 Kubus)
   {
     id: 'kompakt-kubus',
     name: 'Kompakt-Kubus',
     description:
-      'Quadratisches 3,0 × 3,0 m Raumwunder mit Panoramafenster. Ideal als vollwertiges Home Office oder gemütliches Gästezimmer.',
+      'Zwei Module zu einem 3,0 × 3,0 m Raum verbunden. Ideal als vollwertiges Home Office oder gemütliches Gästezimmer.',
     image: assetPath('/templates/kompakt-kubus.jpg'),
     persons: '1–2 Personen',
     basePrice: 11500,
     modules: [
-      { type: 'living', gridX: 0, gridY: 0, width: 6, height: 6, options: {} },
+      { type: 'living', gridX: 0, gridY: 0, width: 6, height: 3, options: {} },
+      { type: 'living', gridX: 0, gridY: 3, width: 6, height: 3, options: {} },
     ],
   },
 
@@ -55,7 +56,8 @@ export const TEMPLATES: Template[] = [
     persons: '1–2 Personen',
     basePrice: 17000,
     modules: [
-      { type: 'living', gridX: 0, gridY: 0, width: 6, height: 6, options: {} },
+      { type: 'living', gridX: 0, gridY: 0, width: 6, height: 3, options: {} },
+      { type: 'living', gridX: 0, gridY: 3, width: 6, height: 3, options: {} },
       { type: 'pergola', gridX: 0, gridY: 6, width: 6, height: 6, options: { dachtyp: 'glas' } },
     ],
   },
@@ -65,12 +67,13 @@ export const TEMPLATES: Template[] = [
     id: 'garten-studio',
     name: 'Garten-Studio',
     description:
-      'Zwei verbundene Living-Module: großer Hauptraum mit Panoramafenster und separater Eingangsbereich. Ideal als Atelier, Praxis oder Gästewohnung.',
+      'Drei verbundene Living-Module: großer Hauptraum mit Panoramafenster und separater Eingangsbereich. Ideal als Atelier, Praxis oder Gästewohnung.',
     image: assetPath('/templates/garten-studio.jpg'),
     persons: '1–3 Personen',
     basePrice: 18400,
     modules: [
-      { type: 'living', gridX: 0, gridY: 0, width: 6, height: 6, options: {} },
+      { type: 'living', gridX: 0, gridY: 0, width: 6, height: 3, options: {} },
+      { type: 'living', gridX: 0, gridY: 3, width: 6, height: 3, options: {} },
       { type: 'living', gridX: 0, gridY: 6, width: 6, height: 3, options: {} },
     ],
   },
@@ -80,12 +83,13 @@ export const TEMPLATES: Template[] = [
     id: 'studio-terrasse',
     name: 'Studio mit Terrasse',
     description:
-      'Zwei Living-Module mit vorgelagerter Glasdach-Pergola: Arbeiten, Empfangen und Entspannen unter einem Dach.',
+      'Drei Living-Module mit vorgelagerter Glasdach-Pergola: Arbeiten, Empfangen und Entspannen unter einem Dach.',
     image: assetPath('/templates/studio-terrasse.jpg'),
     persons: '2–4 Personen',
     basePrice: 23800,
     modules: [
-      { type: 'living', gridX: 0, gridY: 0, width: 6, height: 6, options: {} },
+      { type: 'living', gridX: 0, gridY: 0, width: 6, height: 3, options: {} },
+      { type: 'living', gridX: 0, gridY: 3, width: 6, height: 3, options: {} },
       { type: 'living', gridX: 0, gridY: 6, width: 6, height: 3, options: {} },
       { type: 'pergola', gridX: 0, gridY: 9, width: 6, height: 6, options: { dachtyp: 'glas' } },
     ],
@@ -101,9 +105,9 @@ export const TEMPLATES: Template[] = [
     persons: '2–6 Personen',
     basePrice: 29000,
     modules: [
-      // Hauptbüro – Panorama hinten, Interior-Tür rechts zum WC
+      // Hauptbüro hinten – Panorama hinten, Interior-Tür rechts zum WC
       {
-        type: 'living', gridX: 0, gridY: 0, width: 6, height: 6, options: {},
+        type: 'living', gridX: 0, gridY: 0, width: 6, height: 3, options: {},
         walls: {
           front: [],
           back: [PANORAMA_WINDOW],
@@ -112,6 +116,16 @@ export const TEMPLATES: Template[] = [
           interiorWalls: {
             right: [INTERIOR_DOOR],
           },
+        },
+      },
+      // Hauptbüro vorne – Verbindung zum Eingang
+      {
+        type: 'living', gridX: 0, gridY: 3, width: 6, height: 3, options: {},
+        walls: {
+          front: [],
+          back: [],
+          left: [],
+          right: [],
         },
       },
       // Empfang/Meeting – Terrassentür als Haupteingang, offen zum Büro
@@ -179,7 +193,7 @@ export const TEMPLATES: Template[] = [
     ],
   },
 
-  // ★★ Größere Sauna
+  // ★★ Größere Sauna (ehemals 6×6, jetzt 2× 6×3)
   {
     id: 'sauna-deluxe',
     name: 'Sauna Deluxe',
@@ -189,13 +203,23 @@ export const TEMPLATES: Template[] = [
     persons: '6 Personen',
     basePrice: 17650,
     modules: [
-      // Sauna – KEIN Außeneingang, elegante Panorama-Streifenfenster
+      // Sauna hinten – Panorama-Streifenfenster links
       {
-        type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 6, options: { dachfenster: true },
+        type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 3, options: { dachfenster: true },
+        walls: {
+          front: [],
+          back: [],
+          left: [SAUNA_PANORAMA],
+          right: [],
+        },
+      },
+      // Sauna vorne – Panorama-Streifenfenster vorne
+      {
+        type: 'sauna', gridX: 0, gridY: 3, width: 6, height: 3, options: {},
         walls: {
           front: [SAUNA_PANORAMA],
           back: [],
-          left: [SAUNA_PANORAMA],
+          left: [],
           right: [],
         },
       },
@@ -225,13 +249,23 @@ export const TEMPLATES: Template[] = [
     persons: '4–6 Personen',
     basePrice: 23100,
     modules: [
-      // Sauna – kein Außeneingang, Panorama-Streifenfenster
+      // Sauna hinten – Panorama-Streifenfenster links
       {
-        type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 6, options: {},
+        type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 3, options: {},
+        walls: {
+          front: [],
+          back: [],
+          left: [SAUNA_PANORAMA],
+          right: [],
+        },
+      },
+      // Sauna vorne – Panorama-Streifenfenster vorne
+      {
+        type: 'sauna', gridX: 0, gridY: 3, width: 6, height: 3, options: {},
         walls: {
           front: [SAUNA_PANORAMA],
           back: [],
-          left: [SAUNA_PANORAMA],
+          left: [],
           right: [],
         },
       },
@@ -263,14 +297,24 @@ export const TEMPLATES: Template[] = [
     persons: '4–6 Personen',
     basePrice: 25800,
     modules: [
-      // Sauna – KEIN Außeneingang, Panorama-Streifenfenster + großes Dachfenster (Sternenhimmel)
+      // Sauna hinten – KEIN Außeneingang, Streifenfenster links
       {
-        type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 6,
+        type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 3,
         options: { dachfenster: true, dachfenster_w: 2.0, dachfenster_d: 1.5 },
+        walls: {
+          front: [],
+          back: [],
+          left: [{ type: 'window' as const, position: 0.5, width: 2.0, height: 0.5, offsetY: 1.6 }],
+          right: [],
+        },
+      },
+      // Sauna vorne – Streifenfenster vorne
+      {
+        type: 'sauna', gridX: 0, gridY: 3, width: 6, height: 3, options: {},
         walls: {
           front: [{ type: 'window' as const, position: 0.5, width: 2.0, height: 0.5, offsetY: 1.6 }],
           back: [],
-          left: [{ type: 'window' as const, position: 0.5, width: 2.0, height: 0.5, offsetY: 1.6 }],
+          left: [],
           right: [],
         },
       },
@@ -300,17 +344,27 @@ export const TEMPLATES: Template[] = [
           },
         },
       },
-      // Chillout-Lounge – Panoramafenster vorne + Seite (Gartenblick)
+      // Chillout-Lounge hinten – Panoramafenster rechts
       {
-        type: 'ruhe', gridX: 12, gridY: 0, width: 6, height: 6, options: {},
+        type: 'ruhe', gridX: 12, gridY: 0, width: 6, height: 3, options: {},
         walls: {
-          front: [PANORAMA_WINDOW],
+          front: [],
           back: [],
           left: [],
           right: [SIDE_WINDOW],
           interiorWalls: {
             left: [INTERIOR_DOOR],
           },
+        },
+      },
+      // Chillout-Lounge vorne – Panoramafenster vorne
+      {
+        type: 'ruhe', gridX: 12, gridY: 3, width: 6, height: 3, options: {},
+        walls: {
+          front: [PANORAMA_WINDOW],
+          back: [],
+          left: [],
+          right: [],
         },
       },
     ],
@@ -326,9 +380,9 @@ export const TEMPLATES: Template[] = [
     persons: '4 Personen',
     basePrice: 24200,
     modules: [
-      // Sauna – KEIN Außeneingang, Panorama-Streifenfenster, Interior-Tür rechts zum Sanitär
+      // Sauna hinten – Panorama-Streifenfenster hinten + links, Interior rechts zum Sanitär
       {
-        type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 6, options: {},
+        type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 3, options: {},
         walls: {
           front: [],
           back: [SAUNA_PANORAMA],
@@ -337,6 +391,16 @@ export const TEMPLATES: Template[] = [
           interiorWalls: {
             right: [INTERIOR_DOOR],
           },
+        },
+      },
+      // Sauna vorne – Verbindung zum Ruheraum
+      {
+        type: 'sauna', gridX: 0, gridY: 3, width: 6, height: 3, options: {},
+        walls: {
+          front: [],
+          back: [],
+          left: [],
+          right: [],
         },
       },
       // Sanitär – KEIN Außeneingang, nur über Sauna erreichbar
@@ -388,9 +452,9 @@ export const TEMPLATES: Template[] = [
           },
         },
       },
-      // Sauna groß – KEIN Außeneingang, Panorama-Streifenfenster hinten, Interior rechts → Sanitär, Interior vorne → Ruhe
+      // Sauna hinten – Panorama-Streifenfenster hinten, Interior rechts → Sanitär
       {
-        type: 'sauna', gridX: 3, gridY: 0, width: 6, height: 6, options: { dachfenster: true },
+        type: 'sauna', gridX: 3, gridY: 0, width: 6, height: 3, options: { dachfenster: true },
         walls: {
           front: [],
           back: [SAUNA_PANORAMA],
@@ -398,6 +462,18 @@ export const TEMPLATES: Template[] = [
           right: [],
           interiorWalls: {
             right: [INTERIOR_DOOR],
+          },
+        },
+      },
+      // Sauna vorne – Interior vorne → Ruhe
+      {
+        type: 'sauna', gridX: 3, gridY: 3, width: 6, height: 3, options: {},
+        walls: {
+          front: [],
+          back: [],
+          left: [],
+          right: [],
+          interiorWalls: {
             front: [INTERIOR_DOOR],
           },
         },
@@ -412,14 +488,24 @@ export const TEMPLATES: Template[] = [
           right: [PRIVACY_WINDOW],
         },
       },
-      // Ruheraum – Terrassentür vorne zur Pergola, Panoramafenster links + rechts
+      // Ruheraum hinten – Panoramafenster links + rechts
       {
-        type: 'ruhe', gridX: 3, gridY: 6, width: 6, height: 6, options: {},
+        type: 'ruhe', gridX: 3, gridY: 6, width: 6, height: 3, options: {},
         walls: {
-          front: [TERRACE_DOOR],
+          front: [],
           back: [],
           left: [PANORAMA_WINDOW],
           right: [PANORAMA_WINDOW],
+        },
+      },
+      // Ruheraum vorne – Terrassentür zur Pergola
+      {
+        type: 'ruhe', gridX: 3, gridY: 9, width: 6, height: 3, options: {},
+        walls: {
+          front: [TERRACE_DOOR],
+          back: [],
+          left: [],
+          right: [],
         },
       },
       // Pergola vor Ruheraum – Outdoor-Lounge nach dem Saunieren
@@ -441,17 +527,27 @@ export const TEMPLATES: Template[] = [
     basePrice: 20000,
     image: assetPath('/templates/gaestehouse.jpg'),
     modules: [
-      // Wohnraum – Terrassentür vorne, Interior-Tür links zum Bad
+      // Wohnraum hinten – Panorama hinten, Interior-Tür links zum Bad
       {
-        type: 'living', gridX: 3, gridY: 0, width: 6, height: 6, options: {},
+        type: 'living', gridX: 3, gridY: 0, width: 6, height: 3, options: {},
         walls: {
-          front: [TERRACE_DOOR],
+          front: [],
           back: [PANORAMA_WINDOW],
           left: [],
           right: [SIDE_WINDOW],
           interiorWalls: {
             left: [INTERIOR_DOOR],
           },
+        },
+      },
+      // Wohnraum vorne – Terrassentür vorne
+      {
+        type: 'living', gridX: 3, gridY: 3, width: 6, height: 3, options: {},
+        walls: {
+          front: [TERRACE_DOOR],
+          back: [],
+          left: [],
+          right: [],
         },
       },
       // Bad – KEIN Außeneingang, nur über Wohnraum erreichbar
@@ -493,18 +589,28 @@ export const TEMPLATES: Template[] = [
     id: 'l-form-villa',
     name: 'L-Form Villa',
     description:
-      'Drei offene Wohnräume in L-Form mit geschützter Glasdach-Pergola im Innenhof – ein architektonisches Statement.',
+      'Offene Wohnräume in L-Form mit geschützter Glasdach-Pergola im Innenhof – ein architektonisches Statement.',
     persons: '2–4 Personen',
     basePrice: 30000,
     image: assetPath('/templates/l-form-villa.jpg'),
     modules: [
-      // Hauptraum (hinten, Panorama links + hinten)
+      // Hauptraum hinten (Panorama links + hinten)
       {
-        type: 'living', gridX: 0, gridY: 0, width: 6, height: 6, options: {},
+        type: 'living', gridX: 0, gridY: 0, width: 6, height: 3, options: {},
         walls: {
           front: [],
           back: [PANORAMA_WINDOW],
           left: [PANORAMA_WINDOW],
+          right: [],
+        },
+      },
+      // Hauptraum vorne
+      {
+        type: 'living', gridX: 0, gridY: 3, width: 6, height: 3, options: {},
+        walls: {
+          front: [],
+          back: [],
+          left: [],
           right: [],
         },
       },
@@ -533,12 +639,12 @@ export const TEMPLATES: Template[] = [
     ],
   },
 
-  // Grand Residence: große Villa mit Sanitär, 3 Living-Modulen + Pergola
+  // Grand Residence: große Villa mit Sanitär, mehreren Living-Modulen + Pergola
   {
     id: 'grand-residence',
     name: 'Grand Residence',
     description:
-      'Stilvolle Modulvilla auf 10,5 × 6,0 m: drei großzügige Wohnbereiche, eigenes Bad und überdachte Glasdach-Terrasse. Der große 3 × 6 m Flügel bietet Raum für Masterbereich oder offenes Wohnzimmer – modern, weitläufig, beeindruckend.',
+      'Stilvolle Modulvilla: mehrere großzügige Wohnbereiche, eigenes Bad und überdachte Glasdach-Terrasse – modern, weitläufig, beeindruckend.',
     persons: '4–6 Personen',
     basePrice: 52000,
     image: assetPath('/templates/grand-residence.jpg'),
@@ -553,11 +659,11 @@ export const TEMPLATES: Template[] = [
           right: [],
         },
       },
-      // Living 1 (Zentrum) – Terrassentür vorne zur Pergola, Interior links zum Bad
+      // Living 1 hinten (Zentrum) – Panorama hinten, Interior links zum Bad
       {
-        type: 'living', gridX: 3, gridY: 0, width: 6, height: 6, options: {},
+        type: 'living', gridX: 3, gridY: 0, width: 6, height: 3, options: {},
         walls: {
-          front: [TERRACE_DOOR],
+          front: [],
           back: [PANORAMA_WINDOW],
           left: [],
           right: [],
@@ -566,9 +672,19 @@ export const TEMPLATES: Template[] = [
           },
         },
       },
-      // Living 2 (Mitte) – offener Übergang zu Living 1, Panorama hinten
+      // Living 1 vorne – Terrassentür zur Pergola
       {
-        type: 'living', gridX: 9, gridY: 0, width: 6, height: 6, options: {},
+        type: 'living', gridX: 3, gridY: 3, width: 6, height: 3, options: {},
+        walls: {
+          front: [TERRACE_DOOR],
+          back: [],
+          left: [],
+          right: [],
+        },
+      },
+      // Living 2 hinten (Mitte) – Panorama hinten
+      {
+        type: 'living', gridX: 9, gridY: 0, width: 6, height: 3, options: {},
         walls: {
           front: [],
           back: [PANORAMA_WINDOW],
@@ -576,17 +692,54 @@ export const TEMPLATES: Template[] = [
           right: [],
         },
       },
-      // Living 3 (großer Flügel rechts, 3×6m) – Masterbereich, Terrassentür + Panorama
+      // Living 2 vorne
       {
-        type: 'living', gridX: 15, gridY: 0, width: 6, height: 12, options: {},
+        type: 'living', gridX: 9, gridY: 3, width: 6, height: 3, options: {},
         walls: {
-          front: [TERRACE_DOOR],
+          front: [],
+          back: [],
+          left: [],
+          right: [],
+        },
+      },
+      // Living 3 (großer Flügel rechts) – 4 Module für 3×6m
+      {
+        type: 'living', gridX: 15, gridY: 0, width: 6, height: 3, options: {},
+        walls: {
+          front: [],
           back: [SIDE_WINDOW],
+          left: [],
+          right: [],
+        },
+      },
+      {
+        type: 'living', gridX: 15, gridY: 3, width: 6, height: 3, options: {},
+        walls: {
+          front: [],
+          back: [],
           left: [],
           right: [PANORAMA_WINDOW],
           interiorWalls: {
             left: [INTERIOR_DOOR],
           },
+        },
+      },
+      {
+        type: 'living', gridX: 15, gridY: 6, width: 6, height: 3, options: {},
+        walls: {
+          front: [],
+          back: [],
+          left: [],
+          right: [],
+        },
+      },
+      {
+        type: 'living', gridX: 15, gridY: 9, width: 6, height: 3, options: {},
+        walls: {
+          front: [TERRACE_DOOR],
+          back: [],
+          left: [],
+          right: [],
         },
       },
       // Pergola vorne (Glasdach-Terrasse unter Living 1 + Living 2)
@@ -604,12 +757,22 @@ export const TEMPLATES: Template[] = [
     basePrice: 26500,
     image: assetPath('/templates/saunagarten.jpg'),
     modules: [
-      // Sauna – kein Außeneingang, Panorama-Streifenfenster vorne + hinten
+      // Sauna hinten – Panorama-Streifenfenster hinten
       {
-        type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 6, options: {},
+        type: 'sauna', gridX: 0, gridY: 0, width: 6, height: 3, options: {},
+        walls: {
+          front: [],
+          back: [SAUNA_PANORAMA],
+          left: [],
+          right: [],
+        },
+      },
+      // Sauna vorne – Panorama-Streifenfenster vorne
+      {
+        type: 'sauna', gridX: 0, gridY: 3, width: 6, height: 3, options: {},
         walls: {
           front: [SAUNA_PANORAMA],
-          back: [SAUNA_PANORAMA],
+          back: [],
           left: [],
           right: [],
         },

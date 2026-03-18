@@ -64,10 +64,10 @@ export function UeberUns() {
             oder EPDM-Folie), die sich intelligent an das Haus anbindet.
           </p>
           <p className="mt-2 text-sm leading-relaxed text-gray-600">
-            Von der kompakten 3-Personen-Sauna (ab 11.700 EUR) ueber das vollausgestattete
-            Tiny House (ab 22.200 EUR) bis zum luxurioesen Spa Resort (ab 36.500 EUR) --
-            19 vordefinierte Vorlagen dienen als Inspiration, die Sie im 3D-Konfigurator
-            frei anpassen koennen.
+            Von der kompakten Sauna ueber das vollausgestattete Tiny House bis zum
+            luxurioesen Spa Resort -- vordefinierte Vorlagen dienen als Inspiration,
+            die Sie im 3D-Konfigurator frei anpassen koennen. Die Preisgestaltung erfolgt
+            individuell auf Basis Ihrer Konfiguration.
           </p>
           <div className="mt-4 rounded-lg border border-wood-200 bg-wood-50 p-4">
             <p className="text-sm leading-relaxed text-wood-800">

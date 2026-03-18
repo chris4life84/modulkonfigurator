@@ -14,6 +14,7 @@ export function SiteFooter() {
           {/* Links */}
           <nav className="flex flex-wrap justify-center gap-4 text-sm text-gray-500">
             <Link to="/ueber-uns" className="hover:text-wood-600 transition-colors">Konzept</Link>
+            <Link to="/galerie" className="hover:text-wood-600 transition-colors">Galerie</Link>
             <Link to="/kontakt" className="hover:text-wood-600 transition-colors">Kontakt</Link>
             <Link to="/impressum" className="hover:text-wood-600 transition-colors">Impressum</Link>
             <Link to="/datenschutz" className="hover:text-wood-600 transition-colors">Datenschutz</Link>

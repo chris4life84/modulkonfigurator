@@ -33,7 +33,7 @@ const strings: Record<string, string> = {
   'summary.title': 'Ihre Konfiguration',
   'summary.modules': 'Module',
   'summary.options_label': 'Optionen',
-  'summary.total': 'Gesamtpreis',
+  'summary.total': 'Zusammenfassung',
   'summary.dimensions': 'Gesamtmaße',
   'summary.contact': 'Kontakt & Anfrage',
   'summary.contact.description': 'Senden Sie uns Ihre Konfiguration für ein unverbindliches Angebot.',
@@ -48,7 +48,7 @@ const strings: Record<string, string> = {
   'summary.contact.privacy': 'Ich stimme der Verarbeitung meiner Daten gemäß der Datenschutzerklärung zu.',
 
   'price.from': 'ab',
-  'price.total': 'Gesamt',
+  'price.total': 'Module',
 
   'dimensions.inner_height': 'Innenhöhe: 2,10 m',
   'dimensions.outer_height': 'Außenhöhe: 2,50 m',
@@ -61,7 +61,7 @@ const strings: Record<string, string> = {
 
   'pdf.export': 'PDF herunterladen',
   'pdf.generating': 'PDF wird erstellt...',
-  'pdf.footer': 'Erstellt mit dem Modulhaus-Konfigurator · Alle Preise sind Richtwerte inkl. MwSt.',
+  'pdf.footer': 'Erstellt mit dem Modulhaus-Konfigurator von Modul-Garten.de',
 
   'walls.title': 'Türen & Fenster',
   'walls.shared': 'Verbundwand',

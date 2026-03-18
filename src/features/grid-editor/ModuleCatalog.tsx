@@ -19,16 +19,10 @@ type Category = 'haus' | 'pergola';
 const HAUS_COLOR = '#d97706';
 const PERGOLA_COLOR = '#6B7280';
 
+// Only two base elements for Modulhaus
 const HAUS_BLOCKS: { w: number; h: number }[] = [
-  { w: 6, h: 3 },
-  { w: 3, h: 6 },
-  { w: 6, h: 6 },
-];
-
-const HAUS_BLOCKS_LARGE: { w: number; h: number }[] = [
-  { w: 12, h: 6 },
-  { w: 6, h: 12 },
-  { w: 12, h: 12 },
+  { w: 6, h: 3 },   // 3.0 × 1.5 m
+  { w: 3, h: 6 },   // 1.5 × 3.0 m
 ];
 
 // Generate all pergola blocks from 2.0m to 6.0m (0.5m steps), width >= height
@@ -42,53 +36,16 @@ const PERGOLA_BLOCKS: { w: number; h: number }[] = (() => {
   return blocks;
 })();
 
-/** Snap a meter value to the nearest valid grid cell multiple */
-function snapToGrid(meters: number): number {
-  return Math.max(GRID_CELL_SIZE, Math.round(meters / GRID_CELL_SIZE) * GRID_CELL_SIZE);
-}
-
 export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
   const [category, setCategory] = useState<Category>('haus');
-  const [customWm, setCustomWm] = useState(4.5);
-  const [customHm, setCustomHm] = useState(3.0);
-
-  const customW = Math.round(customWm / GRID_CELL_SIZE);
-  const customH = Math.round(customHm / GRID_CELL_SIZE);
 
   const blocks = category === 'haus' ? HAUS_BLOCKS : PERGOLA_BLOCKS;
-  const blocksLarge = category === 'haus' ? HAUS_BLOCKS_LARGE : [];
-  const allBlocks = category === 'haus' ? [...HAUS_BLOCKS, ...HAUS_BLOCKS_LARGE] : PERGOLA_BLOCKS;
   const blockColor = category === 'haus' ? HAUS_COLOR : PERGOLA_COLOR;
   const blockType: ModuleType = category === 'haus' ? 'living' : 'pergola';
-
-  const isCustomSelected =
-    selection != null &&
-    !allBlocks.some((b) => b.w === selection.width && b.h === selection.height) &&
-    selection.width === customW &&
-    selection.height === customH;
-
-  const handleMeterInput = (
-    value: string,
-    setter: (v: number) => void,
-  ) => {
-    const v = Number(value);
-    const minM = category === 'pergola' ? 2.0 : GRID_CELL_SIZE;
-    const maxM = category === 'pergola' ? 6.0 : 9;
-    if (!isNaN(v) && v >= minM && v <= maxM) {
-      setter(snapToGrid(v));
-    }
-  };
 
   const handleCategoryChange = (cat: Category) => {
     setCategory(cat);
     onSelect(null);
-    if (cat === 'pergola') {
-      setCustomWm(3.0);
-      setCustomHm(3.0);
-    } else {
-      setCustomWm(4.5);
-      setCustomHm(3.0);
-    }
   };
 
   return (
@@ -209,96 +166,7 @@ export function ModuleCatalog({ selection, onSelect }: ModuleCatalogProps) {
         </div>
       )}
 
-      {/* Large house blocks (double size) */}
-      {category === 'haus' && blocksLarge.length > 0 && (
-        <>
-          <p className="mt-3 mb-1.5 text-[11px] font-medium text-gray-400 uppercase tracking-wider">Große Module</p>
-          <div className="flex gap-2">
-            {blocksLarge.map(({ w, h }) => {
-              const isSelected =
-                selection?.width === w && selection?.height === h && selection?.type === blockType;
-              const sizeLabel = `${(w * GRID_CELL_SIZE).toFixed(1)}×${(h * GRID_CELL_SIZE).toFixed(1)}m`;
-              const isVertical = w < h;
-              const isLarge = w >= 6 && h >= 6;
-
-              return (
-                <DraggableCatalogItem
-                  key={`${w}x${h}`}
-                  type={blockType}
-                  width={w}
-                  height={h}
-                  isSelected={isSelected}
-                  color={blockColor}
-                  onClick={() =>
-                    onSelect(
-                      isSelected ? null : { type: blockType, width: w, height: h },
-                    )
-                  }
-                >
-                  <div className="flex items-center justify-center mb-1">
-                    <div
-                      className="rounded-[2px] transition-colors"
-                      style={{
-                        width: isLarge ? 28 : isVertical ? 14 : 28,
-                        height: isLarge ? 28 : isVertical ? 28 : 14,
-                        backgroundColor: isSelected ? blockColor : `${blockColor}40`,
-                      }}
-                    />
-                  </div>
-                  <span className="block text-[11px] font-medium leading-tight">{sizeLabel}</span>
-                </DraggableCatalogItem>
-              );
-            })}
-          </div>
-        </>
-      )}
-
-      {/* Custom size block — only for Modulhaus */}
-      {category === 'haus' && (
-        <div className="mt-3 rounded-lg border border-dashed border-gray-300 p-2.5">
-          <p className="text-xs font-medium text-gray-600 mb-2">Eigene Größe</p>
-          <div className="flex items-center gap-1.5">
-            <label className="text-[11px] text-gray-500 shrink-0">B:</label>
-            <input
-              type="number"
-              min={GRID_CELL_SIZE}
-              max={9}
-              step={GRID_CELL_SIZE}
-              value={customWm}
-              onChange={(e) => handleMeterInput(e.target.value, setCustomWm)}
-              className="w-14 rounded border border-gray-200 px-1.5 py-0.5 text-xs text-center focus:border-amber-400 focus:outline-none"
-            />
-            <span className="text-[10px] text-gray-400">m</span>
-            <label className="text-[11px] text-gray-500 shrink-0 ml-2">T:</label>
-            <input
-              type="number"
-              min={GRID_CELL_SIZE}
-              max={9}
-              step={GRID_CELL_SIZE}
-              value={customHm}
-              onChange={(e) => handleMeterInput(e.target.value, setCustomHm)}
-              className="w-14 rounded border border-gray-200 px-1.5 py-0.5 text-xs text-center focus:border-amber-400 focus:outline-none"
-            />
-            <span className="text-[10px] text-gray-400">m</span>
-          </div>
-          <button
-            onClick={() => {
-              onSelect(
-                isCustomSelected
-                  ? null
-                  : { type: blockType, width: customW, height: customH },
-              );
-            }}
-            className={`mt-2 w-full rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
-              isCustomSelected
-                ? 'bg-amber-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            {customWm.toFixed(1)} × {customHm.toFixed(1)}m platzieren
-          </button>
-        </div>
-      )}
+      {/* Pergola custom size — only for pergola */}
 
       {/* Pergolakonfigurator CTA */}
       {category === 'pergola' && (
