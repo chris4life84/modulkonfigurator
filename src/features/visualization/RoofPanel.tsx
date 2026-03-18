@@ -2,10 +2,20 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import { createRoofTexture } from './textures/createRoofTexture';
 
-const ROOF_THICKNESS = 0.10;
 const OVERHANG = 0;
-const FASCIA_HEIGHT = 0.03;
-const FASCIA_DEPTH = 0.015;
+
+// Roof = U-profile frame (Dachrand) + recessed EPDM inner panel
+// The U-profile frame IS the roof edge. The EPDM sits inside, lower.
+const FRAME_H = 0.04;         // 4cm frame height — both outer and inner walls same height
+const FRAME_CHANNEL = 0.035;  // 3.5cm channel width (gutter depth)
+const FRAME_T = 0.003;        // 3mm aluminium wall/bottom thickness
+const FRAME_COLOR = '#2A2A2A';
+
+// Inner EPDM panel sits at the bottom of the channel
+const EPDM_THICKNESS = 0.01;  // 1cm thin EPDM membrane
+
+// For skylight and other calculations
+const ROOF_THICKNESS = FRAME_H; // effective roof height for external references
 
 // Skylight defaults & limits
 export const SKYLIGHT_DEFAULT_W = 0.8;  // 0.8m default width
@@ -58,12 +68,21 @@ export function RoofPanel({
   const slW = Math.min(skylightWidth, moduleWidth - 0.3);
   const slD = Math.min(skylightDepth, moduleDepth - 0.3);
 
+  // Inner panel dimensions (inside the inner walls, no overlap)
+  const innerW = totalWidth - FRAME_CHANNEL * 2 - FRAME_T * 2;
+  const innerD = totalDepth - FRAME_CHANNEL * 2 - FRAME_T * 2;
+
+  // Y reference: y=0 at roofY. Frame walls go from 0 to FRAME_H.
+  // EPDM panel top flush with inner wall top (FRAME_H)
+  const epdmY = FRAME_H - EPDM_THICKNESS / 2;
+
   return (
     <group position={[0, roofY, 0]}>
-      {/* Main roof slab – with or without skylight cutout */}
+
+      {/* ── Part 1: Inner EPDM panel (recessed) ── */}
       {!hasSkylight ? (
-        <mesh position={[offsetX, ROOF_THICKNESS / 2, offsetZ]} castShadow receiveShadow>
-          <boxGeometry args={[totalWidth, ROOF_THICKNESS, totalDepth]} />
+        <mesh position={[offsetX, epdmY, offsetZ]} castShadow receiveShadow>
+          <boxGeometry args={[innerW, EPDM_THICKNESS, innerD]} />
           <meshStandardMaterial
             map={texture}
             roughness={0.9}
@@ -73,8 +92,8 @@ export function RoofPanel({
         </mesh>
       ) : (
         <RoofWithCutout
-          totalWidth={totalWidth}
-          totalDepth={totalDepth}
+          totalWidth={innerW}
+          totalDepth={innerD}
           offsetX={offsetX}
           offsetZ={offsetZ}
           skylightW={slW}
@@ -83,11 +102,10 @@ export function RoofPanel({
         />
       )}
 
-      {/* Skylight glass + frame */}
+      {/* Skylight glass + frame (positioned on inner panel) */}
       {hasSkylight && (
         <group position={[0, 0, 0]}>
-          {/* Glass panel – flush with roof top surface */}
-          <mesh position={[0, ROOF_THICKNESS / 2, 0]}>
+          <mesh position={[0, epdmY, 0]}>
             <boxGeometry args={[slW - SKYLIGHT_FRAME * 2, GLASS_THICKNESS, slD - SKYLIGHT_FRAME * 2]} />
             <meshPhysicalMaterial
               transmission={0.92}
@@ -101,48 +119,114 @@ export function RoofPanel({
               side={THREE.DoubleSide}
             />
           </mesh>
-
-          {/* Frame – 4 bars around the glass */}
-          {/* Front frame bar (+Z) */}
-          <mesh position={[0, ROOF_THICKNESS / 2, slD / 2 - SKYLIGHT_FRAME / 2]}>
-            <boxGeometry args={[slW, ROOF_THICKNESS + 0.005, SKYLIGHT_FRAME]} />
-            <meshStandardMaterial color="#555555" roughness={0.3} metalness={0.3} />
-          </mesh>
-          {/* Back frame bar (-Z) */}
-          <mesh position={[0, ROOF_THICKNESS / 2, -slD / 2 + SKYLIGHT_FRAME / 2]}>
-            <boxGeometry args={[slW, ROOF_THICKNESS + 0.005, SKYLIGHT_FRAME]} />
-            <meshStandardMaterial color="#555555" roughness={0.3} metalness={0.3} />
-          </mesh>
-          {/* Left frame bar (-X) */}
-          <mesh position={[-slW / 2 + SKYLIGHT_FRAME / 2, ROOF_THICKNESS / 2, 0]}>
-            <boxGeometry args={[SKYLIGHT_FRAME, ROOF_THICKNESS + 0.005, slD - SKYLIGHT_FRAME * 2]} />
-            <meshStandardMaterial color="#555555" roughness={0.3} metalness={0.3} />
-          </mesh>
-          {/* Right frame bar (+X) */}
-          <mesh position={[slW / 2 - SKYLIGHT_FRAME / 2, ROOF_THICKNESS / 2, 0]}>
-            <boxGeometry args={[SKYLIGHT_FRAME, ROOF_THICKNESS + 0.005, slD - SKYLIGHT_FRAME * 2]} />
-            <meshStandardMaterial color="#555555" roughness={0.3} metalness={0.3} />
-          </mesh>
+          {/* Frame bars */}
+          {[
+            { px: 0, pz: slD / 2 - SKYLIGHT_FRAME / 2, w: slW, d: SKYLIGHT_FRAME },
+            { px: 0, pz: -slD / 2 + SKYLIGHT_FRAME / 2, w: slW, d: SKYLIGHT_FRAME },
+            { px: -slW / 2 + SKYLIGHT_FRAME / 2, pz: 0, w: SKYLIGHT_FRAME, d: slD - SKYLIGHT_FRAME * 2 },
+            { px: slW / 2 - SKYLIGHT_FRAME / 2, pz: 0, w: SKYLIGHT_FRAME, d: slD - SKYLIGHT_FRAME * 2 },
+          ].map((bar, i) => (
+            <mesh key={i} position={[bar.px, epdmY, bar.pz]}>
+              <boxGeometry args={[bar.w, EPDM_THICKNESS + 0.005, bar.d]} />
+              <meshStandardMaterial color="#555555" roughness={0.3} metalness={0.3} />
+            </mesh>
+          ))}
         </group>
       )}
 
-      {/* Fascia strips on all 4 edges */}
-      <mesh position={[offsetX, -FASCIA_HEIGHT / 2, halfD + overhangFront]}>
-        <boxGeometry args={[totalWidth - FASCIA_DEPTH * 2, FASCIA_HEIGHT + ROOF_THICKNESS, FASCIA_DEPTH]} />
-        <meshStandardMaterial color="#3A3A3A" roughness={0.5} metalness={0.1} />
-      </mesh>
-      <mesh position={[offsetX, -FASCIA_HEIGHT / 2, -(halfD + overhangBack)]}>
-        <boxGeometry args={[totalWidth - FASCIA_DEPTH * 2, FASCIA_HEIGHT + ROOF_THICKNESS, FASCIA_DEPTH]} />
-        <meshStandardMaterial color="#3A3A3A" roughness={0.5} metalness={0.1} />
-      </mesh>
-      <mesh position={[-(halfW + overhangLeft), -FASCIA_HEIGHT / 2, offsetZ]}>
-        <boxGeometry args={[FASCIA_DEPTH, FASCIA_HEIGHT + ROOF_THICKNESS, totalDepth]} />
-        <meshStandardMaterial color="#3A3A3A" roughness={0.5} metalness={0.1} />
-      </mesh>
-      <mesh position={[halfW + overhangRight, -FASCIA_HEIGHT / 2, offsetZ]}>
-        <boxGeometry args={[FASCIA_DEPTH, FASCIA_HEIGHT + ROOF_THICKNESS, totalDepth]} />
-        <meshStandardMaterial color="#3A3A3A" roughness={0.5} metalness={0.1} />
-      </mesh>
+      {/* ── Part 2: U-Profile frame (4 sides, closed corners) ── */}
+      {(() => {
+        const mat = <meshStandardMaterial color={FRAME_COLOR} roughness={0.4} metalness={0.3} />;
+        // All 4 sides use same height. Front/back = totalWidth, left/right = totalDepth.
+        // Outer walls run the full length. Bottom plates and inner walls fit inside.
+        const edgeF = halfD + overhangFront;
+        const edgeB = halfD + overhangBack;
+        const edgeL = halfW + overhangLeft;
+        const edgeR = halfW + overhangRight;
+
+        return (
+          <>
+            {/* ── Outer walls (4 sides, full length each, forming closed rectangle) ── */}
+            {/* Front outer (+Z) */}
+            <mesh position={[offsetX, FRAME_H / 2, edgeF]}>
+              <boxGeometry args={[totalWidth + FRAME_T * 2, FRAME_H, FRAME_T]} />
+              {mat}
+            </mesh>
+            {/* Back outer (-Z) */}
+            <mesh position={[offsetX, FRAME_H / 2, -edgeB]}>
+              <boxGeometry args={[totalWidth + FRAME_T * 2, FRAME_H, FRAME_T]} />
+              {mat}
+            </mesh>
+            {/* Left outer (-X) */}
+            <mesh position={[-edgeL, FRAME_H / 2, offsetZ]}>
+              <boxGeometry args={[FRAME_T, FRAME_H, totalDepth + FRAME_T * 2]} />
+              {mat}
+            </mesh>
+            {/* Right outer (+X) */}
+            <mesh position={[edgeR, FRAME_H / 2, offsetZ]}>
+              <boxGeometry args={[FRAME_T, FRAME_H, totalDepth + FRAME_T * 2]} />
+              {mat}
+            </mesh>
+
+            {/* ── Bottom plates (4 sides) ── */}
+            {/* Front bottom */}
+            <mesh position={[offsetX, FRAME_T / 2, edgeF - FRAME_CHANNEL / 2]}>
+              <boxGeometry args={[totalWidth, FRAME_T, FRAME_CHANNEL]} />
+              {mat}
+            </mesh>
+            {/* Back bottom */}
+            <mesh position={[offsetX, FRAME_T / 2, -(edgeB - FRAME_CHANNEL / 2)]}>
+              <boxGeometry args={[totalWidth, FRAME_T, FRAME_CHANNEL]} />
+              {mat}
+            </mesh>
+            {/* Left bottom */}
+            <mesh position={[-(edgeL - FRAME_CHANNEL / 2), FRAME_T / 2, offsetZ]}>
+              <boxGeometry args={[FRAME_CHANNEL, FRAME_T, totalDepth]} />
+              {mat}
+            </mesh>
+            {/* Right bottom */}
+            <mesh position={[edgeR - FRAME_CHANNEL / 2, FRAME_T / 2, offsetZ]}>
+              <boxGeometry args={[FRAME_CHANNEL, FRAME_T, totalDepth]} />
+              {mat}
+            </mesh>
+
+            {/* ── Inner walls (4 sides, fit inside the bottom plates) ── */}
+            {/* Front inner */}
+            <mesh position={[offsetX, FRAME_H / 2, edgeF - FRAME_CHANNEL]}>
+              <boxGeometry args={[totalWidth - FRAME_CHANNEL * 2, FRAME_H, FRAME_T]} />
+              {mat}
+            </mesh>
+            {/* Back inner */}
+            <mesh position={[offsetX, FRAME_H / 2, -(edgeB - FRAME_CHANNEL)]}>
+              <boxGeometry args={[totalWidth - FRAME_CHANNEL * 2, FRAME_H, FRAME_T]} />
+              {mat}
+            </mesh>
+            {/* Left inner */}
+            <mesh position={[-(edgeL - FRAME_CHANNEL), FRAME_H / 2, offsetZ]}>
+              <boxGeometry args={[FRAME_T, FRAME_H, totalDepth - FRAME_CHANNEL * 2]} />
+              {mat}
+            </mesh>
+            {/* Right inner */}
+            <mesh position={[edgeR - FRAME_CHANNEL, FRAME_H / 2, offsetZ]}>
+              <boxGeometry args={[FRAME_T, FRAME_H, totalDepth - FRAME_CHANNEL * 2]} />
+              {mat}
+            </mesh>
+
+            {/* ── Corner bottom plates (4 corners, fill the gap) ── */}
+            {[
+              { x: edgeR - FRAME_CHANNEL / 2, z: edgeF - FRAME_CHANNEL / 2 },
+              { x: -(edgeL - FRAME_CHANNEL / 2), z: edgeF - FRAME_CHANNEL / 2 },
+              { x: edgeR - FRAME_CHANNEL / 2, z: -(edgeB - FRAME_CHANNEL / 2) },
+              { x: -(edgeL - FRAME_CHANNEL / 2), z: -(edgeB - FRAME_CHANNEL / 2) },
+            ].map((c, i) => (
+              <mesh key={`corner-${i}`} position={[c.x, FRAME_T / 2, c.z]}>
+                <boxGeometry args={[FRAME_CHANNEL, FRAME_T, FRAME_CHANNEL]} />
+                {mat}
+              </mesh>
+            ))}
+          </>
+        );
+      })()}
     </group>
   );
 }
