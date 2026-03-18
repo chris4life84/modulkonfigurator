@@ -16,8 +16,8 @@ const INSET = 0.08; // Default inset from edge for posts/beams
 const HOUSE_INSET = 0.01; // Small gap to house wall (overhang removed on pergola side)
 
 // Target: pergola roof surface aligns with house roof top
-// House roof top (within elevated group) = OUTER_HEIGHT(2.5) + ROOF_THICKNESS(0.10) = 2.60m
-const HOUSE_ROOF_TOP = 2.60;
+// House roof top = OUTER_HEIGHT(2.5) + FRAME_H(0.04) = 2.54m
+const HOUSE_ROOF_TOP = 2.54;
 
 // Roof structure thickness by type (everything above post tops)
 const ROOF_OFFSET: Record<string, number> = {
@@ -163,13 +163,14 @@ export function Pergola3D({ module: m, allModules, color, label, selected, onCli
   // Front/Back: beam span endpoint at gap → beam end 1cm from wall
   const insetLeft = (adjacentSides.left && useHouseInset) ? BEAM_W / 2 + HOUSE_INSET : INSET;
   const insetRight = (adjacentSides.right && useHouseInset) ? BEAM_W / 2 + HOUSE_INSET : INSET;
-  const insetFront = (adjacentSides.front && useHouseInset) ? HOUSE_INSET : INSET;
-  const insetBack = (adjacentSides.back && useHouseInset) ? HOUSE_INSET : INSET;
-  // Roof covering insets — same small gap (no overhang to dodge)
-  const roofInsetLeft = (adjacentSides.left && useHouseInset) ? HOUSE_INSET : INSET;
-  const roofInsetRight = (adjacentSides.right && useHouseInset) ? HOUSE_INSET : INSET;
-  const roofInsetFront = (adjacentSides.front && useHouseInset) ? HOUSE_INSET : INSET;
-  const roofInsetBack = (adjacentSides.back && useHouseInset) ? HOUSE_INSET : INSET;
+  // Front/back beam inset: BEAM_W/2 so cross beam face sits flush against house wall
+  const insetFront = (adjacentSides.front && useHouseInset) ? BEAM_W / 2 + HOUSE_INSET : INSET;
+  const insetBack = (adjacentSides.back && useHouseInset) ? BEAM_W / 2 + HOUSE_INSET : INSET;
+  // Roof covering insets — same as beam insets so roof ends at cross beam, not at wall
+  const roofInsetLeft = insetLeft;
+  const roofInsetRight = insetRight;
+  const roofInsetFront = insetFront;
+  const roofInsetBack = insetBack;
 
   // ── Post positions (skip posts on house-adjacent edges with Wandanschluss) ──
   const posts = useMemo(() => {
@@ -209,9 +210,9 @@ export function Pergola3D({ module: m, allModules, color, label, selected, onCli
   const beamZEnd = halfD - insetFront;
   const backIsHouseWall = adjacentSides.back && useHouseInset;
   const frontIsHouseWall = adjacentSides.front && useHouseInset;
-  // Longitudinal beams extend BEAM_W/2 past cross beams on FREE ends only
-  const longBeamZStart = beamZStart - (backIsHouseWall ? 0 : BEAM_W / 2);
-  const longBeamZEnd = beamZEnd + (frontIsHouseWall ? 0 : BEAM_W / 2);
+  // Longitudinal beams extend BEAM_W/2 past cross beams on ALL sides (closed corners)
+  const longBeamZStart = beamZStart - BEAM_W / 2;
+  const longBeamZEnd = beamZEnd + BEAM_W / 2;
   const longBeamDepth = longBeamZEnd - longBeamZStart;
   const longBeamCenterZ = (longBeamZStart + longBeamZEnd) / 2;
 
@@ -310,21 +311,16 @@ export function Pergola3D({ module: m, allModules, color, label, selected, onCli
               )}
 
               {/* ── Cross beams (shortened to fit between inner edges of longitudinal beams) ── */}
-              {/* Skip on house-adjacent Wandanschluss sides */}
               {/* Front cross beam */}
-              {!frontIsHouseWall && (
-                <mesh position={[beamXCenter, bY, halfD - insetFront]} castShadow>
-                  <boxGeometry args={[crossBeamWidth, bH, BEAM_W]} />
-                  <meshStandardMaterial color="#404040" roughness={0.3} metalness={0.8} />
-                </mesh>
-              )}
+              <mesh position={[beamXCenter, bY, halfD - insetFront]} castShadow>
+                <boxGeometry args={[crossBeamWidth, bH, BEAM_W]} />
+                <meshStandardMaterial color="#404040" roughness={0.3} metalness={0.8} />
+              </mesh>
               {/* Back cross beam */}
-              {!backIsHouseWall && (
-                <mesh position={[beamXCenter, bY, -halfD + insetBack]} castShadow>
-                  <boxGeometry args={[crossBeamWidth, bH, BEAM_W]} />
-                  <meshStandardMaterial color="#404040" roughness={0.3} metalness={0.8} />
-                </mesh>
-              )}
+              <mesh position={[beamXCenter, bY, -halfD + insetBack]} castShadow>
+                <boxGeometry args={[crossBeamWidth, bH, BEAM_W]} />
+                <meshStandardMaterial color="#404040" roughness={0.3} metalness={0.8} />
+              </mesh>
             </>
           );
         })()}
