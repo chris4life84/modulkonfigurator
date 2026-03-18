@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { createRoofTexture } from './textures/createRoofTexture';
 
 const ROOF_THICKNESS = 0.10;
-const OVERHANG = 0.10;
+const OVERHANG = 0;
 const FASCIA_HEIGHT = 0.03;
 const FASCIA_DEPTH = 0.015;
 
