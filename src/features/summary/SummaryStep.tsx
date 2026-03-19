@@ -219,7 +219,7 @@ export function SummaryStep() {
                       </p>
                       <div className="text-right">
                         <span className="text-xs text-gray-400">{widthM} × {depthM} m</span>
-                        <span className="ml-3 text-xs font-semibold text-wood-700">
+                        <span className="ml-3 text-xs font-semibold text-wood-700 hidden">
                           {formatPrice(calculateModulePrice(module))}
                         </span>
                       </div>
@@ -233,14 +233,14 @@ export function SummaryStep() {
         </div>
       </div>
 
-      {/* Total price */}
-      <div className="mt-3 flex items-center justify-between rounded-lg bg-wood-50 border border-wood-200 px-4 py-3">
+      {/* Total price (hidden for now) */}
+      <div className="mt-3 flex items-center justify-between rounded-lg bg-wood-50 border border-wood-200 px-4 py-3 hidden">
         <span className="text-sm font-semibold text-wood-800">Gesamtpreis (Richtwert)</span>
         <span className="text-lg font-bold text-wood-700">
           {formatPrice(modules.reduce((sum, m) => sum + calculateModulePrice(m), 0))}
         </span>
       </div>
-      <p className="mt-1 text-[10px] text-gray-400 text-right">
+      <p className="mt-1 text-[10px] text-gray-400 text-right hidden">
         Alle Preise sind Richtwerte. Der endgültige Preis wird im individuellen Angebot festgelegt.
       </p>
 

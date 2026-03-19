@@ -21,7 +21,7 @@ export function Header() {
           </div>
         </div>
         {totalPrice > 0 && (
-          <div className="text-right">
+          <div className="text-right hidden">
             <p className="text-xs text-gray-400">Gesamt</p>
             <p className="text-lg font-bold text-wood-600">{formatPrice(totalPrice)}</p>
           </div>

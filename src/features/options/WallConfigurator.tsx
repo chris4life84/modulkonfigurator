@@ -41,8 +41,13 @@ function createOpeningForState(
 ): WallOpening[] {
   if (state === 'wall' || state === 'open') return [];
   const maxW = wallWidthM - 0.30; // 15cm margin per side (must match OpeningsGroup clamp)
+  const isWide = wallWidthM >= 2.5; // 3m wall vs 1.5m wall
+
+  // Standard sizes based on wall width:
+  // 1.5m wall: window 1×2 (bodentief) / 1×1 (normal), door 1×2
+  // 3.0m wall: window 2×2 (bodentief) / 1×1 (normal), door 1×2, terrace-door 2×2
   if (state === 'window') {
-    const w = Math.min(2.0, maxW);
+    const w = Math.min(isWide ? 2.0 : 1.0, maxW);
     return [{ type: 'window', position: 0.5, width: w, height: 2.0, offsetY: 0 }];
   }
   if (state === 'window-normal') {
@@ -456,6 +461,17 @@ function InteriorWallControls({
   );
 }
 
+// --- Admin mode check (enable via console: window.__ADMIN_MODE = true) ---
+function useAdminMode() {
+  const [, setTick] = useState(0);
+  const isAdmin = typeof window !== 'undefined' && (window as any).__ADMIN_MODE === true;
+  // Re-check periodically so toggling in console takes effect
+  if (typeof window !== 'undefined') {
+    (window as any).__refreshAdminMode = () => setTick((t: number) => t + 1);
+  }
+  return isAdmin;
+}
+
 // --- Dimension inputs ---
 function DimensionInputs({
   opening,
@@ -476,39 +492,56 @@ function DimensionInputs({
   onOffsetYChange?: (v: number) => void;
   onPositionChange?: (v: number) => void;
 }) {
+  const isAdmin = useAdminMode();
   const atMax = opening.width >= maxW - 0.01;
+
+  // Show info about current dimensions (always visible)
+  const dimLabel = `${opening.width.toFixed(1)} × ${opening.height.toFixed(1)} m`;
 
   return (
     <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5">
-      <div className="flex items-center gap-3">
-        <label className="flex items-center gap-1.5">
-          <span className="text-xs text-gray-500">Breite</span>
-          <input
-            type="number"
-            step="0.1"
-            min="0.3"
-            max={maxW}
-            value={opening.width}
-            onChange={(e) => onWidthChange(parseFloat(e.target.value) || 0.5)}
-            className="w-16 rounded border border-gray-200 px-2 py-1 text-sm text-center focus:border-wood-400 focus:ring-1 focus:ring-wood-200 focus:outline-none"
-          />
-          <span className="text-xs text-gray-400">m</span>
-        </label>
-        <span className="text-gray-300">&times;</span>
-        <label className="flex items-center gap-1.5">
-          <span className="text-xs text-gray-500">Höhe</span>
-          <input
-            type="number"
-            step="0.1"
-            min="0.3"
-            max={OUTER_HEIGHT}
-            value={opening.height}
-            onChange={(e) => onHeightChange(parseFloat(e.target.value) || 0.5)}
-            className="w-16 rounded border border-gray-200 px-2 py-1 text-sm text-center focus:border-wood-400 focus:ring-1 focus:ring-wood-200 focus:outline-none"
-          />
-          <span className="text-xs text-gray-400">m</span>
-        </label>
-      </div>
+      {/* Dimension summary (always visible) */}
+      {!isAdmin && (
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-500">Maße</span>
+          <span className="text-xs font-medium text-gray-700">{dimLabel}</span>
+        </div>
+      )}
+
+      {/* Width/Height inputs (admin only) */}
+      {isAdmin && (
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-500">Breite</span>
+            <input
+              type="number"
+              step="0.1"
+              min="0.3"
+              max={maxW}
+              value={opening.width}
+              onChange={(e) => onWidthChange(parseFloat(e.target.value) || 0.5)}
+              className="w-16 rounded border border-gray-200 px-2 py-1 text-sm text-center focus:border-wood-400 focus:ring-1 focus:ring-wood-200 focus:outline-none"
+            />
+            <span className="text-xs text-gray-400">m</span>
+          </label>
+          <span className="text-gray-300">&times;</span>
+          <label className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-500">Höhe</span>
+            <input
+              type="number"
+              step="0.1"
+              min="0.3"
+              max={OUTER_HEIGHT}
+              value={opening.height}
+              onChange={(e) => onHeightChange(parseFloat(e.target.value) || 0.5)}
+              className="w-16 rounded border border-gray-200 px-2 py-1 text-sm text-center focus:border-wood-400 focus:ring-1 focus:ring-wood-200 focus:outline-none"
+            />
+            <span className="text-xs text-gray-400">m</span>
+          </label>
+        </div>
+      )}
+
+      {/* Brüstungshöhe (always visible for window-normal) */}
       {showOffsetY && onOffsetYChange && (
         <div className="flex items-center gap-1.5 mt-2">
           <span className="text-xs text-gray-500">Brüstung</span>
@@ -524,7 +557,9 @@ function DimensionInputs({
           <span className="text-xs text-gray-400">m</span>
         </div>
       )}
-      {onPositionChange && (
+
+      {/* Position slider (admin only) */}
+      {isAdmin && onPositionChange && (
         <div className="mt-2">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs text-gray-500">Position</span>
@@ -547,7 +582,8 @@ function DimensionInputs({
           </div>
         </div>
       )}
-      {atMax && (
+
+      {isAdmin && atMax && (
         <p className="mt-1.5 text-[11px] text-amber-600">
           Max. {wallWidthM.toFixed(1)} m Breite
         </p>

@@ -83,9 +83,11 @@ export function getDefaultWallConfig(
   width: number,
   height: number,
 ): WallConfig {
-  const isLarge = width >= 6 && height >= 6;
   const widthM = width * GRID_CELL_SIZE; // front/back wall width in meters
   const depthM = height * GRID_CELL_SIZE; // left/right wall width in meters
+  // Standard sizes: door 1×2, window-normal 1×1 @0.9m, window-floor 1×2 (1.5m) / 2×2 (3m), terrace 2×2
+  const isWideFront = widthM >= 2.5;   // 3m front
+  const isWideSide = depthM >= 2.5;    // 3m side
 
   let raw: WallConfig;
 
@@ -94,30 +96,30 @@ export function getDefaultWallConfig(
       raw = {
         front: [{ type: 'door', position: 0.5, width: 1.0, height: 2.0, offsetY: 0, hingeSide: 'left', opensOutward: true }],
         back: [],
-        left: isLarge
-          ? [{ type: 'window', position: 0.5, width: 1.0, height: 1.0, offsetY: 0.8 }]
-          : [],
-        right: [{ type: 'window', position: 0.5, width: 1.0, height: 1.0, offsetY: 0.8 }],
+        left: [],
+        right: [{ type: 'window', position: 0.5, width: 1.0, height: 1.0, offsetY: 0.9 }],
       };
       break;
 
     case 'living':
       raw = {
-        front: [{ type: 'terrace-door', position: 0.5, width: 2.0, height: 2.0, offsetY: 0, hingeSide: 'left', opensOutward: true }],
-        back: isLarge
-          ? [{ type: 'window', position: 0.5, width: 2.0, height: 2.0, offsetY: 0 }]
-          : [],
+        front: isWideFront
+          ? [{ type: 'terrace-door', position: 0.5, width: 2.0, height: 2.0, offsetY: 0, hingeSide: 'left', opensOutward: true }]
+          : [{ type: 'door', position: 0.5, width: 1.0, height: 2.0, offsetY: 0, hingeSide: 'left', opensOutward: true }],
+        back: [],
         left: [],
-        right: [{ type: 'window', position: 0.5, width: 2.0, height: 2.0, offsetY: 0 }],
+        right: isWideSide
+          ? [{ type: 'window', position: 0.5, width: 2.0, height: 2.0, offsetY: 0 }]
+          : [{ type: 'window', position: 0.5, width: 1.0, height: 2.0, offsetY: 0 }],
       };
       break;
 
     case 'ruhe':
       raw = {
         front: [{ type: 'door', position: 0.5, width: 1.0, height: 2.0, offsetY: 0, hingeSide: 'left', opensOutward: true }],
-        back: isLarge
+        back: isWideFront
           ? [{ type: 'window', position: 0.5, width: 2.0, height: 2.0, offsetY: 0 }]
-          : [{ type: 'window', position: 0.5, width: 2.0, height: 2.0, offsetY: 0 }],
+          : [{ type: 'window', position: 0.5, width: 1.0, height: 2.0, offsetY: 0 }],
         left: [],
         right: [],
       };
@@ -137,7 +139,7 @@ export function getDefaultWallConfig(
         front: [{ type: 'door', position: 0.5, width: 1.0, height: 2.0, offsetY: 0, hingeSide: 'left', opensOutward: true }],
         back: [],
         left: [],
-        right: [{ type: 'window', position: 0.5, width: 0.5, height: 0.4, offsetY: 1.6 }],
+        right: [{ type: 'window', position: 0.5, width: 1.0, height: 1.0, offsetY: 0.9 }],
       };
       break;
 

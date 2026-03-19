@@ -62,7 +62,7 @@ export function TemplateSelectionStep() {
                   {tpl.modules.length} {tpl.modules.length === 1 ? 'Modul' : 'Module'}
                 </span>
                 {tpl.basePrice > 0 && (
-                  <span className="mt-1 block text-sm font-semibold text-wood-700">
+                  <span className="mt-1 block text-sm font-semibold text-wood-700 hidden">
                     ab {formatPrice(tpl.basePrice)}
                   </span>
                 )}

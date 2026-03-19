@@ -371,11 +371,11 @@ async function renderPdf(data: PdfData, doc: InstanceType<typeof import('jspdf')
     doc.setTextColor(...C.gray);
     doc.text(`${widthM} × ${depthM} m`, margin + 85, yPos);
 
-    // Price
-    const modulePrice = calculateModulePrice(module);
-    doc.setTextColor(...C.brand);
-    doc.setFontSize(10);
-    doc.text(formatPrice(modulePrice), pageW - margin, yPos, { align: 'right' });
+    // Price (hidden for now)
+    // const modulePrice = calculateModulePrice(module);
+    // doc.setTextColor(...C.brand);
+    // doc.setFontSize(10);
+    // doc.text(formatPrice(modulePrice), pageW - margin, yPos, { align: 'right' });
 
     yPos += 7;
 
@@ -428,12 +428,13 @@ async function renderPdf(data: PdfData, doc: InstanceType<typeof import('jspdf')
   doc.line(margin, yPos, pageW - margin, yPos);
   yPos += 8;
 
+  // Preisübersicht (hidden for now)
+  /*
   doc.setFontSize(12);
   doc.setTextColor(...C.brand);
   doc.text('Preisübersicht', margin, yPos);
   yPos += 8;
 
-  // Price table
   const totalPrice = data.modules.reduce((sum, m) => sum + calculateModulePrice(m), 0);
 
   for (let idx = 0; idx < data.modules.length; idx++) {
@@ -451,7 +452,6 @@ async function renderPdf(data: PdfData, doc: InstanceType<typeof import('jspdf')
     yPos += 5;
   }
 
-  // Total
   yPos += 2;
   doc.setDrawColor(...C.accent);
   doc.setLineWidth(0.4);
@@ -473,6 +473,7 @@ async function renderPdf(data: PdfData, doc: InstanceType<typeof import('jspdf')
     yPos,
     { maxWidth: contentW },
   );
+  */
 
   addFooter();
 }
