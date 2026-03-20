@@ -14,7 +14,7 @@ interface WizardState {
   prevStep: () => void;
 }
 
-export const useWizardStore = create<WizardState>()(
+const _wizardStore = create<WizardState>()(
   persist(
     (set) => ({
       currentStep: 0,
@@ -53,3 +53,6 @@ export const useWizardStore = create<WizardState>()(
     },
   ),
 );
+
+export const useWizardStore = _wizardStore;
+(window as any).__wizardStore = _wizardStore;

@@ -1,5 +1,5 @@
-import { useMemo, useState, useRef, Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { useMemo, useState, useEffect, useRef, Suspense } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, ContactShadows, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type { PlacedModule } from '../../types/grid';
@@ -77,6 +77,8 @@ export function Scene3D({ modules, selectedModuleId, onModuleClick, onBackground
           onBackgroundClick?.();
         }}
       >
+        {/* Camera exposer outside Suspense so it mounts immediately */}
+        <CameraExposer />
         <Suspense fallback={null}>
           {/* Environment: Sky, Fog, Lighting */}
           <EnvironmentSetup />
@@ -128,23 +130,48 @@ export function Scene3D({ modules, selectedModuleId, onModuleClick, onBackground
             maxDistance={40}
             enableDamping
             dampingFactor={0.08}
-            onEnd={() => {
-              const ctrl = controlsRef.current;
-              if (!ctrl) return;
-              const cam = ctrl.object;
-              const tgt = ctrl.target;
-              const data = {
-                position: [+cam.position.x.toFixed(3), +cam.position.y.toFixed(3), +cam.position.z.toFixed(3)],
-                target: [+tgt.x.toFixed(3), +tgt.y.toFixed(3), +tgt.z.toFixed(3)],
-              };
-              (window as any).__cameraData = data;
-              console.log(`Camera: position=[${data.position}] target=[${data.target}]`);
-            }}
           />
         </Suspense>
       </Canvas>
     </div>
   );
+}
+
+/**
+ * Exposes camera + renderer to window so screenshots can be taken via console:
+ *   window.__setCamera([x,y,z], [tx,ty,tz])  — sets camera position & target
+ *   window.__screenshot()                      — returns dataURL of current frame
+ */
+function CameraExposer() {
+  const { camera, gl, scene } = useThree();
+
+  useEffect(() => {
+    (window as any).__setCamera = (pos: [number, number, number], target: [number, number, number]) => {
+      camera.position.set(...pos);
+      camera.lookAt(new THREE.Vector3(...target));
+      camera.updateProjectionMatrix();
+      gl.render(scene, camera);
+      return `Camera set to pos=[${pos}] target=[${target}]`;
+    };
+
+    (window as any).__screenshot = () => {
+      gl.render(scene, camera);
+      return gl.domElement.toDataURL('image/png');
+    };
+
+    (window as any).__getCameraInfo = () => {
+      const pos = camera.position;
+      return `position=[${pos.x.toFixed(3)},${pos.y.toFixed(3)},${pos.z.toFixed(3)}]`;
+    };
+
+    return () => {
+      delete (window as any).__setCamera;
+      delete (window as any).__screenshot;
+      delete (window as any).__getCameraInfo;
+    };
+  }, [camera, gl, scene]);
+
+  return null;
 }
 
 /** Subtle direction labels around the building (Vorne/Hinten/Links/Rechts) */
@@ -167,35 +194,30 @@ function DirectionLabels({ modules }: { modules: PlacedModule[] }) {
     };
   }, [modules]);
 
-  const isMobile = window.innerWidth < 768;
-  const dFactor = isMobile ? 18 : 55;
-
   const labelStyle: React.CSSProperties = {
-    color: '#8a9099',
-    fontSize: isMobile ? '2px' : '4px',
-    fontWeight: 400,
-    letterSpacing: '0.12em',
+    color: '#555',
+    fontSize: '13px',
+    fontWeight: 600,
+    letterSpacing: '0.15em',
     textTransform: 'uppercase' as const,
     pointerEvents: 'none' as const,
     userSelect: 'none' as const,
     whiteSpace: 'nowrap' as const,
-    background: 'rgba(255,255,255,0.45)',
-    padding: '1px 3px',
-    borderRadius: '2px',
+    textShadow: '0 1px 3px rgba(255,255,255,0.8), 0 0 6px rgba(255,255,255,0.5)',
   };
 
   return (
     <>
-      <Html position={positions.front} center distanceFactor={dFactor} style={{ pointerEvents: 'none' }}>
+      <Html position={positions.front} center distanceFactor={12} style={{ pointerEvents: 'none' }}>
         <div style={labelStyle}>Vorne</div>
       </Html>
-      <Html position={positions.back} center distanceFactor={dFactor} style={{ pointerEvents: 'none' }}>
+      <Html position={positions.back} center distanceFactor={12} style={{ pointerEvents: 'none' }}>
         <div style={labelStyle}>Hinten</div>
       </Html>
-      <Html position={positions.left} center distanceFactor={dFactor} style={{ pointerEvents: 'none' }}>
+      <Html position={positions.left} center distanceFactor={12} style={{ pointerEvents: 'none' }}>
         <div style={labelStyle}>Links</div>
       </Html>
-      <Html position={positions.right} center distanceFactor={dFactor} style={{ pointerEvents: 'none' }}>
+      <Html position={positions.right} center distanceFactor={12} style={{ pointerEvents: 'none' }}>
         <div style={labelStyle}>Rechts</div>
       </Html>
     </>

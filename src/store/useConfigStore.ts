@@ -26,7 +26,8 @@ function generateId(): string {
   return `mod_${nextId++}_${Date.now()}`;
 }
 
-export const useConfigStore = create<ConfigState>()(
+// Expose store globally for dev tools / screenshot automation
+const _store = create<ConfigState>()(
   persist(
     (set) => ({
       templateId: null,
@@ -125,3 +126,6 @@ export const useConfigStore = create<ConfigState>()(
     },
   ),
 );
+
+export const useConfigStore = _store;
+(window as any).__configStore = _store;
