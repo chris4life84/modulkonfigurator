@@ -48,23 +48,19 @@ export function loadWoodPBR(): WoodPBRMaps | null {
     const loader = new THREE.TextureLoader();
 
     const diffuse = configureTex(
-      loader.load(assetPath('/textures/pbr/wood/wall_color_2k.png')),
+      loader.load(assetPath('/textures/pbr/wood/wall_color_1k.jpg')),
       true,
     );
     const roughness = configureTex(
-      loader.load(assetPath('/textures/pbr/wood/wall_rough_2k.png')),
+      loader.load(assetPath('/textures/pbr/wood/wall_rough_1k.jpg')),
       false,
     );
     const normal = configureTex(
-      loader.load(assetPath('/textures/pbr/wood/wall_normal_2k.png')),
+      loader.load(assetPath('/textures/pbr/wood/wall_normal_1k.jpg')),
       false,
     );
-    const bump = configureTex(
-      loader.load(assetPath('/textures/pbr/wood/wall_disp_2k.png')),
-      false,
-    );
-
-    _cached = { diffuse, roughness, normal, bump };
+    // Use roughness map as subtle bump (no separate displacement in this set)
+    _cached = { diffuse, roughness, normal };
 
     return _cached;
   } catch {
@@ -86,19 +82,33 @@ export function clonePBRMaps(
   offset: [number, number],
   rotation = 0,
 ): WoodPBRMaps {
+  const is90 = Math.abs(rotation - Math.PI / 2) < 0.01;
+
   const cloneMap = (t: THREE.Texture): THREE.Texture => {
     const c = t.clone();
     c.needsUpdate = true;
     c.anisotropy = 16;
-    c.repeat.set(repeat[0], repeat[1]);
-    c.offset.set(offset[0], offset[1]);
-    // Only set center for rotation; with center=(0,0) and rotation=0,
-    // the UV formula is simply: uv * repeat + offset — guaranteeing
-    // consistent patterns across wall segments of different sizes.
-    if (rotation !== 0) {
+
+    if (is90) {
+      // For 90° rotation with center(0.5,0.5), we must correct the offset
+      // so that segments around openings align with full walls.
+      // Math: uv' = R * ((uv - center) * repeat) + center + offset
+      // Corrected offset ensures continuous texture across segments.
+      c.repeat.set(repeat[0], repeat[1]);
+      c.offset.set(
+        offset[1] + repeat[1] / 2 - 0.5,
+        offset[0] + repeat[0] / 2 - 0.5,
+      );
       c.center.set(0.5, 0.5);
+      c.rotation = Math.PI / 2;
+    } else {
+      c.repeat.set(repeat[0], repeat[1]);
+      c.offset.set(offset[0], offset[1]);
+      if (rotation !== 0) {
+        c.center.set(0.5, 0.5);
+        c.rotation = rotation;
+      }
     }
-    c.rotation = rotation;
     return c;
   };
 

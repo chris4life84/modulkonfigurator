@@ -35,9 +35,7 @@ export function loadWoodImageTexture(): THREE.Texture | null {
       },
     );
 
-    // Rotate 90° for horizontal lamellen
-    texture.center.set(0.5, 0.5);
-    texture.rotation = Math.PI / 2;
+    // No rotation — textures are pre-rotated at build time
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
     texture.colorSpace = THREE.SRGBColorSpace;

@@ -198,15 +198,9 @@ function WallSegmentMesh({ segment, wallWidth, wallHeight, texture, isImageBased
     t.anisotropy = 16;
 
     if (isImageBased) {
-      // Image texture with rotation: needs center for rotation pivot
-      t.center.set(0.5, 0.5);
-      t.rotation = Math.PI / 2;
+      // Texture already has horizontal planks — no rotation needed
       const scale = 1.0;
       t.repeat.set(segment.w / scale, segment.h / scale);
-      // Adjust offset to compensate for center shift:
-      // With center=(0.5,0.5) the UV formula is: (uv - 0.5) * repeat + 0.5 + offset
-      // We need: texture_at_uv0 = segment.x/scale → offset = segment.x/scale - 0.5 + 0.5*repeat.x
-      // But since rotation=PI/2 swaps axes, we use raw offset for the rotated mapping
       t.offset.set(segment.x / scale, segment.y / scale);
     } else {
       // Canvas texture: scale UV to match segment relative to full wall
@@ -236,11 +230,11 @@ function WallSegmentMesh({ segment, wallWidth, wallHeight, texture, isImageBased
 
       if (cloned.bump) {
         mat.bumpMap = cloned.bump;
-        mat.bumpScale = 0.02;
+        mat.bumpScale = 0.04;
       }
       if (cloned.normal) {
         mat.normalMap = cloned.normal;
-        mat.normalScale = new THREE.Vector2(0.8, 0.8);
+        mat.normalScale = new THREE.Vector2(1.2, 1.2);
       }
 
       return mat;
