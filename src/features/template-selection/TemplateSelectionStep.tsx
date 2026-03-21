@@ -52,7 +52,7 @@ export function TemplateSelectionStep() {
           <img
             src={tpl.image}
             alt={tpl.name}
-            className="w-full h-auto object-cover"
+            className="w-full h-48 object-cover"
             loading="lazy"
           />
         </div>
