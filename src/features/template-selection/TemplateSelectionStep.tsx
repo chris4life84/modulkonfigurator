@@ -12,7 +12,7 @@ export function TemplateSelectionStep() {
   // Separate into sections
   const emptyTemplate = TEMPLATES.find((tpl) => tpl.id === 'leer');
   const hausTemplates = TEMPLATES.filter((tpl) =>
-    ['starter-modul', 'kompakt-kubus', 'kubus-terrasse', 'garten-studio', 'studio-terrasse', 'garden-office-deluxe'].includes(tpl.id)
+    ['starter-modul', 'geraeteschuppen', 'gartenhaus', 'kompakt-kubus', 'kubus-terrasse', 'garten-studio', 'studio-terrasse', 'garden-office-deluxe'].includes(tpl.id)
   );
   const saunaTemplates = TEMPLATES.filter((tpl) =>
     ['sauna-kompakt', 'sauna-deluxe', 'sauna-terrasse', 'wellness-suite'].includes(tpl.id)

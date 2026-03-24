@@ -43,7 +43,43 @@ export const TEMPLATES: Template[] = [
     modules: [
       {
         type: 'living', gridX: 0, gridY: 0, width: 6, height: 3, options: {},
-        walls: walls([TERRACE_DOOR], [], [], [STANDARD_WINDOW]),
+        walls: walls([], [], [STANDARD_DOOR], [BODENTIEF_WINDOW]),
+      },
+    ],
+  },
+
+  // ── Geräteschuppen ─────────────────────────────────────────────
+  {
+    id: 'geraeteschuppen',
+    name: 'Geräteschuppen',
+    description: 'Kompakter 3,0 × 1,5 m Schuppen für Gartengeräte, Fahrräder und Werkzeug – robust, wetterfest und sofort einsatzbereit.',
+    persons: 'Lager',
+    basePrice: 5500,
+    image: '/newsite/templates/geraeteschuppen.png',
+    modules: [
+      {
+        type: 'living', gridX: 0, gridY: 0, width: 6, height: 3, options: {},
+        walls: walls([], [], [STANDARD_DOOR], []),
+      },
+    ],
+  },
+
+  // ── Gartenhaus ─────────────────────────────────────────────────
+  {
+    id: 'gartenhaus',
+    name: 'Gartenhaus',
+    description: 'Zwei Module zu einem geräumigen 3,0 × 3,0 m Gartenhaus – vielseitig nutzbar als Abstellraum, Werkstatt oder Hobbyraum.',
+    persons: '1–2 Personen',
+    basePrice: 11000,
+    image: '/newsite/templates/gartenhaus.png',
+    modules: [
+      {
+        type: 'living', gridX: 0, gridY: 0, width: 6, height: 3, options: {},
+        walls: walls([], [], [], [STANDARD_DOOR]),
+      },
+      {
+        type: 'living', gridX: 0, gridY: 3, width: 6, height: 3, options: {},
+        walls: walls([], [], [], []),
       },
     ],
   },
