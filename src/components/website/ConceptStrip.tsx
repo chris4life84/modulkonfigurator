@@ -24,7 +24,7 @@ const concepts = [
       </svg>
     ),
     title: 'Autark & Nachhaltig',
-    text: 'Optionale PV-Paneele, Premium-Isolierung und eigenes Entwasserungssystem. Genehmigungsfrei bis 2,50 m.',
+    text: 'Optionale PV-Paneele, Premium-Isolierung und eigenes Entwässerungssystem.',
   },
 ];
 

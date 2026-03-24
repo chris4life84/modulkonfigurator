@@ -2,22 +2,29 @@ import type { OptionDefinition } from '../types/configuration';
 
 export const MODULE_OPTIONS: OptionDefinition[] = [
   {
-    key: 'fenster',
-    label: 'Fenster-Upgrade',
+    key: 'premiumisolierung',
+    label: 'Premium-Isolierung',
     type: 'checkbox',
-    defaultValue: false,
-    appliesTo: ['sauna', 'ruhe', 'living', 'umkleide'],
+    defaultValue: true,
+    appliesTo: ['living', 'sauna', 'ruhe', 'umkleide', 'sanitaer'],
+    description: 'Premium-Isolierung (Wände, Decke, Boden) – 2-fach, 13 cm Wandaufbau',
   },
+  // {
+  //   key: 'fenster',
+  //   label: 'Fenster-Upgrade',
+  //   type: 'checkbox',
+  //   defaultValue: false,
+  //   appliesTo: ['sauna', 'ruhe', 'living', 'umkleide'],
+  // },
   {
     key: 'dachtyp',
     label: 'Dachtyp',
     type: 'select',
     options: [
-      { value: 'lamellen', label: 'Alu-Lamellen (offen)', priceModifier: 0 },
       { value: 'glas', label: 'Glasdach', priceModifier: 0 },
       { value: 'epdm', label: 'EPDM-Dachfolie', priceModifier: 0 },
     ],
-    defaultValue: 'lamellen',
+    defaultValue: 'glas',
     appliesTo: ['pergola'],
   },
   {
@@ -31,14 +38,14 @@ export const MODULE_OPTIONS: OptionDefinition[] = [
     defaultValue: 'wand',
     appliesTo: ['pergola'],
   },
-  {
-    key: 'dachfenster',
-    label: 'Dachfenster (Skylight)',
-    type: 'checkbox',
-    defaultValue: false,
-    appliesTo: ['sauna', 'ruhe', 'living', 'umkleide'],
-    description: 'Integriertes Dachfenster für Blick in den Himmel',
-  },
+  // {
+  //   key: 'dachfenster',
+  //   label: 'Dachfenster (Skylight)',
+  //   type: 'checkbox',
+  //   defaultValue: false,
+  //   appliesTo: ['sauna', 'ruhe', 'living', 'umkleide'],
+  //   description: 'Integriertes Dachfenster für Blick in den Himmel',
+  // },
   {
     key: 'pv_panels',
     label: 'Photovoltaik',

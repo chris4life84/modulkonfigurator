@@ -97,6 +97,9 @@ export function SummaryStep() {
             if (opt.type === 'checkbox' && value === true) {
               options.push(opt.label);
             }
+            if (opt.type === 'checkbox' && value === false && opt.key === 'premiumisolierung') {
+              options.push('keine Premium-Isolierung');
+            }
           }
 
           // Wall details per side
@@ -272,23 +275,19 @@ export function SummaryStep() {
           <ul className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-wood-700">
             <li className="flex items-center gap-1.5">
               <span className="h-1 w-1 rounded-full bg-wood-400 shrink-0" />
-              Holzrahmenbau (Robinie-Fassade)
+              Aluminium-Rahmen
             </li>
             <li className="flex items-center gap-1.5">
               <span className="h-1 w-1 rounded-full bg-wood-400 shrink-0" />
-              Premium-Isolierung (Wände, Decke, Boden)
+              {modules.some(m => (m.options.premiumisolierung ?? true) === true) ? 'OSB-Wände mit Dämmung' : 'OSB-Wände'}
             </li>
             <li className="flex items-center gap-1.5">
               <span className="h-1 w-1 rounded-full bg-wood-400 shrink-0" />
-              2-Fach Isolierverglasung
+              Wandpaneele aus Robinienholz
             </li>
             <li className="flex items-center gap-1.5">
               <span className="h-1 w-1 rounded-full bg-wood-400 shrink-0" />
-              Komplette Elektroinstallation
-            </li>
-            <li className="flex items-center gap-1.5">
-              <span className="h-1 w-1 rounded-full bg-wood-400 shrink-0" />
-              EPDM-Dach mit Entwässerung
+              Aluminium-Dachplatte mit Entwässerung
             </li>
             <li className="flex items-center gap-1.5">
               <span className="h-1 w-1 rounded-full bg-wood-400 shrink-0" />
@@ -305,7 +304,7 @@ export function SummaryStep() {
         <div className="mt-3 rounded-xl bg-amber-50 border border-amber-200 p-4">
           <p className="text-sm font-semibold text-amber-800">Individuelle Wünsche?</p>
           <p className="mt-1 text-xs text-amber-700 leading-relaxed">
-            Alles über die Grundausstattung hinaus — z.B. Saunaeinbau, Küchenzeile, Bad-Ausstattung oder spezielle Materialien — wird in Ihrem persönlichen Angebot berücksichtigt. Teilen Sie uns Ihre Wünsche mit, wir machen Ihnen einen Vorschlag oder halten Rücksprache.
+            Alles über die Grundausstattung hinaus — z.B. Saunaeinbau, Küchenzeile, Bad-Ausstattung, Elektroinstallation oder spezielle Materialien — wird in Ihrem persönlichen Angebot berücksichtigt. Teilen Sie uns Ihre Wünsche mit, wir machen Ihnen einen Vorschlag oder halten Rücksprache.
           </p>
         </div>
 

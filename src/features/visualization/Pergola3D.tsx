@@ -104,12 +104,12 @@ export function Pergola3D({ module: m, allModules, color, label, selected, onCli
   const posZ = m.gridY * GRID_CELL_SIZE + depthM / 2;
 
   // Read options
-  const roofType = (m.options.dachtyp as string) ?? 'lamellen';
+  const roofType = (m.options.dachtyp as string) ?? 'glas';
   const anschluss = (m.options.anschluss as string) ?? 'wand';
   const isFreistehend = m.options.freistehend === true;
 
   // Auto-calculate post height so roof top matches house roof
-  const postHeight = HOUSE_ROOF_TOP - (ROOF_OFFSET[roofType] ?? ROOF_OFFSET.lamellen);
+  const postHeight = HOUSE_ROOF_TOP - (ROOF_OFFSET[roofType] ?? ROOF_OFFSET.glas);
 
   const halfW = widthM / 2;
   const halfD = depthM / 2;

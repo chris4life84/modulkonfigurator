@@ -58,7 +58,7 @@ export const TEMPLATES: Template[] = [
     image: '/newsite/templates/geraeteschuppen.png',
     modules: [
       {
-        type: 'living', gridX: 0, gridY: 0, width: 6, height: 3, options: {},
+        type: 'living', gridX: 0, gridY: 0, width: 6, height: 3, options: { premiumisolierung: false },
         walls: walls([], [], [STANDARD_DOOR], []),
       },
     ],
@@ -74,11 +74,11 @@ export const TEMPLATES: Template[] = [
     image: '/newsite/templates/gartenhaus.png',
     modules: [
       {
-        type: 'living', gridX: 0, gridY: 0, width: 6, height: 3, options: {},
+        type: 'living', gridX: 0, gridY: 0, width: 6, height: 3, options: { premiumisolierung: false },
         walls: walls([], [], [], [STANDARD_DOOR]),
       },
       {
-        type: 'living', gridX: 0, gridY: 3, width: 6, height: 3, options: {},
+        type: 'living', gridX: 0, gridY: 3, width: 6, height: 3, options: { premiumisolierung: false },
         walls: walls([], [], [], []),
       },
     ],
