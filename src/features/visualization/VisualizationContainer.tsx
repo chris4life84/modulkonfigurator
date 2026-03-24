@@ -4,7 +4,6 @@ import type { PlacedModule, GridPosition } from '../../types/grid';
 import { useViewMode } from '../../hooks/useViewMode';
 import { GridCanvas } from './GridCanvas';
 import { ViewToggle } from './ViewToggle';
-
 // Lazy-load 3D scene for code splitting (three.js is large)
 const Scene3D = lazy(() =>
   import('./Scene3D').then((mod) => ({ default: mod.Scene3D })),

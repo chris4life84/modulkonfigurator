@@ -208,8 +208,8 @@ export function Pergola3D({ module: m, allModules, color, label, selected, onCli
   // ── Beam frame spans (structural — flush against wall) ──
   const beamZStart = -halfD + insetBack;
   const beamZEnd = halfD - insetFront;
-  const backIsHouseWall = adjacentSides.back && useHouseInset;
-  const frontIsHouseWall = adjacentSides.front && useHouseInset;
+  // const _backIsHouseWall = adjacentSides.back && useHouseInset;
+  // const _frontIsHouseWall = adjacentSides.front && useHouseInset;
   // Longitudinal beams extend BEAM_W/2 past cross beams on ALL sides (closed corners)
   const longBeamZStart = beamZStart - BEAM_W / 2;
   const longBeamZEnd = beamZEnd + BEAM_W / 2;

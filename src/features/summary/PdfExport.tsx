@@ -8,7 +8,7 @@ import { MODULE_OPTIONS } from '../../data/options';
 import { getSharedWalls } from '../../utils/walls';
 import { svgToDataUrl } from '../../utils/svg-to-image';
 import { calculateMaxPanels, calculateKWp } from '../../utils/pvCalculation';
-import { calculateModulePrice, formatPrice } from '../../data/pricing';
+// import { calculateModulePrice, formatPrice } from '../../data/pricing';
 import { Button } from '../../components/ui/Button';
 import { t } from '../../utils/i18n';
 

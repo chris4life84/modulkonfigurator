@@ -1,19 +1,18 @@
 import type { Template } from '../types/configuration';
-import type { WallConfig } from '../types/walls';
+import type { WallConfig, WallOpening } from '../types/walls';
 
 // ── Reusable opening definitions ──────────────────────────────────
-const STANDARD_DOOR = { type: 'door' as const, position: 0.5, width: 0.9, height: 2.0, offsetY: 0 };
-const TERRACE_DOOR = { type: 'terrace-door' as const, position: 0.5, width: 2.0, height: 2.0, offsetY: 0 };
-const PANORAMA_WINDOW = { type: 'window' as const, position: 0.5, width: 2.0, height: 2.0, offsetY: 0 };
-const STANDARD_WINDOW = { type: 'window' as const, position: 0.5, width: 1.0, height: 1.0, offsetY: 0.8 };
-const BODENTIEF_WINDOW = { type: 'window' as const, position: 0.5, width: 1.0, height: 2.0, offsetY: 0 };
+const STANDARD_DOOR: WallOpening = { type: 'door', position: 0.5, width: 0.9, height: 2.0, offsetY: 0 };
+const TERRACE_DOOR: WallOpening = { type: 'terrace-door', position: 0.5, width: 2.0, height: 2.0, offsetY: 0 };
+const STANDARD_WINDOW: WallOpening = { type: 'window', position: 0.5, width: 1.0, height: 1.0, offsetY: 0.8 };
+const BODENTIEF_WINDOW: WallOpening = { type: 'window', position: 0.5, width: 1.0, height: 2.0, offsetY: 0 };
 
 // ── Helper: create WallConfig ─────────────────────────────────────
 function walls(
-  front: typeof STANDARD_DOOR[] = [],
-  back: typeof STANDARD_DOOR[] = [],
-  left: typeof STANDARD_DOOR[] = [],
-  right: typeof STANDARD_DOOR[] = [],
+  front: WallOpening[] = [],
+  back: WallOpening[] = [],
+  left: WallOpening[] = [],
+  right: WallOpening[] = [],
 ): WallConfig {
   return { front, back, left, right };
 }

@@ -11,6 +11,7 @@ import { Pergola3D } from './Pergola3D';
 import { GroundPlane } from './GroundPlane';
 import { EnvironmentSetup } from './EnvironmentSetup';
 import { GardenVegetation } from './GardenVegetation';
+import { HourglassLoader } from '../../components/ui/HourglassLoader';
 
 interface Scene3DProps {
   modules: PlacedModule[];
@@ -35,6 +36,7 @@ function computeCamera(modules: PlacedModule[]) {
 export function Scene3D({ modules, selectedModuleId, onModuleClick, onBackgroundClick }: Scene3DProps) {
   // Hide labels by default on mobile (< 768px)
   const [showLabels, setShowLabels] = useState(() => window.innerWidth >= 768);
+  const [sceneReady, setSceneReady] = useState(false);
   const camera = useMemo(() => computeCamera(modules), [modules]);
   const controlsRef = useRef<any>(null);
   const shadowCenter = useMemo(() => {
@@ -45,8 +47,19 @@ export function Scene3D({ modules, selectedModuleId, onModuleClick, onBackground
     return [cx, 0.01, cz] as [number, number, number];
   }, [modules]);
 
+  // Reset loading state on every mount
+  useEffect(() => {
+    setSceneReady(false);
+  }, []);
+
   return (
     <div className="relative h-full w-full" style={{ touchAction: 'none' }}>
+      {/* Hourglass overlay – shown until first frame renders */}
+      {!sceneReady && (
+        <div className="absolute inset-0 z-20">
+          <HourglassLoader />
+        </div>
+      )}
       {/* Toggle direction labels button – top left */}
       <button
         onClick={() => setShowLabels((v) => !v)}
@@ -75,6 +88,10 @@ export function Scene3D({ modules, selectedModuleId, onModuleClick, onBackground
         }}
         onPointerMissed={() => {
           onBackgroundClick?.();
+        }}
+        onCreated={() => {
+          // Give the scene one frame to render, then hide the hourglass
+          requestAnimationFrame(() => setSceneReady(true));
         }}
       >
         {/* Camera exposer outside Suspense so it mounts immediately */}
